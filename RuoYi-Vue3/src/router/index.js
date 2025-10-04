@@ -131,6 +131,34 @@ export const dynamicRoutes = [
     ]
   },
   {
+    path: '/label/project-package',
+    component: Layout,
+    hidden: true,
+    permissions: ['label:project:list'],
+    children: [
+      {
+        path: 'index/:projectId(\\d+)/:projectName',
+        component: () => import('@/views/label/taskPackage'),
+        name: 'project-package',
+        meta: { title: '任务包', activeMenu: '/label/project' }
+      }
+    ]
+  },
+  {
+    path: '/label/project-task',
+    component: Layout,
+    hidden: true,
+    permissions: ['label:project:list'],
+    children: [
+      {
+        path: 'index/:taskPackageId(\\d+)/:taskPackageName',
+        component: () => import('@/views/label/task'),
+        name: 'project-task',
+        meta: { title: '任务', activeMenu: '/label/project' }
+      }
+    ]
+  },
+  {
     path: '/monitor/job-log',
     component: Layout,
     hidden: true,
