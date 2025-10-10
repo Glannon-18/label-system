@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
 PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.ruoyi.system.mapper.SysTaskMapper">
+<mapper namespace="com.ruoyi.label.mapper.SysTaskMapper">
     
     <resultMap type="SysTask" id="SysTaskResult">
         <result property="taskId"    column="task_id"    />
@@ -31,6 +31,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="annotator != null  and annotator != ''"> and annotator = #{annotator}</if>
             <if test="auditor != null  and auditor != ''"> and auditor = #{auditor}</if>
             <if test="params.beginCreateBy != null and params.beginCreateBy != '' and params.endCreateBy != null and params.endCreateBy != ''"> and create_by between #{params.beginCreateBy} and #{params.endCreateBy}</if>
+            <if test="packageId != null and packageId != ''"> and package_id = #{packageId}</if>
         </where>
     </select>
     

@@ -1,15 +1,16 @@
-package com.ruoyi.system.service;
+package com.ruoyi.label.mapper;
+
+import com.ruoyi.label.domain.SysProject;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysProject;
 
 /**
- * 项目Service接口
+ * 项目Mapper接口
  * 
  * @author ruoyi
  * @date 2025-09-30
  */
-public interface ISysProjectService 
+public interface SysProjectMapper 
 {
     /**
      * 查询项目
@@ -44,18 +45,18 @@ public interface ISysProjectService
     public int updateSysProject(SysProject sysProject);
 
     /**
-     * 批量删除项目
-     * 
-     * @param projectIds 需要删除的项目主键集合
-     * @return 结果
-     */
-    public int deleteSysProjectByProjectIds(Long[] projectIds);
-
-    /**
-     * 删除项目信息
+     * 删除项目
      * 
      * @param projectId 项目主键
      * @return 结果
      */
     public int deleteSysProjectByProjectId(Long projectId);
+
+    /**
+     * 批量删除项目
+     * 
+     * @param projectIds 需要删除的数据主键集合
+     * @return 结果
+     */
+    public int deleteSysProjectByProjectIds(Long[] projectIds);
 }

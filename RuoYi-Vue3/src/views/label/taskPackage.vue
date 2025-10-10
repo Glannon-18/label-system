@@ -96,6 +96,7 @@
           <dict-tag :options="package_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
+      <el-table-column label="分配人" align="center" prop="assigner" />
       <el-table-column label="创建者" align="center" prop="createBy" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template #default="scope">
@@ -108,8 +109,32 @@
 
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['label:package:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['label:package:remove']">删除</el-button>
+          <el-button 
+            link 
+            type="primary" 
+            icon="Edit" 
+            @click="handleUpdate(scope.row)" 
+            v-hasPermi="['label:project:edit']"
+            :disabled="scope.row.status === 'allocated'">
+            修改
+          </el-button>
+          <el-button 
+            link 
+            type="primary" 
+            icon="Delete" 
+            @click="handleDelete(scope.row)" 
+            v-hasPermi="['label:project:remove']"
+            :disabled="scope.row.status === 'allocated'">
+            删除
+          </el-button>
+          <el-button 
+            link 
+            type="primary"  
+            @click="showUser(scope.row)" 
+            v-hasPermi="['label:project:edit']"
+            :disabled="scope.row.status === 'allocated'">
+            分配人员
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -128,16 +153,6 @@
         <el-form-item label="任务包名" prop="name">
           <el-input v-model="form.name" placeholder="请输入任务包名" />
         </el-form-item>
-        <el-form-item label="任务包状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择任务包状态">
-            <el-option
-              v-for="dict in package_status"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
-        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
@@ -149,11 +164,36 @@
         </div>
       </template>
     </el-dialog>
+    
+    <!-- 分配人员对话框 -->
+    <el-dialog title="分配人员" v-model="assignUserOpen" width="500px" append-to-body>
+      <el-form ref="assignUserRef" :model="assignUserForm" :rules="assignUserRules" label-width="80px">
+        <el-form-item label="用户名" prop="userId">
+          <el-select 
+            v-model="assignUserForm.userId" 
+            placeholder="请选择用户" 
+            style="width: 100%">
+            <el-option
+              v-for="item in userList"
+              :key="item.userId"
+              :label="item.nickName + '(' + item.userName + ')'"
+              :value="item.userId">
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitAssignUser">确 定</el-button>
+          <el-button @click="cancelAssignUser">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="Package">
-import { listPackage, getPackage, delPackage, addPackage, updatePackage } from "@/api/label/package"
+import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser } from "@/api/label/package"
 
 const { proxy } = getCurrentInstance()
 const { package_status } = proxy.useDict('package_status')
@@ -170,10 +210,12 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 const daterangeCreateTime = ref([])
+const assignUserOpen = ref(false)
+const userList = ref([])
+const currentRow = ref({})
 
 const projectId = route.params.projectId
 const projectName = route.params.projectName
-
 
 const data = reactive({
   form: {},
@@ -188,10 +230,16 @@ const data = reactive({
     name: [
       { required: true, message: "任务包名不能为空", trigger: "blur" }
     ],
+  },
+  assignUserForm: {
+    userId: null
+  },
+  assignUserRules: {
+    userId: [{ required: true, message: "请选择用户", trigger: "change" }]
   }
 })
 
-const { queryParams, form, rules } = toRefs(data)
+const { queryParams, form, rules, assignUserForm, assignUserRules } = toRefs(data)
 
 /** 查询任务包列表 */
 function getList() {
@@ -322,6 +370,53 @@ function goToTask(row) {
       taskPackageName: row.name
     }
   })
+}
+
+// 显示分配人员对话框
+function showUser(row) {
+  currentRow.value = row
+  assignUserOpen.value = true
+  assignUserForm.value.userId = null
+  // 加载所有用户
+  loadAllUsers()
+}
+
+// 取消分配人员
+function cancelAssignUser() {
+  assignUserOpen.value = false
+  proxy.resetForm("assignUserRef")
+}
+
+// 加载所有用户
+function loadAllUsers() {
+  getUserForPackage().then(response => {
+    userList.value = response.data
+  })
+}
+
+// 提交分配用户
+function submitAssignUser() {
+  proxy.$refs["assignUserRef"].validate(valid => {
+    if (valid) {
+      // 查找选中的用户
+      const selectedUser = userList.value.find(user => user.userId === assignUserForm.value.userId);
+      
+      // 显示确认对话框
+      proxy.$modal.confirm("指派人员之后将无法修改任务包，你确定要指派人员吗？").then(function() {
+        const taskPackage = {
+          taskPackageId: currentRow.value.taskPackageId,
+          assigner: selectedUser.userName, // 使用选中用户的用户名作为分配者
+          status: "ALLOCATED" // 更新状态为已分配
+        };
+        
+        return assignPackageToUser(taskPackage);
+      }).then(response => {
+        proxy.$modal.msgSuccess("分配成功");
+        assignUserOpen.value = false;
+        getList(); // 重新加载任务包列表以显示更新后的状态
+      }).catch(() => {});
+    }
+  });
 }
 
 getList()

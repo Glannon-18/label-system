@@ -1,7 +1,10 @@
-package com.ruoyi.system.mapper;
+package com.ruoyi.label.mapper;
+
+import com.ruoyi.label.domain.SysTaskPackage;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysTaskPackage;
+
+import org.apache.ibatis.annotations.Mapper;
 
 /**
  * 任务包Mapper接口
@@ -9,6 +12,7 @@ import com.ruoyi.system.domain.SysTaskPackage;
  * @author ruoyi
  * @date 2025-10-02
  */
+@Mapper
 public interface SysTaskPackageMapper 
 {
     /**

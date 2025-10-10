@@ -1,12 +1,12 @@
-package com.ruoyi.system.service.impl;
+package com.ruoyi.label.service.impl;
 
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.system.mapper.SysTaskPackageMapper;
-import com.ruoyi.system.domain.SysTaskPackage;
-import com.ruoyi.system.service.ISysTaskPackageService;
+import com.ruoyi.label.mapper.SysTaskPackageMapper;
+import com.ruoyi.label.domain.SysTaskPackage;
+import com.ruoyi.label.service.ISysTaskPackageService;
 
 /**
  * 任务包Service业务层处理
@@ -67,6 +67,21 @@ public class SysTaskPackageServiceImpl implements ISysTaskPackageService
     public int updateSysTaskPackage(SysTaskPackage sysTaskPackage)
     {
         sysTaskPackage.setUpdateTime(DateUtils.getNowDate());
+        return sysTaskPackageMapper.updateSysTaskPackage(sysTaskPackage);
+    }
+    
+    /**
+     * 分配任务包给用户
+     * 
+     * @param sysTaskPackage 任务包
+     * @return 结果
+     */
+    @Override
+    public int assignSysTaskPackageToUser(SysTaskPackage sysTaskPackage)
+    {
+        // 设置更新时间
+        sysTaskPackage.setUpdateTime(DateUtils.getNowDate());
+        // 更新任务包的分配者和状态
         return sysTaskPackageMapper.updateSysTaskPackage(sysTaskPackage);
     }
 

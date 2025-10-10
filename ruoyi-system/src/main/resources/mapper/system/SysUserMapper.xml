@@ -47,6 +47,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="status"       column="role_status"    />
     </resultMap>
 	
+    <resultMap type="SysUser" id="TaskPackageUserResult">
+        <result property="userId" column="user_id" />
+        <result property="userName" column="user_name" />
+        <result property="nickName" column="nick_name" />
+    </resultMap>
+	
 	<sql id="selectUserVo">
         select u.user_id, u.dept_id, u.user_name, u.nick_name, u.email, u.avatar, u.phonenumber, u.password, u.sex, u.status, u.del_flag, u.login_ip, u.login_date, u.pwd_update_date, u.create_by, u.create_time, u.remark, 
         d.dept_id, d.parent_id, d.ancestors, d.dept_name, d.order_num, d.leader, d.status as dept_status,
@@ -124,6 +130,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectUserByUserName" parameterType="String" resultMap="SysUserResult">
 	    <include refid="selectUserVo"/>
 		where u.user_name = #{userName} and u.del_flag = '0'
+	</select>
+	
+	<select id="selectUserForPackage" resultMap="TaskPackageUserResult">
+	    select u.user_id, u.user_name, u.nick_name 
+	    from sys_user u
+	    where u.del_flag = '0'
+	    <if test="userName != null and userName != ''">
+	        AND u.user_name like concat('%', #{userName}, '%')
+	    </if>
+	    <if test="nickName != null and nickName != ''">
+	        AND u.nick_name like concat('%', #{nickName}, '%')
+	    </if>
 	</select>
 	
 	<select id="selectUserById" parameterType="Long" resultMap="SysUserResult">

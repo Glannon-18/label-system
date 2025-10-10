@@ -1,12 +1,12 @@
-package com.ruoyi.system.service.impl;
+package com.ruoyi.label.service.impl;
 
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.system.mapper.SysTaskMapper;
-import com.ruoyi.system.domain.SysTask;
-import com.ruoyi.system.service.ISysTaskService;
+import com.ruoyi.label.mapper.SysTaskMapper;
+import com.ruoyi.label.domain.SysTask;
+import com.ruoyi.label.service.ISysTaskService;
 
 /**
  * 任务Service业务层处理

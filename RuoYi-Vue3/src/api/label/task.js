@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 查询任务列表
 export function listTask(query) {
   return request({
-    url: '/system/task/list',
+    url: '/label/task/list',
     method: 'get',
     params: query
   })
@@ -12,7 +12,7 @@ export function listTask(query) {
 // 查询任务详细
 export function getTask(taskId) {
   return request({
-    url: '/system/task/' + taskId,
+    url: '/label/task/' + taskId,
     method: 'get'
   })
 }
@@ -20,7 +20,7 @@ export function getTask(taskId) {
 // 新增任务
 export function addTask(data) {
   return request({
-    url: '/system/task',
+    url: '/label/task',
     method: 'post',
     data: data
   })
@@ -29,7 +29,7 @@ export function addTask(data) {
 // 修改任务
 export function updateTask(data) {
   return request({
-    url: '/system/task',
+    url: '/label/task',
     method: 'put',
     data: data
   })
@@ -38,7 +38,7 @@ export function updateTask(data) {
 // 删除任务
 export function delTask(taskId) {
   return request({
-    url: '/system/task/' + taskId,
+    url: '/label/task/' + taskId,
     method: 'delete'
   })
 }

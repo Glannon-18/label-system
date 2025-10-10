@@ -68,7 +68,7 @@ const props = defineProps({
   // 文件类型, 例如['png', 'jpg', 'jpeg']
   fileType: {
     type: Array,
-    default: () => ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "pdf","wav"]
+    default: () => ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "pdf","wav","mp3"]
   },
   // 是否显示提示
   isShowTip: {
@@ -124,7 +124,7 @@ function handleBeforeUpload(file) {
   if (props.fileType.length) {
     const fileName = file.name.split('.')
     const fileExt = fileName[fileName.length - 1]
-    const isTypeOk = props.fileType.indexOf(fileExt) >= 0
+    const isTypeOk = props.fileType.indexOf(fileExt.toLowerCase()) >= 0
     if (!isTypeOk) {
       proxy.$modal.msgError(`文件格式不正确，请上传${props.fileType.join("/")}格式文件!`)
       return false

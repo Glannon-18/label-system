@@ -1,15 +1,16 @@
-package com.ruoyi.system.service;
+package com.ruoyi.label.mapper;
+
+import com.ruoyi.label.domain.SysTask;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysTask;
 
 /**
- * 任务Service接口
+ * 任务Mapper接口
  * 
  * @author ruoyi
  * @date 2025-10-04
  */
-public interface ISysTaskService 
+public interface SysTaskMapper 
 {
     /**
      * 查询任务
@@ -44,18 +45,18 @@ public interface ISysTaskService
     public int updateSysTask(SysTask sysTask);
 
     /**
-     * 批量删除任务
-     * 
-     * @param taskIds 需要删除的任务主键集合
-     * @return 结果
-     */
-    public int deleteSysTaskByTaskIds(Long[] taskIds);
-
-    /**
-     * 删除任务信息
+     * 删除任务
      * 
      * @param taskId 任务主键
      * @return 结果
      */
     public int deleteSysTaskByTaskId(Long taskId);
+
+    /**
+     * 批量删除任务
+     * 
+     * @param taskIds 需要删除的数据主键集合
+     * @return 结果
+     */
+    public int deleteSysTaskByTaskIds(Long[] taskIds);
 }

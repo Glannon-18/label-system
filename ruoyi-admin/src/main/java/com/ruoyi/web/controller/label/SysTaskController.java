@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.system;
+package com.ruoyi.web.controller.label;
 
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
@@ -16,8 +16,8 @@ import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.system.domain.SysTask;
-import com.ruoyi.system.service.ISysTaskService;
+import com.ruoyi.label.domain.SysTask;
+import com.ruoyi.label.service.ISysTaskService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 
@@ -28,7 +28,7 @@ import com.ruoyi.common.core.page.TableDataInfo;
  * @date 2025-10-04
  */
 @RestController
-@RequestMapping("/system/task")
+@RequestMapping("/label/task")
 public class SysTaskController extends BaseController
 {
     @Autowired
@@ -37,7 +37,7 @@ public class SysTaskController extends BaseController
     /**
      * 查询任务列表
      */
-    @PreAuthorize("@ss.hasPermi('system:task:list')")
+    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysTask sysTask)
     {
@@ -49,7 +49,7 @@ public class SysTaskController extends BaseController
     /**
      * 导出任务列表
      */
-    @PreAuthorize("@ss.hasPermi('system:task:export')")
+    @PreAuthorize("@ss.hasPermi('label:project:export')")
     @Log(title = "任务", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysTask sysTask)
@@ -62,7 +62,7 @@ public class SysTaskController extends BaseController
     /**
      * 获取任务详细信息
      */
-    @PreAuthorize("@ss.hasPermi('system:task:query')")
+    @PreAuthorize("@ss.hasPermi('label:project:query')")
     @GetMapping(value = "/{taskId}")
     public AjaxResult getInfo(@PathVariable("taskId") Long taskId)
     {
@@ -72,7 +72,7 @@ public class SysTaskController extends BaseController
     /**
      * 新增任务
      */
-    @PreAuthorize("@ss.hasPermi('system:task:add')")
+    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody SysTask sysTask)
@@ -84,7 +84,7 @@ public class SysTaskController extends BaseController
     /**
      * 修改任务
      */
-    @PreAuthorize("@ss.hasPermi('system:task:edit')")
+    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody SysTask sysTask)
@@ -96,7 +96,7 @@ public class SysTaskController extends BaseController
     /**
      * 删除任务
      */
-    @PreAuthorize("@ss.hasPermi('system:task:remove')")
+    @PreAuthorize("@ss.hasPermi('label:project:remove')")
     @Log(title = "任务", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{taskIds}")
     public AjaxResult remove(@PathVariable Long[] taskIds)

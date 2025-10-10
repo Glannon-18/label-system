@@ -43,6 +43,15 @@ public interface SysUserMapper
      * @return 用户对象信息
      */
     public SysUser selectUserByUserName(String userName);
+    
+    /**
+     * 查询可用于任务包分配的用户列表
+     * 
+     * @param userName 用户名
+     * @param nickName 昵称
+     * @return 用户对象列表（只包含用户名和昵称）
+     */
+    public List<SysUser> selectUserForPackage(@Param("userName") String userName, @Param("nickName") String nickName);
 
     /**
      * 通过用户ID查询用户

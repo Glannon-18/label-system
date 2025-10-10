@@ -116,6 +116,19 @@ public class SysUserServiceImpl implements ISysUserService
     {
         return userMapper.selectUserByUserName(userName);
     }
+    
+    /**
+     * 查询可用于任务包分配的用户列表
+     * 
+     * @param userName 用户名
+     * @param nickName 昵称
+     * @return 用户对象列表（只包含用户名和昵称）
+     */
+    @Override
+    public List<SysUser> selectUserForPackage(String userName, String nickName)
+    {
+        return userMapper.selectUserForPackage(userName, nickName);
+    }
 
     /**
      * 通过用户ID查询用户

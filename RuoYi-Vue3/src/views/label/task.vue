@@ -73,8 +73,8 @@
           <dict-tag :options="task_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
-      <el-table-column label="分配人账户名" align="center" prop="annotator" />
-      <el-table-column label="审核人员账户名" align="center" prop="auditor" />
+<!--      <el-table-column label="分配人账户名" align="center" prop="annotator" />-->
+<!--      <el-table-column label="审核人员账户名" align="center" prop="auditor" />-->
       <el-table-column label="创建者" align="center" prop="createBy" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template #default="scope">
@@ -114,12 +114,12 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="分配人账户名" prop="annotator">
-          <el-input v-model="form.annotator" placeholder="请输入分配人账户名" />
-        </el-form-item>
-        <el-form-item label="审核人员账户名" prop="auditor">
-          <el-input v-model="form.auditor" placeholder="请输入审核人员账户名" />
-        </el-form-item>
+<!--        <el-form-item label="分配人账户名" prop="annotator">-->
+<!--          <el-input v-model="form.annotator" placeholder="请输入分配人账户名" />-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="审核人员账户名" prop="auditor">-->
+<!--          <el-input v-model="form.auditor" placeholder="请输入审核人员账户名" />-->
+<!--        </el-form-item>-->
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
@@ -187,7 +187,7 @@ function getList() {
   loading.value = true
   // 设置查询条件，根据任务包ID查询任务
   if (taskPackageId) {
-    queryParams.value.taskPackageId = taskPackageId
+    queryParams.value.packageId = taskPackageId
   }
   listTask(queryParams.value).then(response => {
     taskList.value = response.rows

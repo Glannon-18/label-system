@@ -1,4 +1,4 @@
-package com.ruoyi.system.domain;
+package com.ruoyi.label.domain;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -6,44 +6,25 @@ import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 任务包对象 sys_task_package
+ * 项目对象 sys_project
  * 
  * @author ruoyi
- * @date 2025-10-02
+ * @date 2025-09-30
  */
-public class SysTaskPackage extends BaseEntity
+public class SysProject extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    /** 任务包id */
-    private Long taskPackageId;
-
-    /** 关联的项目id */
+    /** 项目ID */
     private Long projectId;
 
-    /** 任务包名 */
-    @Excel(name = "任务包名")
+    /** 项目名称 */
+    @Excel(name = "项目名称")
     private String name;
 
-    /** 任务包状态 */
-    @Excel(name = "任务包状态")
+    /** 状态（0正常 1停用） */
+    @Excel(name = "状态", readConverterExp = "0=正常,1=停用")
     private String status;
-
-    /** 分配人账户名 */
-    private String assigner;
-
-    /** 审核人账户名 */
-    private String auditor;
-
-    public void setTaskPackageId(Long taskPackageId) 
-    {
-        this.taskPackageId = taskPackageId;
-    }
-
-    public Long getTaskPackageId() 
-    {
-        return taskPackageId;
-    }
 
     public void setProjectId(Long projectId) 
     {
@@ -75,26 +56,6 @@ public class SysTaskPackage extends BaseEntity
         return status;
     }
 
-    public void setAssigner(String assigner) 
-    {
-        this.assigner = assigner;
-    }
-
-    public String getAssigner() 
-    {
-        return assigner;
-    }
-
-    public void setAuditor(String auditor) 
-    {
-        this.auditor = auditor;
-    }
-
-    public String getAuditor() 
-    {
-        return auditor;
-    }
-
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -103,12 +64,9 @@ public class SysTaskPackage extends BaseEntity
             .append("updateBy", getUpdateBy())
             .append("updateTime", getUpdateTime())
             .append("remark", getRemark())
-            .append("taskPackageId", getTaskPackageId())
             .append("projectId", getProjectId())
             .append("name", getName())
             .append("status", getStatus())
-            .append("assigner", getAssigner())
-            .append("auditor", getAuditor())
             .toString();
     }
 }

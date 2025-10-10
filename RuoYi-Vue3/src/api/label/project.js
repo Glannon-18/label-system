@@ -3,7 +3,7 @@ import request from '@/utils/request.js'
 // 查询项目列表
 export function listProject(query) {
   return request({
-    url: '/system/project/list',
+    url: '/label/project/list',
     method: 'get',
     params: query
   })
@@ -12,7 +12,7 @@ export function listProject(query) {
 // 查询项目详细
 export function getProject(projectId) {
   return request({
-    url: '/system/project/' + projectId,
+    url: '/label/project/' + projectId,
     method: 'get'
   })
 }
@@ -20,7 +20,7 @@ export function getProject(projectId) {
 // 新增项目
 export function addProject(data) {
   return request({
-    url: '/system/project',
+    url: '/label/project',
     method: 'post',
     data: data
   })
@@ -29,7 +29,7 @@ export function addProject(data) {
 // 修改项目
 export function updateProject(data) {
   return request({
-    url: '/system/project',
+    url: '/label/project',
     method: 'put',
     data: data
   })
@@ -38,7 +38,7 @@ export function updateProject(data) {
 // 删除项目
 export function delProject(projectId) {
   return request({
-    url: '/system/project/' + projectId,
+    url: '/label/project/' + projectId,
     method: 'delete'
   })
 }

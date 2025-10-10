@@ -1,7 +1,8 @@
-package com.ruoyi.system.service;
+package com.ruoyi.label.service;
+
+import com.ruoyi.label.domain.SysTaskPackage;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysTaskPackage;
 
 /**
  * 任务包Service接口
@@ -42,6 +43,14 @@ public interface ISysTaskPackageService
      * @return 结果
      */
     public int updateSysTaskPackage(SysTaskPackage sysTaskPackage);
+    
+    /**
+     * 分配任务包给用户
+     * 
+     * @param sysTaskPackage 任务包
+     * @return 结果
+     */
+    public int assignSysTaskPackageToUser(SysTaskPackage sysTaskPackage);
 
     /**
      * 批量删除任务包

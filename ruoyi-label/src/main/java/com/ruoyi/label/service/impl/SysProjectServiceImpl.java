@@ -1,12 +1,13 @@
-package com.ruoyi.system.service.impl;
+package com.ruoyi.label.service.impl;
 
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.label.domain.SysProject;
+import com.ruoyi.label.mapper.SysProjectMapper;
+import com.ruoyi.label.service.ISysProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.system.mapper.SysProjectMapper;
-import com.ruoyi.system.domain.SysProject;
-import com.ruoyi.system.service.ISysProjectService;
+
 
 /**
  * 项目Service业务层处理
@@ -15,7 +16,7 @@ import com.ruoyi.system.service.ISysProjectService;
  * @date 2025-09-30
  */
 @Service
-public class SysProjectServiceImpl implements ISysProjectService 
+public class SysProjectServiceImpl implements ISysProjectService
 {
     @Autowired
     private SysProjectMapper sysProjectMapper;

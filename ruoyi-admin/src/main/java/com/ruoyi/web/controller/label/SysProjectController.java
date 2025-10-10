@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.system;
+package com.ruoyi.web.controller.label;
 
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
@@ -16,19 +16,19 @@ import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.system.domain.SysProject;
-import com.ruoyi.system.service.ISysProjectService;
+import com.ruoyi.label.domain.SysProject;
+import com.ruoyi.label.service.ISysProjectService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 
-/**
+/*
  * 项目Controller
  * 
  * @author ruoyi
  * @date 2025-09-30
  */
 @RestController
-@RequestMapping("/system/project")
+@RequestMapping("/label/project")
 public class SysProjectController extends BaseController
 {
     @Autowired
@@ -37,7 +37,7 @@ public class SysProjectController extends BaseController
     /**
      * 查询项目列表
      */
-    @PreAuthorize("@ss.hasPermi('system:project:list')")
+    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysProject sysProject)
     {
@@ -49,7 +49,7 @@ public class SysProjectController extends BaseController
     /**
      * 导出项目列表
      */
-    @PreAuthorize("@ss.hasPermi('system:project:export')")
+    @PreAuthorize("@ss.hasPermi('label:project:export')")
     @Log(title = "项目", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysProject sysProject)
@@ -62,7 +62,7 @@ public class SysProjectController extends BaseController
     /**
      * 获取项目详细信息
      */
-    @PreAuthorize("@ss.hasPermi('system:project:query')")
+    @PreAuthorize("@ss.hasPermi('label:project:query')")
     @GetMapping(value = "/{projectId}")
     public AjaxResult getInfo(@PathVariable("projectId") Long projectId)
     {
@@ -72,7 +72,7 @@ public class SysProjectController extends BaseController
     /**
      * 新增项目
      */
-    @PreAuthorize("@ss.hasPermi('system:project:add')")
+    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "项目", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody SysProject sysProject)
@@ -84,7 +84,7 @@ public class SysProjectController extends BaseController
     /**
      * 修改项目
      */
-    @PreAuthorize("@ss.hasPermi('system:project:edit')")
+    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "项目", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody SysProject sysProject)
@@ -96,7 +96,7 @@ public class SysProjectController extends BaseController
     /**
      * 删除项目
      */
-    @PreAuthorize("@ss.hasPermi('system:project:remove')")
+    @PreAuthorize("@ss.hasPermi('label:project:remove')")
     @Log(title = "项目", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{projectIds}")
     public AjaxResult remove(@PathVariable Long[] projectIds)
