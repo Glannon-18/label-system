@@ -115,7 +115,7 @@
             icon="Edit" 
             @click="handleUpdate(scope.row)" 
             v-hasPermi="['label:project:edit']"
-            :disabled="scope.row.status === 'allocated'">
+            :disabled="scope.row.status === 'reception'">
             修改
           </el-button>
           <el-button 
@@ -124,7 +124,7 @@
             icon="Delete" 
             @click="handleDelete(scope.row)" 
             v-hasPermi="['label:project:remove']"
-            :disabled="scope.row.status === 'allocated'">
+            :disabled="scope.row.status === 'reception'">
             删除
           </el-button>
           <el-button 
@@ -132,7 +132,7 @@
             type="primary"  
             @click="showUser(scope.row)" 
             v-hasPermi="['label:project:edit']"
-            :disabled="scope.row.status === 'allocated'">
+            :disabled="scope.row.status === 'reception'">
             分配人员
           </el-button>
         </template>
@@ -406,7 +406,7 @@ function submitAssignUser() {
         const taskPackage = {
           taskPackageId: currentRow.value.taskPackageId,
           assigner: selectedUser.userName, // 使用选中用户的用户名作为分配者
-          status: "ALLOCATED" // 更新状态为已分配
+          status: "allocated" // 更新状态为已分配
         };
         
         return assignPackageToUser(taskPackage);

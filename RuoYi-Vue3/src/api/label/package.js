@@ -9,6 +9,15 @@ export function listPackage(query) {
   })
 }
 
+// 查询分配给当前用户的所有任务包列表
+export function listPackageByAssigner(query) {
+  return request({
+    url: '/label/package/assigner/list',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询任务包详细
 export function getPackage(taskPackageId) {
   return request({

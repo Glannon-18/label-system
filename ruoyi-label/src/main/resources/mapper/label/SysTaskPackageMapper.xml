@@ -16,10 +16,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="status"    column="status"    />
         <result property="assigner"    column="assigner"    />
         <result property="auditor"    column="auditor"    />
+        <result property="projectName"    column="project_name"    />
     </resultMap>
 
     <sql id="selectSysTaskPackageVo">
         select create_by, create_time, update_by, update_time, remark, task_package_id, project_id, name, status, assigner, auditor from sys_task_package
+    </sql>
+    
+    <sql id="selectSysTaskPackageVoWithProject">
+        select t.create_by, t.create_time, t.update_by, t.update_time, t.remark, t.task_package_id, t.project_id, t.name, t.status, t.assigner, t.auditor, p.name as project_name from sys_task_package t left join sys_project p on t.project_id = p.project_id
     </sql>
 
     <select id="selectSysTaskPackageList" parameterType="SysTaskPackage" resultMap="SysTaskPackageResult">
@@ -29,6 +34,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
             <if test="status != null  and status != ''"> and status = #{status}</if>
             <if test="projectId != null"> and project_id = #{projectId}</if>
+        </where>
+    </select>
+    
+    <select id="selectSysTaskPackageListByAssigner" parameterType="SysTaskPackage" resultMap="SysTaskPackageResult">
+        <include refid="selectSysTaskPackageVoWithProject"/>
+        <where>  
+            <if test="params.beginCreateTime != null and params.beginCreateTime != '' and params.endCreateTime != null and params.endCreateTime != ''"> and t.create_time between #{params.beginCreateTime} and #{params.endCreateTime}</if>
+            <if test="name != null  and name != ''"> and t.name like concat('%', #{name}, '%')</if>
+            <if test="status != null  and status != ''"> and t.status = #{status}</if>
+            <if test="assigner != null  and assigner != ''"> and t.assigner = #{assigner}</if>
         </where>
     </select>
     

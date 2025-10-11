@@ -25,4 +25,9 @@ public class TaskPackageStatus {
      * 审核不通过
      */
     public static final String NO_GO = "no-go";
+    
+    /**
+     * 已接收
+     */
+    public static final String RECEPTION = "reception";
 }

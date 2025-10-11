@@ -27,6 +27,14 @@ public interface ISysTaskPackageService
      * @return 任务包集合
      */
     public List<SysTaskPackage> selectSysTaskPackageList(SysTaskPackage sysTaskPackage);
+    
+    /**
+     * 查询分配给指定用户的所有任务包列表
+     * 
+     * @param sysTaskPackage 任务包
+     * @return 任务包集合
+     */
+    public List<SysTaskPackage> selectSysTaskPackageListByAssigner(SysTaskPackage sysTaskPackage);
 
     /**
      * 新增任务包

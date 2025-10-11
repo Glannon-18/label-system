@@ -54,6 +54,20 @@ public class SysTaskPackageController extends BaseController
     }
     
     /**
+     * 查询分配给当前用户的所有任务包列表
+     */
+    @PreAuthorize("@ss.hasPermi('label:project:list')")
+    @GetMapping("/assigner/list")
+    public TableDataInfo listByAssigner(SysTaskPackage sysTaskPackage)
+    {
+        startPage();
+        // 设置查询条件为当前登录用户
+        sysTaskPackage.setAssigner(getUsername());
+        List<SysTaskPackage> list = sysTaskPackageService.selectSysTaskPackageListByAssigner(sysTaskPackage);
+        return getDataTable(list);
+    }
+    
+    /**
      * 查询可用于任务包分配的用户列表
      */
     @PreAuthorize("@ss.hasPermi('label:project:list')")

@@ -34,6 +34,9 @@ public class SysTaskPackage extends BaseEntity
 
     /** 审核人账户名 */
     private String auditor;
+    
+    /** 项目名 */
+    private String projectName;
 
     public void setTaskPackageId(Long taskPackageId) 
     {
@@ -93,6 +96,14 @@ public class SysTaskPackage extends BaseEntity
     public String getAuditor() 
     {
         return auditor;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 
     @Override

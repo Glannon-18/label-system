@@ -43,6 +43,18 @@ public class SysTaskPackageServiceImpl implements ISysTaskPackageService
     {
         return sysTaskPackageMapper.selectSysTaskPackageList(sysTaskPackage);
     }
+    
+    /**
+     * 查询分配给指定用户的所有任务包列表
+     * 
+     * @param sysTaskPackage 任务包
+     * @return 任务包集合
+     */
+    @Override
+    public List<SysTaskPackage> selectSysTaskPackageListByAssigner(SysTaskPackage sysTaskPackage)
+    {
+        return sysTaskPackageMapper.selectSysTaskPackageListByAssigner(sysTaskPackage);
+    }
 
     /**
      * 新增任务包

@@ -159,6 +159,20 @@ export const dynamicRoutes = [
     ]
   },
   {
+    path: '/label/my-task',
+    component: Layout,
+    hidden: true,
+    permissions: ['label:project:list'],
+    children: [
+      {
+        path: 'index/:taskPackageId(\\d+)/:taskPackageName',
+        component: () => import('@/views/label/annotatorTask'),
+        name: 'my-task',
+        meta: { title: '我的任务', activeMenu: '/label/project' }
+      }
+    ]
+  },
+  {
     path: '/monitor/job-log',
     component: Layout,
     hidden: true,
