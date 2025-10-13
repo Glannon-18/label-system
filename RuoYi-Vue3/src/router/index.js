@@ -168,7 +168,7 @@ export const dynamicRoutes = [
         path: 'index/:taskPackageId(\\d+)/:taskPackageName',
         component: () => import('@/views/label/annotatorTask'),
         name: 'my-task',
-        meta: { title: '我的任务', activeMenu: '/label/project' }
+        meta: { title: '我的任务', activeMenu: '/label/annotator' }
       }
     ]
   },
