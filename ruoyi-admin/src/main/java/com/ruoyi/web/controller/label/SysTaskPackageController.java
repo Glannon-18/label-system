@@ -77,21 +77,6 @@ public class SysTaskPackageController extends BaseController
         List<SysUser> users = sysUserService.selectUserForPackage(userName, nickName);
         return AjaxResult.success(users);
     }
-    
-    /**
-     * 分配任务包给用户
-     */
-    @PreAuthorize("@ss.hasPermi('label:project:edit')")
-    @Log(title = "任务包", businessType = BusinessType.UPDATE)
-    @PostMapping("/assign")
-    public AjaxResult assignPackageToUser(@RequestBody SysTaskPackage sysTaskPackage)
-    {
-        // 设置更新者
-        sysTaskPackage.setUpdateBy(getUsername());
-        sysTaskPackage.setStatus(TaskPackageStatus.ALLOCATED);
-        // 更新任务包的分配者和状态
-        return toAjax(sysTaskPackageService.assignSysTaskPackageToUser(sysTaskPackage));
-    }
 
     /**
      * 导出任务包列表
@@ -150,5 +135,20 @@ public class SysTaskPackageController extends BaseController
     public AjaxResult remove(@PathVariable Long[] taskPackageIds)
     {
         return toAjax(sysTaskPackageService.deleteSysTaskPackageByTaskPackageIds(taskPackageIds));
+    }
+
+    /**
+     * 分配任务包给用户
+     */
+    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+    @Log(title = "任务包", businessType = BusinessType.UPDATE)
+    @PostMapping("/assign")
+    public AjaxResult assignPackageToUser(@RequestBody SysTaskPackage sysTaskPackage)
+    {
+        // 设置更新者
+        sysTaskPackage.setUpdateBy(getUsername());
+        sysTaskPackage.setStatus(TaskPackageStatus.ALLOCATED);
+        // 更新任务包的分配者和状态
+        return toAjax(sysTaskPackageService.assignSysTaskPackageToUser(sysTaskPackage));
     }
 }
