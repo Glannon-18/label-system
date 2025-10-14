@@ -39,6 +39,9 @@ public class SysTask extends BaseEntity
     /** 审核人员账户名 */
     @Excel(name = "审核人员账户名")
     private String auditor;
+    
+    /** 任务包分配人 */
+    private String packageAssigner;
 
     public void setTaskId(Long taskId) 
     {
@@ -109,6 +112,16 @@ public class SysTask extends BaseEntity
     {
         return auditor;
     }
+    
+    public String getPackageAssigner() 
+    {
+        return packageAssigner;
+    }
+
+    public void setPackageAssigner(String packageAssigner) 
+    {
+        this.packageAssigner = packageAssigner;
+    }
 
     @Override
     public String toString() {
@@ -120,6 +133,7 @@ public class SysTask extends BaseEntity
             .append("status", getStatus())
             .append("annotator", getAnnotator())
             .append("auditor", getAuditor())
+            .append("packageAssigner", getPackageAssigner())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

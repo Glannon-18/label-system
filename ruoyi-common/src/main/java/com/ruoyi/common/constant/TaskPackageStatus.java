@@ -14,17 +14,17 @@ public class TaskPackageStatus {
     /**
      * 待审核
      */
-    public static final String CHECK = "check";
-
-    /**
-     * 审核通过
-     */
-    public static final String PASS = "pass";
-
-    /**
-     * 审核不通过
-     */
-    public static final String NO_GO = "no-go";
+//    public static final String CHECK = "check";
+//
+//    /**
+//     * 审核通过
+//     */
+//    public static final String PASS = "pass";
+//
+//    /**
+//     * 审核不通过
+//     */
+//    public static final String NO_GO = "no-go";
     
     /**
      * 已接收

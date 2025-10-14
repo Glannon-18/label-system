@@ -93,4 +93,17 @@ public class SysTaskServiceImpl implements ISysTaskService
     {
         return sysTaskMapper.deleteSysTaskByTaskId(taskId);
     }
+    
+    /**
+     * 审核任务
+     * 
+     * @param sysTask 任务信息
+     * @return 结果
+     */
+    @Override
+    public int auditTask(SysTask sysTask)
+    {
+        sysTask.setUpdateTime(DateUtils.getNowDate());
+        return sysTaskMapper.updateSysTask(sysTask);
+    }
 }

@@ -103,4 +103,16 @@ public class SysTaskController extends BaseController
     {
         return toAjax(sysTaskService.deleteSysTaskByTaskIds(taskIds));
     }
+    
+    /**
+     * 审核任务
+     */
+    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+    @Log(title = "任务", businessType = BusinessType.UPDATE)
+    @PutMapping("/audit")
+    public AjaxResult audit(@RequestBody SysTask sysTask)
+    {
+        sysTask.setUpdateBy(getUsername());
+        return toAjax(sysTaskService.auditTask(sysTask));
+    }
 }
