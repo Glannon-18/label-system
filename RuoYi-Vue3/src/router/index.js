@@ -173,6 +173,20 @@ export const dynamicRoutes = [
     ]
   },
   {
+    path: '/label/annotator1',
+    component: Layout,
+    hidden: true,
+    permissions: ['label:project:list'],
+    children: [
+      {
+        path: 'index/:taskId(\\d+)',
+        component: () => import('@/views/label/labelEditor'),
+        name: 'my-annotator1',
+        meta: { title: '音频标注', activeMenu: '/label/annotator' }
+      }
+    ]
+  },
+  {
     path: '/monitor/job-log',
     component: Layout,
     hidden: true,
