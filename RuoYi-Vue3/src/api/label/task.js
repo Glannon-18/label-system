@@ -42,3 +42,12 @@ export function delTask(taskId) {
     method: 'delete'
   })
 }
+
+// 审核任务
+export function auditTask(data) {
+  return request({
+    url: '/label/task/audit',
+    method: 'put',
+    data: data
+  })
+}

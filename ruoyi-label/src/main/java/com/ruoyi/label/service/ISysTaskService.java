@@ -59,4 +59,12 @@ public interface ISysTaskService
      * @return 结果
      */
     public int deleteSysTaskByTaskId(Long taskId);
+    
+    /**
+     * 审核任务
+     * 
+     * @param sysTask 任务信息
+     * @return 结果
+     */
+    public int auditTask(SysTask sysTask);
 }

@@ -54,7 +54,7 @@ function resetQuery() {
 
 /** 接收按钮操作 */
 function handleReception(row) {
-  proxy.$modal.confirm('确认要接收任务包"' + row.name + '"吗？').then(function() {
+  proxy.$modal.confirm('确认接收任务包之后，将无法修改任务包，确认要接收任务包"' + row.name + '"吗？').then(function() {
     // 更新任务包状态为已接收
     row.status = "reception"
     return updatePackage(row)
@@ -89,7 +89,7 @@ getList()
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="任务包状态" prop="status">
+      <el-form-item label="任务包状态" prop="status" label-width="auto">
         <el-select v-model="queryParams.status" placeholder="请选择任务包状态" clearable style="width: 120px;">
           <el-option
             v-for="dict in package_status"

@@ -24,7 +24,7 @@
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="任务包状态" prop="status">
+      <el-form-item label="任务包状态" label-width="auto" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择任务包状态" clearable style="width: 120px;">
           <el-option
             v-for="dict in package_status"
@@ -401,16 +401,14 @@ function submitAssignUser() {
       // 查找选中的用户
       const selectedUser = userList.value.find(user => user.userId === assignUserForm.value.userId);
       
-      // 显示确认对话框
-      proxy.$modal.confirm("指派人员之后将无法修改任务包，你确定要指派人员吗？").then(function() {
-        const taskPackage = {
-          taskPackageId: currentRow.value.taskPackageId,
-          assigner: selectedUser.userName, // 使用选中用户的用户名作为分配者
-          status: "allocated" // 更新状态为已分配
-        };
-        
-        return assignPackageToUser(taskPackage);
-      }).then(response => {
+      // 直接执行分配，无需确认对话框
+      const taskPackage = {
+        taskPackageId: currentRow.value.taskPackageId,
+        assigner: selectedUser.userName, // 使用选中用户的用户名作为分配者
+        status: "allocated" // 更新状态为已分配
+      };
+      
+      assignPackageToUser(taskPackage).then(response => {
         proxy.$modal.msgSuccess("分配成功");
         assignUserOpen.value = false;
         getList(); // 重新加载任务包列表以显示更新后的状态
