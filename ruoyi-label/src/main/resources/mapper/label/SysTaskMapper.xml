@@ -9,6 +9,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="packageId"    column="package_id"    />
         <result property="audioFileName"    column="audio_file_name"    />
         <result property="audioFilePath"    column="audio_file_path"    />
+        <result property="textGrid"    column="text_grid"    />
         <result property="status"    column="status"    />
         <result property="annotator"    column="annotator"    />
         <result property="auditor"    column="auditor"    />
@@ -26,6 +27,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.package_id, 
             t.audio_file_name, 
             t.audio_file_path, 
+            t.text_grid, 
             t.status, 
             t.annotator, 
             t.auditor, 
@@ -92,6 +94,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="packageId != null">package_id = #{packageId},</if>
             <if test="audioFileName != null and audioFileName != ''">audio_file_name = #{audioFileName},</if>
             <if test="audioFilePath != null and audioFilePath != ''">audio_file_path = #{audioFilePath},</if>
+            <if test="textGrid != null and textGrid != ''">text_grid = #{textGrid},</if>
             <if test="status != null">status = #{status},</if>
             <if test="annotator != null">annotator = #{annotator},</if>
             <if test="auditor != null">auditor = #{auditor},</if>

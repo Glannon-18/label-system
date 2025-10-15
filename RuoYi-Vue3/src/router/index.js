@@ -182,7 +182,7 @@ export const dynamicRoutes = [
         path: 'index/:taskId(\\d+)',
         component: () => import('@/views/label/labelEditor'),
         name: 'my-annotator1',
-        meta: { title: '音频标注', activeMenu: '/label/annotator' }
+        meta: { title: '语音标注', activeMenu: '/label/annotator' }
       }
     ]
   },

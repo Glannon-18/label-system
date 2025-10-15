@@ -1,123 +1,35 @@
-<!--解决times不更新显示问题之前的备份-->
 <template>
-  <div class="app-container" ref="root">
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="24">
-        <h2> 任务包：{{ taskPackageName }} (Task ID: {{ taskId }})</h2>
-      </el-col>
-    </el-row>
+  <div class="app-container" >
+
+    <!-- <textarea id="textarea" v-model="textGridText" style="width: 100%; height: 100px; display: none;"></textarea> -->
+
+    <div style="display: flex; justify-content: space-between; ">
+      <!-- <div> 任务包：{{ taskPackageName }}</div> -->
+      <div> 音频文件：{{ task.data.audioFileName }}</div>
+      <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
+        <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
+        <el-button type="danger" plain @click="redo()">重做</el-button>
+        <el-button type="primary" plain @click="saveTask()">保存</el-button>
+        <el-button type="success" plain @click="submitTask()">提交</el-button>
+      </div>
+    </div>
     
-    <el-form v-if="flag" :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="任务状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="请选择任务状态" clearable style="width: 120px;">
-          <el-option
-            v-for="dict in task_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
-
-    <el-row v-if="flag" :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['label:project:add']"
-        >新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="Edit"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['label:project:edit']"
-        >修改</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['label:project:remove']"
-        >删除</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['label:project:export']"
-        >导出</el-button>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
-
-    <el-table v-if="flag" v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-<!--      <el-table-column label="任务ID" align="center" prop="taskId" />-->
-      <el-table-column label="音频文件名" align="center" prop="audioFileName" />
-      <el-table-column v-if="false" label="音频波形" align="center">
-        <template #default="scope">
-          <div :id="'waveform-' + scope.row.taskId" class="waveform-container" style="width: 100%; height: 60px;"></div>
-        </template>
-      </el-table-column>
-      <el-table-column label="任务状态" align="center" prop="status">
-        <template #default="scope">
-          <dict-tag :options="task_status" :value="scope.row.status"/>
-        </template>
-      </el-table-column>
-<!--      <el-table-column label="分配人账户名" align="center" prop="annotator" />-->
-<!--      <el-table-column label="审核人员账户名" align="center" prop="auditor" />-->
-      <el-table-column label="创建者" align="center" prop="createBy" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-        <template #default="scope">
-          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="备注" align="center" prop="remark" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['label:project:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['label:project:remove']">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    
-    <pagination  v-if="flag"
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
-
-
     <!-- 语音标注demo -->
-    <div id="waveform-demo" class="waveform-container" style="width: 100%; height: 100px; margin-top: 0px;"></div>
+    <div id="waveform-demo" class="waveform-container" style="width: 100%; height: 100px; margin-top: 10px;"></div>
     
+    
+
     <div style="margin-top: 40px; display: flex; justify-content: center; align-items: center;font-size: 14px;">
-      <el-button id="backward">|◁上一段</el-button>
-      <el-button id="play">▶播放/‖暂停</el-button>
-      <el-button id="forward">下一段▷|</el-button>
+      <!-- <el-button type="primary" @click="scrollToRow(20)">滚动到第21行</el-button> -->
+      <!-- {{ formatSecondsToMMSSS(currentTime)  }} / {{ formatSecondsToMMSSS(duration)}}  -->
+      <el-button type="info" plain id="backward">上一段</el-button>
+      <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
+      <el-button type="info" plain id="forward">下一段</el-button>
       <view style="margin-left: 12px;display: flex;align-items: center;">
-        音量<el-slider v-model="volume" style="width: 100px"/>
+        音量大小 <el-slider v-model="volume" style="width: 100px;margin-left: 3px;"/>
       </view>
       <view style="margin-left: 12px;display: flex;align-items: center;">
-        倍速<el-select v-model="playbackRate" size="small" style="width: 100px" >
+        播放速度 <el-select v-model="playbackRate" size="small" style="width: 70px;margin-left: 3px;" >
           <el-option
             v-for="item in playbackRateList"
             :key="item.value"
@@ -129,52 +41,38 @@
       <!-- <view style="margin-left: 12px;display: flex;align-items: center;">
         循环播放<el-switch v-model="loopPlay" />
       </view> -->
-      
     </div>
 
+    <!--分段标注列表-->
     <div style="margin-top: 20px; display: flex;">
-      <!--分段列表-->
-      <!-- <table border="1">
-        <thead>
-          <tr>
-            <th>分段序号</th>
-            <th>开始时间</th>
-            <th>结束时间</th>
-            <th>标注内容</th>
-          </tr>          
-        </thead>
-        <tbody>
-          <tr v-for="(ts, index) in times">
-            <td>{{ index + 1}}</td>
-            <td>{{ formatSecondsToMMSSS(ts.start) }}</td>
-            <td>{{ formatSecondsToMMSSS(ts.end) }}</td>
-            <td>{{ ts.text }}</td>
-          </tr>
-        </tbody>
-      </table> -->
-
-      <el-table :data="times" :highlight-current-row="false" style="width: 100%" :row-class-name="tableRowClassName" @row-click="rowClick" > 
+      <el-table ref="tableRef" :data="times" :highlight-current-row="false" style="width: 100%;height: 500px;" 
+        :row-class-name="tableRowClassName" @row-click="rowClick" @scrolltop="scrollToTop"> 
           <el-table-column label="分段序号" width="100"> 
             <template #default="scope"> 
               {{ scope.$index + 1 }}
             </template>
           </el-table-column>
-          <el-table-column label="开始时间" width="200"> 
+          <el-table-column label="开始时间" width="100"> 
             <template #default="scope"> 
               {{ scope.row.start }}
             </template>
           </el-table-column>
-          <el-table-column label="结束时间" width="200"> 
+          <el-table-column label="结束时间" width="100"> 
             <template #default="scope"> 
               {{ scope.row.end }}
             </template>
           </el-table-column>
-          <el-table-column label="标注内容" > 
+          <el-table-column label="时长(秒)" width="100"> 
             <template #default="scope"> 
-              <el-input type="textarea" v-model="scope.row.text" placeholder="请输入标注文本内容" style="width:100%;" />
+              {{ (scope.row.end - scope.row.start).toFixed(3) }}
             </template>
           </el-table-column>
-          <el-table-column label="文本长度" width="200"> 
+          <el-table-column label="标注内容文本" > 
+            <template #default="scope"> 
+              <el-input type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容文本" style="width:100%;" />
+            </template>
+          </el-table-column>
+          <el-table-column label="文本字符数" width="200"> 
             <template #default="scope"> 
               {{ scope.row.text.length }}
             </template>
@@ -183,50 +81,14 @@
 
     </div>
 
-
-
-    <!-- 添加或修改任务对话框 -->
-    <el-dialog :title="title" v-model="open" width="700px" append-to-body>
-      <el-form ref="taskRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="音频文件名" prop="audioFileName">
-          <file-upload v-model="form.audioFileName" :file-size="20" :limit="1"/>
-        </el-form-item>
-        <el-form-item label="音频波形">
-          <div id="waveform-detail" class="waveform-container" v-if="form.audioFileName" style="width: 100%; height: 100px;"></div>
-          <div v-else>请先上传音频文件</div>
-        </el-form-item>
-        <el-form-item label="任务状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择任务状态">
-            <el-option
-              v-for="dict in task_status"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
-        </el-form-item>
-<!--        <el-form-item label="分配人账户名" prop="annotator">-->
-<!--          <el-input v-model="form.annotator" placeholder="请输入分配人账户名" />-->
-<!--        </el-form-item>-->
-<!--        <el-form-item label="审核人员账户名" prop="auditor">-->
-<!--          <el-input v-model="form.auditor" placeholder="请输入审核人员账户名" />-->
-<!--        </el-form-item>-->
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
-        </div>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
-<script setup name="Task">
-import { listTask, getTask, delTask, addTask, updateTask } from "@/api/label/task"
+<script setup name="labelEditor">
+//=========================引入模块=========================
+import { getPackage } from "@/api/label/package"
+import { listTask, getTask, updateTask } from "@/api/label/task"
+
 import WaveSurfer from "wavesurfer.js"
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
 import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js'
@@ -234,57 +96,10 @@ import ZoomPlugin from 'wavesurfer.js/dist/plugins/zoom.esm.js'
 import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
 import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
 
-const { proxy } = getCurrentInstance()
-const { task_status } = proxy.useDict('task_status')
-const route = useRoute()
 
-const taskList = ref([])
-const open = ref(false)
-const loading = ref(true)
-const showSearch = ref(true)
-const ids = ref([])
-const single = ref(true)
-const multiple = ref(true)
-const total = ref(0)
-const title = ref("")
-const flag = ref(false)
-let volume = ref(50)
-let playbackRateList = ref([
-  { label: '2.0x', value: 2.0 },
-  { label: '1.5x', value: 1.5 },
-  { label: '1.25x', value: 1.25 },
-  { label: '1.0x', value: 1.0 },
-  { label: '0.75x', value: 0.75 },
-  { label: '0.5x', value: 0.5 },
-  { label: '0.25x', value: 0.25 },
-  
-])
-let playbackRate = ref({ label: '1.0x', value: 1.0 })
-let loopPlay = ref(false)
 
-watch(volume,(newVal, oldVal)=>{
-  ws.setVolume(newVal/100)
-})
-watch(playbackRate,(newVal, oldVal)=>{
-  console.log('playbackRate-->', newVal)
-  ws.setPlaybackRate(newVal, true)
-})
 
-let ws = null;
-// 当前激活的颜色
-let activeColor = 'rgba(255, 255, 0, 0.3)';
-// 当前激活的区域
-let activeRegion = reactive({start: 0, end: 0, text:''})
-// 音频总时长
-let duration = ref(0)
-// 音频标注分段列表
-let times = reactive([
-  {start: 0, end: 5, text: '111'},
-  {start: 5, end: 10, text: '222'},
-  {start: 10, end: 15, text: '333'},
-  {start: 15, end: 20, text: '444'},
-  {start: 20, end: duration, text: '555'},
-])
+//=========================定义函数=========================
 
 // 定义行类名函数
 const tableRowClassName = ({ row, rowIndex }) => {
@@ -292,14 +107,9 @@ const tableRowClassName = ({ row, rowIndex }) => {
   if (row.start === activeRegion.start && row.end===activeRegion.end) {
     return 'highlight-row'
   }
-  // 可以添加更多条件
-  // if (row.text === '222') {
-  //   return 'special-row'
-  // }
   return ''
 }
 
-const root = ref(null);
 
 const handleSpace = (event) => {
   if (event.key === ' ') { // 确保是空格键被按下
@@ -308,84 +118,18 @@ const handleSpace = (event) => {
   }
 };
 
-onMounted(() => {
-  if (root.value) {
-    
-  }
-});
 
 
-// Wavesurfer实例
-const wavesurferInstances = ref({})
-
-
-
-
-
-// 获取路由参数
-const taskPackageId = route.params.taskPackageId
-const taskPackageName = route.params.taskPackageName
-const taskId = route.params.taskId  // 从路由中获取taskId
-
-const data = reactive({
-  form: {},
-  queryParams: {
-    pageNum: 1,
-    pageSize: 10,
-    audioFileName: null,
-    status: null,
-    annotator: null,
-    auditor: null,
-    createBy: null,
-    taskPackageId: taskPackageId  // 添加任务包ID作为查询条件
-  },
-  rules: {
-    packageId: [
-      { required: true, message: "所属包的ID不能为空", trigger: "blur" }
-    ],
-    audioFileName: [
-      { required: true, message: "音频文件名不能为空", trigger: "blur" }
-    ],
-    audioFilePath: [
-      { required: true, message: "音频文件在服务器的路径不能为空", trigger: "blur" }
-    ],
-  }
-})
-
-const { queryParams, form, rules } = toRefs(data)
-
-/** 查询任务列表 */
-function getList() {
-  loading.value = true
-  // 设置查询条件，根据任务包ID查询任务
-  if (taskPackageId) {
-    queryParams.value.packageId = taskPackageId
-  }
-  listTask(queryParams.value).then(response => {
-    taskList.value = response.rows
-    total.value = response.total
-    loading.value = false
-    
-    // 等待DOM更新后渲染波形
-    nextTick(() => {
-      renderWaveforms()      
-      // renderDemoWaveform()
-    })
-  })
-}
 
 // 获取音频文件URL（需要根据实际路径结构调整）
 function getAudioUrl(audioFileName) {
-  console.log("getAudioUrl-->", audioFileName)
-  // 使用完整的API路径访问音频文件
-  // 根据错误信息中的URL，需要添加/dev-api前缀
+  // 使用完整的API路径访问音频文件，例如：`/dev-api/profile/upload/${audioFileName}`
   if (audioFileName.startsWith('/profile/upload/')) {
     return `/dev-api${audioFileName}`;
   } else {
     return `/dev-api/profile/upload/${audioFileName}`;
   }
 }
-
 
 // 添加一个错误处理函数来更好地调试波形加载问题
 function handleWaveSurferError(taskId, error) {
@@ -474,60 +218,9 @@ function renderDetailWaveform(audioFileName) {
 }
 
 
-// 取消按钮
-function cancel() {
-  open.value = false
-  reset()
-}
-
-// 表单重置
-function reset() {
-  form.value = {
-    taskId: null,
-    packageId: null,
-    audioFileName: null,
-    audioFilePath: null,
-    status: null,
-    annotator: null,
-    auditor: null,
-    createBy: null,
-    createTime: null,
-    updateBy: null,
-    updateTime: null,
-    remark: null
-  }
-  proxy.resetForm("taskRef")
-}
-
-/** 搜索按钮操作 */
-function handleQuery() {
-  queryParams.value.pageNum = 1
-  getList()
-}
-
-/** 重置按钮操作 */
-function resetQuery() {
-  proxy.resetForm("queryRef")
-  handleQuery()
-}
-
-// 多选框选中数据
-function handleSelectionChange(selection) {
-  ids.value = selection.map(item => item.taskId)
-  single.value = selection.length != 1
-  multiple.value = !selection.length
-}
-
-/** 新增按钮操作 */
-function handleAdd() {
-  reset()
-  open.value = true
-  title.value = "添加任务"
-}
 
 /** 修改按钮操作 */
 function handleUpdate(row) {
-  reset()
   const _taskId = row.taskId || ids.value
   getTask(_taskId).then(response => {
     form.value = response.data
@@ -543,36 +236,62 @@ function handleUpdate(row) {
   })
 }
 
-/** 提交按钮 */
-function submitForm() {
-  proxy.$refs["taskRef"].validate(valid => {
-    if (valid) {
-      if (form.value.taskId != null) {
-        updateTask(form.value).then(response => {
-          proxy.$modal.msgSuccess("修改成功")
-          open.value = false
-          getList()
-        })
-      } else {
-        addTask({...form.value, packageId: taskPackageId}).then(response => {
-          proxy.$modal.msgSuccess("新增成功")
-          open.value = false
-          getList()
-        })
-      }
+//重做标注
+function redo(){
+  //刷新页面
+  proxy.$router.go(0)
+}
+
+/** 保存任务  */
+function saveTask() {
+  //将最新的times转为intervals
+  let intervals = times.map((ts,i)=>{
+    return {
+      index: (i+1),
+      xmin: ts.start,
+      xmax: ts.end,
+      text: ts.text,
     }
+  })
+  // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
+  task.textGridJson.intervals = intervals
+  task.textGridJson.tiers[0].intervals = intervals
+  //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
+  let textGrid = convertJsonToTextGrid(task.textGridJson)
+  task.data.textGrid = textGrid
+  //将任务状态改为“标注中”
+  task.data.status = 'underway'
+  //提交task.data修改
+  updateTask(task.data).then(response => {
+    proxy.$modal.msgSuccess("保存成功")
   })
 }
 
-/** 删除按钮操作 */
-function handleDelete(row) {
-  const _taskIds = row.taskId || ids.value
-  proxy.$modal.confirm('是否确认删除任务编号为"' + _taskIds + '"的数据项？').then(function() {
-    return delTask(_taskIds)
-  }).then(() => {
-    getList()
-    proxy.$modal.msgSuccess("删除成功")
-  }).catch(() => {})
+/** 提交任务 */
+function submitTask() {
+  proxy.$modal.confirm('是否确认已完成标注并提交审核？').then(function () {
+    //将最新的times转为intervals
+    let intervals = times.map((ts,i)=>{
+      return {
+        index: (i+1),
+        xmin: ts.start,
+        xmax: ts.end,
+        text: ts.text,
+      }
+    })
+    // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
+    task.textGridJson.intervals = intervals
+    task.textGridJson.tiers[0].intervals = intervals
+    //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
+    let textGrid = convertJsonToTextGrid(task.textGridJson)
+    task.data.textGrid = textGrid
+    //将任务状态改为“待审核”
+    task.data.status = 'pending_review'
+    //提交task.data修改
+    updateTask(task.data).then(response => {
+      proxy.$modal.msgSuccess("保存成功")
+    })
+  })
 }
 
 /** 导出按钮操作 */
@@ -589,9 +308,6 @@ onUnmounted(() => {
       instance.destroy()
     }
   })
-  if (root.value) {
-    root.value.removeEventListener('keyup', handleSpace);
-  }
 })
 
 //添加分段
@@ -809,12 +525,40 @@ function adjustSegment(times, oldSegment, newSegment) {
 }
 
 // 渲染demo波形
-function renderDemoWaveform(
-  audioFileName = '/profile/upload/2025/10/11/Khmer_JLP_250904_12_0001_20251011102407A001.wav') 
-{
-  console.log('renderDemoWaveform()--->')
+async function init(){
+  console.log('init()--->')
   const container = document.getElementById('waveform-demo')
-  if (container) {        
+  if (container) {  // 判断waveform容器是否存在
+    
+  // 获取任务详情信息
+  let res = await getTask(taskId);
+  console.log('任务详情：', res)
+  task.data = res.data;
+
+  // ----将预标注文本转为json---
+  // 解析TextGrid
+  task.textGridJson = parseTextGridToJson(task.data.textGrid)
+  // console.log('task.textGridJson-->',JSON.stringify(task.textGridJson))
+
+  // 生成时间序列数据
+  let realtimes = task.textGridJson.intervals.map(e => {
+    return {
+      start: e.xmin,
+      end: e.xmax,
+      text: e.text
+    }
+  })
+
+  //赋值区域
+  times.splice(0, times.length);
+  times.push(...realtimes);
+
+
+    
+
+    // 等待DOM更新
+    // await nextTick()
+
     // 创建wavesurfer实例
     ws = WaveSurfer.create({
       container: '#waveform-demo',
@@ -825,7 +569,7 @@ function renderDemoWaveform(
       responsive: true,
       hideScrollbar: false,
       interact: true, // 可交互
-      url:'/dev-api/profile/upload/2025/10/11/Khmer_JLP_250904_12_0001_20251011102407A001.wav',
+      minPxPerSec: 45,
       plugins: [
         regions,
         timeline,
@@ -841,12 +585,18 @@ function renderDemoWaveform(
     })
 
     // 加载音频文件    
-    // const audioUrl = getAudioUrl(audioFileName)
-    // const audioUrl = getAudioUrl('/profile/upload/2025/10/11/Khmer_JLP_250904_12_0001_20251011102407A001.wav')
-    // ws.load(audioUrl)
+    ws.load( getAudioUrl(task.data.audioFileName) )
+
+    ws.on('play', () => {
+      console.log('ws.currentTime-->', ws.getCurrentTime())
+      currentTime.value = ws.getCurrentTime()
+    })
+
+    ws.on('zoom', (minPxPerSec) => {
+      console.log('zoom---->minPxPerSec', minPxPerSec)
+    })
 
     ws.on('decode', () => { 
-      root.value.addEventListener('keyup', handleSpace);
 
       //获得音频总时长
       duration = ws.decodedData.duration
@@ -883,7 +633,7 @@ function renderDemoWaveform(
     })
     //创建新区域事件
     regions.on('region-created', (region) => {
-      console.log('新增区域：', region)
+      // console.log('新增区域：', region)
       region.drag = false;//禁止拖拽新区域
 
       if(!(region.start && region.end && region.start!==region.end)) return //无效区域
@@ -918,7 +668,8 @@ function renderDemoWaveform(
 
       //====添加新区域到时间序列数组中===
       console.log(`添加前：`,times);
-      let newtimes = addSegment(times, {start:region.start, end:region.end})
+      let newSeg = {start:region.start.toFixed(3), end:region.end.toFixed(3)}
+      let newtimes = addSegment(times, newSeg)
       times.splice(0, times.length);
       times.push(...newtimes);
       console.log(`添加后：`,times);
@@ -945,12 +696,18 @@ function renderDemoWaveform(
       })
 
       //将手动新增区域视为当前激活区域（记录边界值）
-      activeRegion.start = region.start
-      activeRegion.end = region.end
+      activeRegion.start = newSeg.start
+      activeRegion.end = newSeg.end
 
-      const index = times.findIndex(seg => seg.start === region.start && seg.end === region.end);
+      //移除并激活新分段
+      //region.play()
+      region.remove()
+      activateRegion(newSeg)
+
+      const index = times.findIndex(seg => seg.start === newSeg.start && seg.end === newSeg.end);
       console.log('++++当前激活的分段：', JSON.stringify(times[index]));
-      region.play()
+
+      
       
 
       // //删除当前区域
@@ -987,14 +744,14 @@ function renderDemoWaveform(
       console.log('regions.region-updated');
 
       //调整region的start和end精度保留2位小数
-      // region.start = Math.round(region.start * 100) / 100
-      // region.end = Math.round(region.end * 100) / 100
+      let start = region.start.toFixed(3)
+      let end = region.end.toFixed(3)
 
       console.log(`识别到调整区域：(${activeRegion.start},${activeRegion.end})-->(${region.start},${region.end})`)
       
       console.log('调整前：', JSON.stringify(times))
       let oldReg = {start:activeRegion.start, end:activeRegion.end}
-      let newReg = {start:region.start, end:region.end}
+      let newReg = {start:start, end:end}
       let newtimes  = adjustSegment(times, oldReg, newReg)
       times.splice(0, times.length)
       times.push(...newtimes)
@@ -1019,12 +776,16 @@ function renderDemoWaveform(
       })
 
       //将手动新增区域视为当前激活区域（记录边界值）
-      activeRegion.start = region.start
-      activeRegion.end = region.end
+      activeRegion.start = start
+      activeRegion.end = end
 
       
-      const index = times.findIndex(seg => seg.start === region.start && seg.end === region.end);
+      const index = times.findIndex(seg => seg.start === start && seg.end === end);
       console.log('>>>>当前激活的分段：', JSON.stringify(times[index]));
+      //移除分段
+      region.remove()
+      //激活新分段
+      activateRegion(newReg)
 
     })
 
@@ -1072,6 +833,8 @@ function renderDemoWaveform(
         if(clickTime>=ts.start && clickTime<=ts.end){//点击位置在此区间
           //激活分段
           activateRegion(ts)
+          //滚动到标注行
+          scrollToRow(index)
         }
       });
 
@@ -1101,12 +864,22 @@ function renderDemoWaveform(
 
     if (playButton) {
       playButton.onclick = () => {
-        if(!ws.isPlaying() && activeRegion.start!=activeRegion.end &&ws.currentTime>=activeRegion.end){
-          ws.skip(activeRegion.start)
-          ws.play()
-        }else{
+
+        if(ws.isPlaying()){
           ws.pause()
+        }else{
+          ws.play()
         }
+        
+
+        //如果当前不在播放，并且
+        // if(!ws.isPlaying() && activeRegion.start!=activeRegion.end &&ws.currentTime>=activeRegion.end){
+        //   ws.skip(activeRegion.start)
+        //   ws.play()
+        // }else{
+        //   ws.pause()
+        // }
+
       }
     }
 
@@ -1166,7 +939,7 @@ function activateRegion(ts){
   });
 
   //2.创建当前点击区域
-  const region = regions.addRegion({
+  let region = regions.addRegion({
     start: ts.start,
     end: ts.end, // 现在设置了有效的结束时间
     color: activeColor,
@@ -1199,6 +972,7 @@ function activateRegion(ts){
   return region
 }
 
+// 格式化秒数
 function formatSecondsToMMSSS(seconds) {
     // 创建一个新的Date对象，这里乘以1000是因为Date构造函数接收的是毫秒
     let date = new Date(seconds * 1000);
@@ -1217,45 +991,340 @@ function formatSecondsToMMSSS(seconds) {
     return `${minutes}:${secondsInMinute}:${milliseconds}`;
 }
 
+// 点击表格的行
 function rowClick(row, column, event){
   console.log('表格的行被点击了--->', row, column, event)
   //通过row.start和row.end查找到对应分段
   // 类似分段的click事件函数：
   // 1.激活分段区域（含高亮显示）
   let region = activateRegion(row)
-  // 2.跳转分段起点
-  ws.skip(region.start)
-  // 3.播放分段音频
-  region.play()
+  // // 2.跳转分段起点
+  // ws.skip(region.start)
+  // // 3.播放分段音频
+  // region.play()
 }
 
-// 示例使用
-// console.log(formatSecondsToMMSSS(61.123)); // 输出: "01:01:123"
+
+/**
+ * 将TextGrid文本转换为JSON对象
+ * @param {string} textGridText - TextGrid格式的文本
+ * @returns {Object} JSON对象
+ */
+function parseTextGridToJson(textGridText) {
+    const lines = textGridText.split('\n').filter(line => line.trim() !== '');
+    const result = {
+        fileType: '',
+        objectClass: '',
+        xmin: 0,
+        xmax: 0,
+        tiers: [],
+        intervals: []
+    };
+
+    let currentTier = null;
+    let currentInterval = null;
+    let inIntervals = false;
+    let intervalIndex = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line.startsWith('File type =')) {
+            result.fileType = line.split('=')[1].trim().replace(/"/g, '');
+        } else if (line.startsWith('Object class =')) {
+            result.objectClass = line.split('=')[1].trim().replace(/"/g, '');
+        } else if (line.startsWith('xmin =')) {
+            const value = parseFloat(line.split('=')[1].trim());
+            if (!inIntervals) {
+                result.xmin = value;
+            } else if (currentInterval) {
+                currentInterval.xmin = value;
+            } else if (currentTier) {
+                currentTier.xmin = value;
+            }
+        } else if (line.startsWith('xmax =')) {
+            const value = parseFloat(line.split('=')[1].trim());
+            if (!inIntervals) {
+                result.xmax = value;
+            } else if (currentInterval) {
+                currentInterval.xmax = value;
+            } else if (currentTier) {
+                currentTier.xmax = value;
+            }
+        } else if (line.startsWith('size =')) {
+            // 处理tier数量
+        } else if (line.startsWith('item [')) {
+            // 开始新的tier
+            currentTier = {
+                class: '',
+                name: '',
+                xmin: 0,
+                xmax: 0,
+                intervals: []
+            };
+            result.tiers.push(currentTier);
+        } else if (line.startsWith('class =')) {
+            if (currentTier) {
+                currentTier.class = line.split('=')[1].trim().replace(/"/g, '');
+            }
+        } else if (line.startsWith('name =')) {
+            if (currentTier) {
+                currentTier.name = line.split('=')[1].trim().replace(/"/g, '');
+            }
+        } else if (line.startsWith('intervals: size =')) {
+            inIntervals = true;
+            intervalIndex = 0;
+        } else if (line.startsWith('intervals [')) {
+            // 开始新的interval
+            currentInterval = {
+                index: ++intervalIndex,
+                xmin: 0,
+                xmax: 0,
+                text: ''
+            };
+            if (currentTier) {
+                currentTier.intervals.push(currentInterval);
+            }
+            result.intervals.push(currentInterval);
+        } else if (line.startsWith('text =')) {
+            if (currentInterval) {
+                // 提取引号内的文本内容
+                const match = line.match(/text = "([^"]*)"/);
+                if (match) {
+                    currentInterval.text = match[1];
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+/**
+ * 将JSON对象转换回TextGrid文本格式
+ * @param {Object} jsonData - 包含TextGrid数据的JSON对象
+ * @returns {string} TextGrid格式的文本
+ */
+function convertJsonToTextGrid(jsonData) {
+    let textGridText = '';
+    
+    // 头部信息
+    textGridText += `File type = "ooTextFile"\n`;
+    textGridText += `Object class = "TextGrid"\n\n`;
+    textGridText += `xmin = ${jsonData.xmin}\n`;
+    textGridText += `xmax = ${jsonData.xmax}\n`;
+    textGridText += `tiers? <exists>\n`;
+    textGridText += `size = ${jsonData.tiers.length}\n`;
+    textGridText += `item []:\n`;
+    
+    // 处理每个tier
+    jsonData.tiers.forEach((tier, tierIndex) => {
+        textGridText += `    item[${tierIndex + 1}]:\n`;
+        textGridText += `        class = "${tier.class}"\n`;
+        textGridText += `        name = "${tier.name}"\n`;
+        textGridText += `        xmin = ${tier.xmin}\n`;
+        textGridText += `        xmax = ${tier.xmax}\n`;
+        textGridText += `        intervals: size = ${tier.intervals.length}\n`;
+        
+        // 处理每个interval
+        tier.intervals.forEach((interval, intervalIndex) => {
+            textGridText += `        intervals [${intervalIndex + 1}]\n`;
+            textGridText += `            xmin = ${interval.xmin}\n`;
+            textGridText += `            xmax = ${interval.xmax}\n`;
+            textGridText += `            text = "${interval.text}"\n`;
+        });
+    });
+    
+    return textGridText;
+}
+
+
+
+
+//=========================定义变量=========================
+
+const { proxy } = getCurrentInstance()
+const { task_status } = proxy.useDict('task_status')
+const route = useRoute()
+
+const taskList = ref([])
+const open = ref(false)
+const loading = ref(true)
+const showSearch = ref(true)
+const ids = ref([])
+const single = ref(true)
+const multiple = ref(true)
+const total = ref(0)
+const title = ref("")
+
+
+//播放音量
+let volume = ref(50)
+watch(volume,(newVal, oldVal)=>{//监听音量值改变
+  ws.setVolume(newVal/100)
+})
+
+//播放速度
+let playbackRateList = ref([
+  { label: '2.0x', value: 2.0 },
+  { label: '1.5x', value: 1.5 },
+  { label: '1.25x', value: 1.25 },
+  { label: '1.0x', value: 1.0 },
+  { label: '0.75x', value: 0.75 },
+  { label: '0.5x', value: 0.5 },
+  { label: '0.25x', value: 0.25 },
+  
+])
+let playbackRate = ref({ label: '1.0x', value: 1.0 })
+watch(playbackRate,(newVal, oldVal)=>{//监听播放倍速值变化
+  ws.setPlaybackRate(newVal, true)
+})
+
+
+
+
+// Wavesurfer实例
+const wavesurferInstances = ref({})
+// 获取路由参数
+let taskPackageId = route.params.taskPackageId //任务包ID
+let taskPackageName = route.params.taskPackageName //任务包名称
+let taskId = route.params.taskId  // 从路由中获取taskId
+//任务数据
+let task = reactive({
+  data:{ //任务信息
+    taskId: taskId,
+    audioFileName: '',
+    packageId: taskPackageId,
+    textGrid: '',//TG文本
+  },  
+  textGridJson: {},//TG文本转的JSON（用于显示、重置、提交等）
+})
+
+
+// 音频播放控件
+let ws = null;
+// 激活区域颜色
+let activeColor = 'rgba(255, 255, 0, 0.3)';
+// 当前激活的区域
+let activeRegion = reactive({start: 0, end: 0})
+// 音频总时长
+let duration = ref(0)
+// 当前播放时间点
+let currentTime = ref(0)
+// 音频标注分段列表
+let times = reactive([
+  // {start: 0, end: 5, text: '111'},
+  // {start: 5, end: 10, text: '222'},
+  // {start: 10, end: 15, text: '333'},
+  // {start: 15, end: 20, text: '444'},
+  // {start: 20, end: 25, text: '555'},
+  // {start: 25, end: 30, text: '666'},
+  // {start: 30, end: 35, text: '777'},
+  // {start: 35, end: 40, text: '888'},
+  // {start: 40, end: 45, text: '999'},
+  // {start: 45, end: 50, text: '1010'},
+  // {start: 50, end: 55, text: '1111'},
+])
+//表格
+const tableRef = ref()
+
+const scrollToRow = (rowIndex) => {
+  if (!tableRef.value) return
+
+  console.log('scrollToRow-->', rowIndex, tableRef)
+  
+  // 设置高亮
+  // tableRef.value.setCurrentRow(times[rowIndex])
+  
+  // 滚动到指定行
+  nextTick(() => {
+    setTimeout(()=>{
+      tableRef.value.scrollTo({ 
+        row: rowIndex, 
+        position: 'top' 
+      })
+    }, 100)    
+  })
+}
+
+
 
 // 初始化区域插件
 let regions = RegionsPlugin.create()
-
+// 初始化时间轴插件
 const timeline = TimelinePlugin.create()
+// 初始化hover插件
 const hover = Hover.create({
-      formatTimeCallback: (time) => {
-        return `${time.toFixed(3)}s`
-      },
-      lineColor: '#ff0000',
-      lineWidth: 1,
-      labelBackground: '#555',
-      labelColor: '#fff',
-      labelSize: '11px',
-      labelPreferLeft: false,
-    })
+  formatTimeCallback: (time) => {
+    return `${time.toFixed(3)}s`
+  },
+  lineColor: '#ff0000',
+  lineWidth: 1,
+  labelBackground: '#555',
+  labelColor: '#fff',
+  labelSize: '11px',
+  labelPreferLeft: false,
+})
 
+
+
+//=========================初始执行代码=========================
+
+//已初始化就可以去读取task数据，然后tg文本转换为json，显示分段标注列表
+//波形图要等nextTick执行DOM更新后，才能创建wavesurfer实例
+//ws实例创建完成后，加载显示波形图
 
 // 等待DOM更新后渲染波形
 nextTick(() => {
-  renderDemoWaveform()
+  init()
 })
 
-getList()
+let textGridText = ref('');
+
+watch(textGridText, (newValue, oldValue) => {
+
+  // 解析TextGrid
+  let jsonData = parseTextGridToJson(newValue)
+  // console.log('jsonData-->',JSON.stringify(jsonData))
+
+  // 生成区域数据
+  let realtimes = jsonData.intervals.map(e => {
+    return {
+      start: e.xmin,
+      end: e.xmax,
+      text: e.text
+    }
+  })
+
+  //重新赋值区域
+  times.splice(0, times.length);
+  times.push(...realtimes);
+
+  //清除区域
+  ws.getRegions.forEach(region => {
+    region.remove()
+  });
+
+  //添加零长区域
+  times.forEach(e => {
+    ws.addRegion({
+      start: e.start,
+      end: e.end,
+      content: e.text,
+      color: 'rgba(0, 0, 0, 0.1)'
+    })
+  })
+
+  // console.log('times-->',JSON.stringify(times))
+
+})
+
+
+
+
 </script>
+
+
 
 <style scoped>
 .waveform-container {
@@ -1268,6 +1337,9 @@ getList()
   background-color: rgba(255, 225, 0, 0.3) !important;
   /*color: #409EFF;*/
   font-weight: bold;
+  .cell .el-textarea__inner{
+    font-size: 18px;
+  }
 }
 
 :deep(.el-table .special-row) {
