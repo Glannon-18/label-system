@@ -69,3 +69,15 @@ export function assignPackageToUser(data) {
     data: data
   })
 }
+
+// 上传任务包
+export function uploadPackage(data) {
+  return request({
+    url: '/label/package/upload',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

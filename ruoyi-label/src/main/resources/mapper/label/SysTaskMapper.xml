@@ -18,6 +18,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateTime"    column="update_time"    />
         <result property="remark"    column="remark"    />
         <result property="packageAssigner" column="package_assigner" />
+        <result property="textGrid" column="text_grid" />
     </resultMap>
 
     <sql id="selectSysTaskVo">
@@ -34,6 +35,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.update_by, 
             t.update_time, 
             t.remark,
+            t.text_grid,
             p.assigner as package_assigner
         from sys_task t
         left join sys_task_package p on t.package_id = p.task_package_id
@@ -70,6 +72,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null">update_by,</if>
             <if test="updateTime != null">update_time,</if>
             <if test="remark != null">remark,</if>
+            <if test="textGrid != null">text_grid,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="packageId != null">#{packageId},</if>
@@ -83,6 +86,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null">#{updateBy},</if>
             <if test="updateTime != null">#{updateTime},</if>
             <if test="remark != null">#{remark},</if>
+            <if test="textGrid != null">#{textGrid},</if>
          </trim>
     </insert>
 
@@ -100,6 +104,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
             <if test="remark != null">remark = #{remark},</if>
+            <if test="textGrid != null">text_grid = #{textGrid},</if>
         </trim>
         where task_id = #{taskId}
     </update>

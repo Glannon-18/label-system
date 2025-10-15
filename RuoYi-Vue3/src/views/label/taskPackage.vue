@@ -50,6 +50,7 @@
           v-hasPermi="['label:project:add']"
         >新增</el-button>
       </el-col>
+
       <el-col :span="1.5">
         <el-button
           type="success"
@@ -78,6 +79,15 @@
           @click="handleExport"
           v-hasPermi="['label:project:export']"
         >导出</el-button>
+      </el-col>
+      <el-col :span="1.5">
+        <el-button
+            type="success"
+            plain
+            icon="Upload"
+            @click="handleUpload"
+            v-hasPermi="['label:project:add']"
+        >上传任务包</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
@@ -189,11 +199,40 @@
         </div>
       </template>
     </el-dialog>
+    
+    <!-- 上传任务包对话框 -->
+    <el-dialog title="上传任务包" v-model="uploadOpen" width="500px" append-to-body>
+      <el-form ref="uploadRef" :model="uploadForm" label-width="80px">
+        <el-form-item label="ZIP文件" prop="file">
+          <el-upload
+            ref="uploadRef"
+            :limit="1"
+            :auto-upload="false"
+            :on-change="handleFileChange"
+            :on-exceed="handleFileExceed"
+            accept=".zip"
+          >
+            <el-button type="primary">选择文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">
+                请上传.zip格式文件，且文件中wav和TextGrid文件必须成对出现
+              </div>
+            </template>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitUpload" :loading="uploadLoading">确 定</el-button>
+          <el-button @click="cancelUpload">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="Package">
-import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser } from "@/api/label/package"
+import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser, uploadPackage } from "@/api/label/package"
 
 const { proxy } = getCurrentInstance()
 const { package_status } = proxy.useDict('package_status')
@@ -213,6 +252,9 @@ const daterangeCreateTime = ref([])
 const assignUserOpen = ref(false)
 const userList = ref([])
 const currentRow = ref({})
+const uploadOpen = ref(false)
+const uploadLoading = ref(false)
+const uploadFile = ref(null)
 
 const projectId = route.params.projectId
 const projectName = route.params.projectName
@@ -236,10 +278,13 @@ const data = reactive({
   },
   assignUserRules: {
     userId: [{ required: true, message: "请选择用户", trigger: "change" }]
+  },
+  uploadForm: {
+    file: null
   }
 })
 
-const { queryParams, form, rules, assignUserForm, assignUserRules } = toRefs(data)
+const { queryParams, form, rules, assignUserForm, assignUserRules, uploadForm } = toRefs(data)
 
 /** 查询任务包列表 */
 function getList() {
@@ -415,6 +460,54 @@ function submitAssignUser() {
       }).catch(() => {});
     }
   });
+}
+
+// 显示上传对话框
+function handleUpload() {
+  uploadOpen.value = true
+  uploadForm.value.file = null
+  uploadFile.value = null
+}
+
+// 取消上传
+function cancelUpload() {
+  uploadOpen.value = false
+  proxy.resetForm("uploadRef")
+}
+
+// 文件选择处理
+function handleFileChange(file) {
+  uploadFile.value = file.raw
+}
+
+// 文件超出限制处理
+function handleFileExceed() {
+  proxy.$modal.msgWarning("只能上传一个文件")
+}
+
+// 提交上传
+function submitUpload() {
+  if (!uploadFile.value) {
+    proxy.$modal.msgWarning("请选择文件")
+    return
+  }
+  
+  uploadLoading.value = true
+  
+  const formData = new FormData()
+  formData.append("file", uploadFile.value)
+  formData.append("projectId", projectId)
+  
+  uploadPackage(formData).then(response => {
+    proxy.$modal.msgSuccess("上传成功")
+    uploadOpen.value = false
+    getList()
+  }).catch(error => {
+    console.error(error)
+    proxy.$modal.msgError("上传失败：" + (error.message || "未知错误"))
+  }).finally(() => {
+    uploadLoading.value = false
+  })
 }
 
 getList()
