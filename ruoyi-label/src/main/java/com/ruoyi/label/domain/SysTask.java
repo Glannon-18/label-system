@@ -39,6 +39,9 @@ public class SysTask extends BaseEntity
     /** 审核人员账户名 */
     @Excel(name = "审核人员账户名")
     private String auditor;
+
+    /** textGrid文件内容 */
+    private String textGrid;
     
     /** 任务包分配人 */
     private String packageAssigner;
@@ -123,6 +126,16 @@ public class SysTask extends BaseEntity
         this.packageAssigner = packageAssigner;
     }
 
+    public String getTextGrid()
+    {
+        return textGrid;
+    }
+
+    public void setTextGrid(String textGrid)
+    {
+        this.textGrid = textGrid;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -139,6 +152,7 @@ public class SysTask extends BaseEntity
             .append("updateBy", getUpdateBy())
             .append("updateTime", getUpdateTime())
             .append("remark", getRemark())
+                .append("textGrid", getTextGrid())
             .toString();
     }
 }
