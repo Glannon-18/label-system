@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.label.mapper.SysAudioRecordsMapper">
+    
+    <resultMap type="SysAudioRecords" id="SysAudioRecordsResult">
+        <result property="id"    column="id"    />
+        <result property="taskId"    column="task_id"    />
+        <result property="packageId"    column="package_id"    />
+        <result property="itemOrder"    column="item_order"    />
+        <result property="text"    column="text"    />
+        <result property="modifiedText"    column="modified_text"    />
+        <result property="audioFilePath"    column="audio_file_path"    />
+        <result property="audioDuration"    column="audio_duration"    />
+        <result property="annotator"    column="annotator"    />
+        <result property="auditor"    column="auditor"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectSysAudioRecordsVo">
+        select id, task_id, package_id, item_order, text, modified_text, audio_file_path, audio_duration, annotator, auditor, create_by, create_time, update_by, update_time from sys_audio_records
+    </sql>
+
+    <select id="selectSysAudioRecordsList" parameterType="SysAudioRecords" resultMap="SysAudioRecordsResult">
+        <include refid="selectSysAudioRecordsVo"/>
+        <where>
+            <if test="taskId != null "> and task_id = #{taskId}</if>
+            <if test="packageId != null "> and package_id = #{packageId}</if>
+            <if test="itemOrder != null "> and item_order = #{itemOrder}</if>
+            <if test="text != null  and text != ''"> and text = #{text}</if>
+            <if test="modifiedText != null  and modifiedText != ''"> and modified_text = #{modifiedText}</if>
+            <if test="audioFilePath != null  and audioFilePath != ''"> and audio_file_path = #{audioFilePath}</if>
+            <if test="audioDuration != null "> and audio_duration = #{audioDuration}</if>
+            <if test="annotator != null  and annotator != ''"> and annotator = #{annotator}</if>
+            <if test="auditor != null  and auditor != ''"> and auditor = #{auditor}</if>
+        </where>
+    </select>
+
+    <select id="selectSysAudioRecordsById" parameterType="Long" resultMap="SysAudioRecordsResult">
+        <include refid="selectSysAudioRecordsVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertSysAudioRecords" parameterType="SysAudioRecords" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_audio_records
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="taskId != null">task_id,</if>
+            <if test="packageId != null">package_id,</if>
+            <if test="itemOrder != null">item_order,</if>
+            <if test="text != null and text != ''">text,</if>
+            <if test="modifiedText != null">modified_text,</if>
+            <if test="audioFilePath != null">audio_file_path,</if>
+            <if test="audioDuration != null">audio_duration,</if>
+            <if test="annotator != null">annotator,</if>
+            <if test="auditor != null">auditor,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="taskId != null">#{taskId},</if>
+            <if test="packageId != null">#{packageId},</if>
+            <if test="itemOrder != null">#{itemOrder},</if>
+            <if test="text != null and text != ''">#{text},</if>
+            <if test="modifiedText != null">#{modifiedText},</if>
+            <if test="audioFilePath != null">#{audioFilePath},</if>
+            <if test="audioDuration != null">#{audioDuration},</if>
+            <if test="annotator != null">#{annotator},</if>
+            <if test="auditor != null">#{auditor},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <insert id="batchInsertSysAudioRecords" parameterType="java.util.List">
+        insert into sys_audio_records (
+        task_id,
+        package_id,
+        item_order,
+        text,
+        modified_text,
+        audio_file_path,
+        audio_duration,
+        annotator,
+        auditor,
+        create_by,
+        create_time,
+        update_by,
+        update_time
+        )
+        values
+        <foreach collection="sysAudioRecords" item="item" separator=",">
+            (
+            #{item.taskId},
+            #{item.packageId},
+            #{item.itemOrder},
+            #{item.text},
+            #{item.modifiedText},
+            #{item.audioFilePath},
+            #{item.audioDuration},
+            #{item.annotator},
+            #{item.auditor},
+            #{item.createBy},
+            #{item.createTime},
+            #{item.updateBy},
+            #{item.updateTime}
+            )
+        </foreach>
+    </insert>
+
+
+    <update id="updateSysAudioRecords" parameterType="SysAudioRecords">
+        update sys_audio_records
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="taskId != null">task_id = #{taskId},</if>
+            <if test="packageId != null">package_id = #{packageId},</if>
+            <if test="itemOrder != null">item_order = #{itemOrder},</if>
+            <if test="text != null and text != ''">text = #{text},</if>
+            <if test="modifiedText != null">modified_text = #{modifiedText},</if>
+            <if test="audioFilePath != null">audio_file_path = #{audioFilePath},</if>
+            <if test="audioDuration != null">audio_duration = #{audioDuration},</if>
+            <if test="annotator != null">annotator = #{annotator},</if>
+            <if test="auditor != null">auditor = #{auditor},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteSysAudioRecordsById" parameterType="Long">
+        delete from sys_audio_records where id = #{id}
+    </delete>
+
+    <delete id="deleteSysAudioRecordsByIds" parameterType="String">
+        delete from sys_audio_records where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

@@ -5,6 +5,7 @@ import { useRouter } from "vue-router"
 
 const { proxy } = getCurrentInstance()
 const { package_status } = proxy.useDict('package_status')
+const { package_type } = proxy.useDict('package_type')
 const router = useRouter()
 
 const packageList = ref([])
@@ -54,14 +55,14 @@ function resetQuery() {
 
 /** 接收按钮操作 */
 function handleReception(row) {
-  proxy.$modal.confirm('确认接收任务包之后，将无法修改任务包，确认要接收任务包"' + row.name + '"吗？').then(function() {
+  proxy.$modal.confirm('确认接收任务包之后，将无法修改任务包，确认要接收任务包"' + row.name + '"吗？').then(function () {
     // 更新任务包状态为已接收
     row.status = "reception"
     return updatePackage(row)
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess("接收成功")
-  }).catch(() => {})
+  }).catch(() => { })
 }
 
 /** 跳转到任务详情页面 */
@@ -82,21 +83,11 @@ getList()
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="任务包名" prop="name">
-        <el-input
-          v-model="queryParams.name"
-          placeholder="请输入任务包名"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.name" placeholder="请输入任务包名" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="任务包状态" prop="status" label-width="auto">
         <el-select v-model="queryParams.status" placeholder="请选择任务包状态" clearable style="width: 120px;">
-          <el-option
-            v-for="dict in package_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in package_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -115,7 +106,12 @@ getList()
       </el-table-column>
       <el-table-column label="任务包状态" align="center" prop="status">
         <template #default="scope">
-          <dict-tag :options="package_status" :value="scope.row.status"/>
+          <dict-tag :options="package_status" :value="scope.row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column label="任务包类型" align="center" prop="type">
+        <template #default="scope">
+          <dict-tag :options="package_type" :value="scope.row.type" />
         </template>
       </el-table-column>
       <el-table-column label="项目名" align="center" prop="projectName" />
@@ -130,28 +126,16 @@ getList()
 
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button 
-            link 
-            type="primary" 
-            @click="handleReception(scope.row)" 
-            v-if="scope.row.status !== 'reception'"
-          >
+          <el-button link type="primary" @click="handleReception(scope.row)" v-if="scope.row.status !== 'reception'">
             接收
           </el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize"
+      @pagination="getList" />
   </div>
 </template>
 
-<style scoped lang="scss">
-
-</style>
+<style scoped lang="scss"></style>

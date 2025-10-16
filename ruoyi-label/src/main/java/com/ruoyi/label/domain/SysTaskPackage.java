@@ -25,6 +25,9 @@ public class SysTaskPackage extends BaseEntity
     @Excel(name = "任务包名")
     private String name;
 
+    @Excel(name = "任务包类型")
+    private String type;
+
     /** 任务包状态 */
     @Excel(name = "任务包状态")
     private String status;
@@ -34,66 +37,66 @@ public class SysTaskPackage extends BaseEntity
 
     /** 审核人账户名 */
     private String auditor;
-    
+
     /** 项目名 */
     private String projectName;
 
-    public void setTaskPackageId(Long taskPackageId) 
+    public void setTaskPackageId(Long taskPackageId)
     {
         this.taskPackageId = taskPackageId;
     }
 
-    public Long getTaskPackageId() 
+    public Long getTaskPackageId()
     {
         return taskPackageId;
     }
 
-    public void setProjectId(Long projectId) 
+    public void setProjectId(Long projectId)
     {
         this.projectId = projectId;
     }
 
-    public Long getProjectId() 
+    public Long getProjectId()
     {
         return projectId;
     }
 
-    public void setName(String name) 
+    public void setName(String name)
     {
         this.name = name;
     }
 
-    public String getName() 
+    public String getName()
     {
         return name;
     }
 
-    public void setStatus(String status) 
+    public void setStatus(String status)
     {
         this.status = status;
     }
 
-    public String getStatus() 
+    public String getStatus()
     {
         return status;
     }
 
-    public void setAssigner(String assigner) 
+    public void setAssigner(String assigner)
     {
         this.assigner = assigner;
     }
 
-    public String getAssigner() 
+    public String getAssigner()
     {
         return assigner;
     }
 
-    public void setAuditor(String auditor) 
+    public void setAuditor(String auditor)
     {
         this.auditor = auditor;
     }
 
-    public String getAuditor() 
+    public String getAuditor()
     {
         return auditor;
     }
@@ -104,6 +107,14 @@ public class SysTaskPackage extends BaseEntity
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     @Override
@@ -120,6 +131,7 @@ public class SysTaskPackage extends BaseEntity
             .append("status", getStatus())
             .append("assigner", getAssigner())
             .append("auditor", getAuditor())
+            .append("type", getType())
             .toString();
     }
 }
