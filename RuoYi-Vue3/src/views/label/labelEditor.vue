@@ -10,9 +10,26 @@
         <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
         <div v-if="['unstart','underway','reject'].includes(task.data.status)">
           <el-button type="danger" plain @click="redo()">重做</el-button>
-          <el-button type="primary" plain @click="saveTask()">保存</el-button>
-          <el-button type="success" plain @click="submitTask()">提交</el-button>
+          <el-button type="primary" plain @click="saveTask()">保存更改</el-button>
+          <el-button type="success" plain @click="submitTask()">提交审核</el-button>
         </div>
+
+        <div v-if="['pending_review'].includes(task.data.status)">
+          <el-button type="danger" plain @click="rejectTask()">驳回任务</el-button>
+          <el-button type="success" plain @click="auditTask('pass')">审核通过</el-button>
+        </div>
+
+        <!-- 审核驳回对话框 -->
+        <el-dialog v-model="dialogFormVisible" title="Shipping address" width="500">
+          <el-input v-model="dialogFormRemark" type="textarea" placeholder="请输入驳回原因" style="width: 100%;" />
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button @click="dialogFormVisible = false">取消</el-button>
+              <el-button type="primary" @click="rejectTask()">确定</el-button>
+            </div>
+          </template>
+        </el-dialog>
+
       </div>
     </div>
     
@@ -45,7 +62,18 @@
     </div>
 
     <!--分段标注列表-->
-    <div style="margin-top: 20px; display: flex;">
+    <div style="margin-top: 20px; display: flex; flex-direction:column">
+      <div style="display: flex; gap: 0.5rem;">
+        <span>插入标注：</span>
+        <el-tag
+          v-for="item in items"
+          :key="item.label"
+          :type="item.type"
+          effect="dark"
+        >
+          {{ item.label }}
+        </el-tag>
+      </div>
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
         style="width: 100%;height: 400px;"  :show-header="true" 
         :row-class-name="tableRowClassName" @row-click="rowClick" > 
@@ -71,7 +99,7 @@
           </el-table-column>
           <el-table-column label="标注文本内容" > 
             <template #default="scope"> 
-              <el-input type="textarea" :readonly="!['unstart','underway','reject'].includes(task.data.status)" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容" style="width:100%;font-size:16px;" />
+              <el-input type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容" style="width:100%;font-size:16px;" />
             </template>
           </el-table-column>
           <el-table-column label="字符数" width="100"> 
@@ -81,10 +109,14 @@
           </el-table-column>
       </el-table>
 
+      <div v-if="task.data.status==='pending_review'" style="line-height: 30px;margin-top: 10px; color: gray; font-size: 12px;">
+        Tip：审核人可对标注内容进行修改，提交审核结果同时保存修改。
+      </div>
     </div>
 
   </div>
 </template>
+
 
 <script setup name="labelEditor">
 //=========================引入模块=========================
@@ -99,6 +131,12 @@ import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
 import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
 
 
+const items = reactive([
+  { type: 'primary', label: '<NOISE>' },
+  { type: 'success', label: '<DEAF>' },
+  { type: 'info', label: '<OVERLAP>' },
+  { type: 'warning', label: '<OOV>' },
+])
 
 
 //=========================定义函数=========================
@@ -171,7 +209,7 @@ function renderWaveforms() {
       })
       
       // 加载音频文件
-      const audioUrl = getAudioUrl(task.audioFileName)
+      const audioUrl = getAudioUrl(task.audioFilePath)
       wavesurfer.load(audioUrl)
       
       // 添加错误处理
@@ -242,7 +280,7 @@ function handleUpdate(row) {
 function redo(){
   //刷新页面
   // proxy.$router.go(0)
-  proxy.$modal.confirm('是否放弃修改并载入上一次保存的标注数据？').then(function () {
+  proxy.$modal.confirm('是否放弃更改并载入上一次保存的标注数据？').then(function () {
     let newtimes = task.textGridJson.intervals.map(ts=>{
       return {
         start: ts.xmin,
@@ -300,15 +338,23 @@ function saveTask() {
   task.data.textGrid = textGrid
   //将任务状态改为“标注中”
   task.data.status = 'underway'
-  //提交task.data修改
-  updateTask(task.data).then(response => {
+  //准备保存的参数
+  let sysTask = {
+      taskId: taskId,
+      textGrid: textGrid,
+      status: 'underway',//标注中
+    }
+  const formData = new FormData();
+  formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
+  updateTask(formData).then(response => {
+    console.log(response)
     proxy.$modal.msgSuccess("保存成功")
   })
 }
 
 /** 提交任务 */
 function submitTask() {
-  proxy.$modal.confirm('确定已完成该音频标注任务并提交审核吗？').then(function () {
+  proxy.$modal.confirm('确定提交审核吗？').then(function () {
     //将最新的times转为intervals
     let intervals = times.map((ts,i)=>{
       return {
@@ -324,16 +370,107 @@ function submitTask() {
     //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
     let textGrid = convertJsonToTextGrid(task.textGridJson)
     task.data.textGrid = textGrid
-    //将任务状态改为“待审核”
-    task.data.status = 'pending_review'
-    //提交task.data修改
-    updateTask(task.data).then(response => {
+    //准备提交的参数
+    let sysTask = {
+        taskId: taskId,
+        textGrid: textGrid,
+        status: 'pending_review',//待审核
+      }
+    const formData = new FormData();
+    formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
+    updateTask(formData).then(response => {
       proxy.$modal.msgSuccess("提交成功")
       setTimeout(() => {
-        //proxy.$router.push(`/label/my-task/index/${taskId}/1112`)
         proxy.$tab.closePage()  // 关闭当前页
         proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
-      }, 1500)
+      }, 1000)
+      
+    })
+  })
+}
+
+//驳回任务
+function rejectTask(){
+  if(dialogFormVisible){
+    // if(dialogFormRemark){
+    //   dialogFormVisible = false
+    //   //将最新的times转为intervals
+    //   let intervals = times.map((ts,i)=>{
+    //     return {
+    //       index: (i+1),
+    //       xmin: ts.start,
+    //       xmax: ts.end,
+    //       text: ts.text,
+    //     }
+    //   })
+    //   // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
+    //   task.textGridJson.intervals = intervals
+    //   task.textGridJson.tiers[0].intervals = intervals
+    //   //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
+    //   let textGrid = convertJsonToTextGrid(task.textGridJson)
+    //   task.data.textGrid = textGrid
+    //   //准备提交的参数
+    //   let sysTask = {
+    //     taskId: taskId,
+    //     textGrid: task.data.textGrid,
+    //     status: 'reject',
+    //     remark: dialogFormRemark,
+    //   }
+    //   const formData = new FormData();
+    //   formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
+    //   updateTask(formData).then(response => { 
+    //     proxy.$modal.msgSuccess("驳回成功")
+    //     setTimeout(() => {
+    //       proxy.$tab.closePage()  // 关闭当前页
+    //       proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
+    //     }, 1000)
+    //   })
+    // }else{
+    //   proxy.$modal.msgError("请填写驳回理由")
+    // }
+  }else{
+    dialogFormVisible = true
+  }
+}
+
+
+
+/** 审核任务 */
+function auditTask(status) {
+  let confirmTxt = '确定审核通过吗？'
+  if(status == 'reject'){
+    confirmTxt = '确定驳回任务吗？'
+  }
+  proxy.$modal.confirm(confirmTxt).then(function () {
+    //将最新的times转为intervals
+    let intervals = times.map((ts,i)=>{
+      return {
+        index: (i+1),
+        xmin: ts.start,
+        xmax: ts.end,
+        text: ts.text,
+      }
+    })
+    // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
+    task.textGridJson.intervals = intervals
+    task.textGridJson.tiers[0].intervals = intervals
+    //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
+    let textGrid = convertJsonToTextGrid(task.textGridJson)
+    task.data.textGrid = textGrid
+    //准备提交的参数
+    let sysTask = {
+        taskId: taskId,
+        textGrid: textGrid,
+        status: status,
+      }
+    const formData = new FormData();
+    formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
+    updateTask(formData).then(response => {
+      proxy.$modal.msgSuccess("提交成功")
+      setTimeout(() => {
+        proxy.$tab.closePage()  // 关闭当前页
+        proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
+      }, 1000)
       
     })
   })
@@ -1393,7 +1530,8 @@ watch(textGridText, (newValue, oldValue) => {
 
 
 
-
+let dialogFormVisible = ref(false)
+let dialogFormRemark = ref('')
 </script>
 
 
