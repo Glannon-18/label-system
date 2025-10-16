@@ -15,12 +15,12 @@
         </div>
 
         <div v-if="['pending_review'].includes(task.data.status)">
-          <el-button type="danger" plain @click="rejectTask()">驳回任务</el-button>
-          <el-button type="success" plain @click="auditTask('pass')">审核通过</el-button>
+          <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">驳回任务</el-button>
+          <el-button type="success" plain @click="auditTask('pass')" vhasPermi="['label:task:audit']">审核通过</el-button>
         </div>
 
         <!-- 审核驳回对话框 -->
-        <el-dialog v-model="dialogFormVisible" title="Shipping address" width="500">
+        <el-dialog v-model="dialogFormVisible" title="驳回任务" width="500">
           <el-input v-model="dialogFormRemark" type="textarea" placeholder="请输入驳回原因" style="width: 100%;" />
           <template #footer>
             <div class="dialog-footer">
@@ -33,49 +33,51 @@
       </div>
     </div>
     
-    <!-- 语音标注demo -->
+    <!-- 语音标注音波图 -->
     <div id="waveform-demo" class="waveform-container" style="width: 100%; height: 100px; margin-top: 10px;"></div>
     
-    
-
-    <div style="margin-top: 40px; display: flex; justify-content: center; align-items: center;font-size: 14px;">
-      <!-- {{ formatSecondsToMMSSS(currentTime)  }} / {{ formatSecondsToMMSSS(duration)}}  -->
-      <el-button type="info" plain id="backward">上一段</el-button>
-      <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
-      <el-button type="info" plain id="forward">下一段</el-button>
-      <view style="margin-left: 12px;display: flex;align-items: center;">
-        音量 <el-slider v-model="volume" style="width: 100px;margin-left: 3px;"/>
-      </view>
-      <view style="margin-left: 12px;display: flex;align-items: center;">
-        倍速 <el-select v-model="playbackRate" size="small" style="width: 70px;margin-left: 3px;" >
-          <el-option
-            v-for="item in playbackRateList"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-      </view>
-      <!-- <view style="margin-left: 12px;display: flex;align-items: center;">
-        循环播放<el-switch v-model="loopPlay" />
-      </view> -->
+    <!-- 操作按钮栏 -->
+    <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
+      <div style="display: flex; gap: 0.5rem; font-size: 12px; align-items: center; justify-content: center;">
+        <span style="color: gray;">点击插入无效时长标签:</span>
+        <div v-for="item in labels" :key="item.label">
+          <el-tooltip 
+            class="box-item"
+            :content="item.tip"
+            placement="top-start"
+          ><el-check-tag  checked :type="item.type" @click="insertText(item.label)">
+            {{ item.label }}
+          </el-check-tag></el-tooltip>
+        </div>
+      </div>
+      <div style="display: flex;">
+        <!-- {{ formatSecondsToMMSSS(currentTime)  }} / {{ formatSecondsToMMSSS(duration)}}  -->
+        <el-button type="info" plain id="backward">上一段</el-button>
+        <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
+        <el-button type="info" plain id="forward">下一段</el-button>
+        <view style="margin-left: 12px;display: flex;align-items: center;">
+          音量 <el-slider v-model="volume" style="width: 100px;margin-left: 3px;"/>
+        </view>
+        <view style="margin-left: 12px;display: flex;align-items: center;">
+          倍速 <el-select v-model="playbackRate" size="small" style="width: 70px;margin-left: 3px;" >
+            <el-option
+              v-for="item in playbackRateList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </view>
+        <!-- <view style="margin-left: 12px;display: flex;align-items: center;">
+          循环播放<el-switch v-model="loopPlay" />
+        </view> -->
+      </div>
     </div>
 
     <!--分段标注列表-->
-    <div style="margin-top: 20px; display: flex; flex-direction:column">
-      <div style="display: flex; gap: 0.5rem;">
-        <span>插入标注：</span>
-        <el-tag
-          v-for="item in items"
-          :key="item.label"
-          :type="item.type"
-          effect="dark"
-        >
-          {{ item.label }}
-        </el-tag>
-      </div>
+    <div style="margin-top: 10px; display: flex; flex-direction:column">
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
-        style="width: 100%;height: 400px;"  :show-header="true" 
+        style="width: 100%;height: 400px; margin-top:10px;"  :show-header="true" 
         :row-class-name="tableRowClassName" @row-click="rowClick" > 
           <el-table-column label="分段序号" width="100"> 
             <template #default="scope"> 
@@ -108,10 +110,11 @@
             </template>
           </el-table-column>
       </el-table>
+    </div>
 
-      <div v-if="task.data.status==='pending_review'" style="line-height: 30px;margin-top: 10px; color: gray; font-size: 12px;">
-        Tip：审核人可对标注内容进行修改，提交审核结果同时保存修改。
-      </div>
+    <!-- 底部提示说明 -->
+    <div v-if="task.data.status==='pending_review'" style="line-height: 30px;margin-top: 10px; color: gray; font-size: 12px;">
+      Tip：审核人可对标注内容进行修改，提交审核结果同时保存修改的内容。
     </div>
 
   </div>
@@ -131,15 +134,24 @@ import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
 import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
 
 
-const items = reactive([
-  { type: 'primary', label: '<NOISE>' },
-  { type: 'success', label: '<DEAF>' },
-  { type: 'info', label: '<OVERLAP>' },
-  { type: 'warning', label: '<OOV>' },
+const labels = reactive([
+  { type: 'primary', label: '<NOISE>', 'tip': '表示非人声噪音' },
+  { type: 'success', label: '<DEAF>', 'tip': '表示无法转写的人声' },
+  { type: 'info', label: '<OVERLAP>', 'tip': '表示多人同时发音：混读、听不清、文本无法转写出来' },
+  { type: 'warning', label: '<OOV>', 'tip': '表示整段非目标语种，包括：中文、英文等' },
 ])
 
 
 //=========================定义函数=========================
+function insertText(text) {
+  if (activeRegion) {
+    times.forEach(item => {
+      if (item.start === activeRegion.start && item.end===activeRegion.end) {
+        item.text += text
+      }
+    })
+  }
+}
 
 // 定义行类名函数
 const tableRowClassName = ({ row, rowIndex }) => {
@@ -391,46 +403,42 @@ function submitTask() {
 
 //驳回任务
 function rejectTask(){
-  if(dialogFormVisible){
-    // if(dialogFormRemark){
-    //   dialogFormVisible = false
-    //   //将最新的times转为intervals
-    //   let intervals = times.map((ts,i)=>{
-    //     return {
-    //       index: (i+1),
-    //       xmin: ts.start,
-    //       xmax: ts.end,
-    //       text: ts.text,
-    //     }
-    //   })
-    //   // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
-    //   task.textGridJson.intervals = intervals
-    //   task.textGridJson.tiers[0].intervals = intervals
-    //   //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
-    //   let textGrid = convertJsonToTextGrid(task.textGridJson)
-    //   task.data.textGrid = textGrid
-    //   //准备提交的参数
-    //   let sysTask = {
-    //     taskId: taskId,
-    //     textGrid: task.data.textGrid,
-    //     status: 'reject',
-    //     remark: dialogFormRemark,
-    //   }
-    //   const formData = new FormData();
-    //   formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
-    //   updateTask(formData).then(response => { 
-    //     proxy.$modal.msgSuccess("驳回成功")
-    //     setTimeout(() => {
-    //       proxy.$tab.closePage()  // 关闭当前页
-    //       proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
-    //     }, 1000)
-    //   })
-    // }else{
-    //   proxy.$modal.msgError("请填写驳回理由")
-    // }
-  }else{
-    dialogFormVisible = true
+  if(!dialogFormRemark && dialogFormRemark.length){
+    proxy.$modal.msgError("请填写驳回理由")
+    return
   }
+  dialogFormVisible = false
+  //将最新的times转为intervals
+  let intervals = times.map((ts,i)=>{
+    return {
+      index: (i+1),
+      xmin: ts.start,
+      xmax: ts.end,
+      text: ts.text,
+    }
+  })
+  // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
+  task.textGridJson.intervals = intervals
+  task.textGridJson.tiers[0].intervals = intervals
+  //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
+  let textGrid = convertJsonToTextGrid(task.textGridJson)
+  task.data.textGrid = textGrid
+  //准备提交的参数
+  let sysTask = {
+    taskId: taskId,
+    textGrid: task.data.textGrid,
+    status: 'reject',
+    remark: dialogFormRemark,
+  }
+  const formData = new FormData();
+  formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
+  updateTask(formData).then(response => { 
+    proxy.$modal.msgSuccess("驳回成功")
+    setTimeout(() => {
+      proxy.$tab.closePage()  // 关闭当前页
+      proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
+    }, 1000)
+  })  
 }
 
 
@@ -767,7 +775,7 @@ async function init(){
     })
 
     // 加载音频文件    
-    ws.load( getAudioUrl(task.data.audioFileName) )
+    ws.load( getAudioUrl(task.data.audioFilePath) )
 
     ws.on('play', () => {
       console.log('ws.currentTime-->', ws.getCurrentTime())
