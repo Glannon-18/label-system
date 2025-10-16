@@ -8,7 +8,7 @@
       <div> 音频文件：{{ task.data.audioFileName }}</div>
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
         <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
-        <div v-if="['unstart','underway','reject'].includes(task.data.status)">
+        <div v-if="['unstart','underway','reject','pass'].includes(task.data.status)">
           <el-button type="danger" plain @click="redo()">重做</el-button>
           <el-button type="primary" plain @click="saveTask()">保存更改</el-button>
           <el-button type="success" plain @click="submitTask()">提交审核</el-button>
@@ -21,7 +21,7 @@
 
         <!-- 审核驳回对话框 -->
         <el-dialog v-model="dialogFormVisible" title="驳回任务" width="500">
-          <el-input v-model="dialogFormRemark" type="textarea" placeholder="请输入驳回原因" style="width: 100%;" />
+          <el-input v-model="dialogFormRemark" type="textarea" :rows="3" placeholder="请输入驳回原因" style="width: 100%;" />
           <template #footer>
             <div class="dialog-footer">
               <el-button @click="dialogFormVisible = false">取消</el-button>
@@ -403,11 +403,13 @@ function submitTask() {
 
 //驳回任务
 function rejectTask(){
-  if(!dialogFormRemark && dialogFormRemark.length){
-    proxy.$modal.msgError("请填写驳回理由")
+  console.log('rejectTask---',dialogFormRemark)
+  if(!dialogFormRemark.value){
+    proxy.$modal.msgError("请填写驳回原因")
     return
   }
   dialogFormVisible = false
+
   //将最新的times转为intervals
   let intervals = times.map((ts,i)=>{
     return {
@@ -425,20 +427,22 @@ function rejectTask(){
   task.data.textGrid = textGrid
   //准备提交的参数
   let sysTask = {
-    taskId: taskId,
-    textGrid: task.data.textGrid,
-    status: 'reject',
-    remark: dialogFormRemark,
-  }
+      taskId: taskId,
+      textGrid: textGrid,
+      status: 'reject',
+      remark: '驳回原因:'+dialogFormRemark.value
+    }
   const formData = new FormData();
   formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
-  updateTask(formData).then(response => { 
+  updateTask(formData).then(response => {
     proxy.$modal.msgSuccess("驳回成功")
     setTimeout(() => {
       proxy.$tab.closePage()  // 关闭当前页
       proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
     }, 1000)
-  })  
+    
+  })
+
 }
 
 
@@ -470,11 +474,12 @@ function auditTask(status) {
         taskId: taskId,
         textGrid: textGrid,
         status: status,
+        remark: '审核通过'
       }
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
     updateTask(formData).then(response => {
-      proxy.$modal.msgSuccess("提交成功")
+      proxy.$modal.msgSuccess("审核成功")
       setTimeout(() => {
         proxy.$tab.closePage()  // 关闭当前页
         proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
