@@ -69,3 +69,24 @@ export function assignPackageToUser(data) {
     data: data
   })
 }
+
+// 接收任务包
+export function receptionPackage(data) {
+  return request({
+    url: '/label/package/reception',
+    method: 'post',
+    data: data
+  })
+}
+
+// 上传任务包
+export function uploadPackage(data) {
+  return request({
+    url: '/label/package/upload',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

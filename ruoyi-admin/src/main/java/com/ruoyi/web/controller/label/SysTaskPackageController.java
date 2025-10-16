@@ -1,5 +1,29 @@
 package com.ruoyi.web.controller.label;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import javax.servlet.http.HttpServletResponse;
+
+import com.ruoyi.common.config.RuoYiConfig;
+import com.ruoyi.common.utils.file.FileUploadUtils;
+import com.ruoyi.label.utils.SysTaskLogUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.TaskPackageStatus;
 import com.ruoyi.common.constant.TaskStatus;
@@ -8,25 +32,11 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.label.domain.SysTask;
 import com.ruoyi.label.domain.SysTaskPackage;
 import com.ruoyi.label.service.ISysTaskPackageService;
 import com.ruoyi.label.service.ISysTaskService;
 import com.ruoyi.system.service.ISysUserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * 任务包Controller
@@ -159,6 +169,40 @@ public class SysTaskPackageController extends BaseController
     }
     
     /**
+     * 接收任务包
+     */
+    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+    @Log(title = "任务包", businessType = BusinessType.UPDATE)
+    @PostMapping("/reception")
+    public AjaxResult receptionPackage(@RequestBody SysTaskPackage sysTaskPackage)
+    {
+        // 设置更新者
+        sysTaskPackage.setUpdateBy(getUsername());
+        sysTaskPackage.setStatus(TaskPackageStatus.RECEPTION);
+        // 更新任务包的状态为已接收
+        int rows = sysTaskPackageService.updateSysTaskPackage(sysTaskPackage);
+        
+        // 将该任务包下的所有任务状态更新为进行中，并记录日志
+        if (rows > 0) {
+            // 获取该任务包下的所有任务
+            List<SysTask> taskList = sysTaskService.selectSysTaskListByPackageId(sysTaskPackage.getTaskPackageId());
+            
+            // 更新每个任务的状态并记录日志
+            SysTask updateTask = new SysTask();
+            updateTask.setStatus(TaskStatus.UNDERWAY);
+            updateTask.setUpdateBy(getUsername());
+            
+            for (SysTask task : taskList) {
+                updateTask.setTaskId(task.getTaskId());
+                sysTaskService.updateSysTask(updateTask);
+                SysTaskLogUtils.insertSysTaskLog(task.getTaskId(), TaskStatus.UNDERWAY, getUsername(), null);
+            }
+        }
+        
+        return toAjax(rows);
+    }
+    
+    /**
      * 上传任务包
      */
     @PreAuthorize("@ss.hasPermi('label:project:add')")
@@ -201,20 +245,48 @@ public class SysTaskPackageController extends BaseController
                 String wavFileName = entry.getKey();
                 String textGridContent = entry.getValue();
                 
+                // 上传wav文件
+                String filePath = RuoYiConfig.getUploadPath();
+                // 从zip中提取wav文件内容并创建MultipartFile
+                MultipartFile wavFile = createMultipartFileFromZipEntry(wavFileName, file);
+                String uploadedFileName = FileUploadUtils.upload(filePath, wavFile);
+                
                 SysTask task = new SysTask();
                 task.setPackageId(taskPackage.getTaskPackageId());
                 task.setAudioFileName(wavFileName);
+                task.setAudioFilePath(uploadedFileName);
                 task.setTextGrid(textGridContent);
                 task.setStatus(TaskStatus.UNSTART);
                 task.setCreateBy(getUsername());
                 
                 sysTaskService.insertSysTask(task);
+                SysTaskLogUtils.insertSysTaskLog(task.getTaskId(), TaskStatus.UNSTART, getUsername(), null);
             }
             
             return AjaxResult.success("上传成功");
         } catch (Exception e) {
             return AjaxResult.error("上传失败: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 从ZIP文件中提取指定条目并创建MultipartFile
+     * @param entryName 条目名称
+     * @param zipFile ZIP文件
+     * @return MultipartFile
+     * @throws IOException
+     */
+    private MultipartFile createMultipartFileFromZipEntry(String entryName, MultipartFile zipFile) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (!entry.isDirectory() && entry.getName().equals(entryName)) {
+                    byte[] buffer = readZipEntry(zis);
+                    return new InMemoryMultipartFile(entryName, entryName, "audio/wav", buffer);
+                }
+            }
+        }
+        throw new IOException("在ZIP文件中找不到条目: " + entryName);
     }
     
     /**
@@ -309,5 +381,64 @@ public class SysTaskPackageController extends BaseController
     private String getBaseName(String fileName) {
         int lastDotIndex = fileName.lastIndexOf('.');
         return lastDotIndex > 0 ? fileName.substring(0, lastDotIndex) : fileName;
+    }
+    
+    /**
+     * 内存中的MultipartFile实现
+     */
+    private static class InMemoryMultipartFile implements MultipartFile {
+        private final String name;
+        private final String originalFilename;
+        private final String contentType;
+        private final byte[] content;
+        
+        public InMemoryMultipartFile(String name, String originalFilename, String contentType, byte[] content) {
+            this.name = name;
+            this.originalFilename = originalFilename;
+            this.contentType = contentType;
+            this.content = content;
+        }
+        
+        @Override
+        public String getName() {
+            return name;
+        }
+        
+        @Override
+        public String getOriginalFilename() {
+            return originalFilename;
+        }
+        
+        @Override
+        public String getContentType() {
+            return contentType;
+        }
+        
+        @Override
+        public boolean isEmpty() {
+            return content == null || content.length == 0;
+        }
+        
+        @Override
+        public long getSize() {
+            return content.length;
+        }
+        
+        @Override
+        public byte[] getBytes() throws IOException {
+            return content;
+        }
+        
+        @Override
+        public java.io.InputStream getInputStream() throws IOException {
+            return new ByteArrayInputStream(content);
+        }
+        
+        @Override
+        public void transferTo(java.io.File dest) throws IOException, IllegalStateException {
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(dest)) {
+                fos.write(content);
+            }
+        }
     }
 }

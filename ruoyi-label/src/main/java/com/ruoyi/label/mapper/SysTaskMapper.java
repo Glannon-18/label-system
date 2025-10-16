@@ -59,4 +59,12 @@ public interface SysTaskMapper
      * @return 结果
      */
     public int deleteSysTaskByTaskIds(Long[] taskIds);
+    
+    /**
+     * 根据任务包ID更新任务状态
+     * 
+     * @param sysTask 任务信息
+     * @return 结果
+     */
+    public int updateSysTaskStatusByPackageId(SysTask sysTask);
 }

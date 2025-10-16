@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
+import com.ruoyi.common.constant.TaskStatus;
+import com.ruoyi.label.utils.SysTaskLogUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,6 +44,8 @@ public class SysTaskController extends BaseController
 {
     @Autowired
     private ISysTaskService sysTaskService;
+    @Autowired
+    private SysTaskLogUtils sysTaskLogUtils;
 
     /**
      * 查询任务列表
@@ -95,7 +99,9 @@ public class SysTaskController extends BaseController
             sysTask.setAudioFilePath(filePath);
         }
         sysTask.setCreateBy(getUsername());
-        return toAjax(sysTaskService.insertSysTask(sysTask));
+        int rows = sysTaskService.insertSysTask(sysTask);
+        SysTaskLogUtils.insertSysTaskLog(sysTask.getTaskId(), TaskStatus.UNSTART, getUsername(), null);
+        return toAjax(rows);
     }
 
     /**
@@ -106,6 +112,9 @@ public class SysTaskController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException
     {
+        // 获取更新前的任务信息
+        SysTask oldTask = sysTaskService.selectSysTaskByTaskId(sysTask.getTaskId());
+        
         if (file != null) {
             // 保存文件并获取访问路径
             String filePath = FileUploadUtils.upload(RuoYiConfig.getProfile(), file);
@@ -115,6 +124,12 @@ public class SysTaskController extends BaseController
             sysTask.setAudioFilePath(filePath);
         }
         sysTask.setUpdateBy(getUsername());
+        
+        // 检查状态是否发生变化，如果变化则记录日志
+        if (sysTask.getStatus() != null && !sysTask.getStatus().equals(oldTask.getStatus())) {
+            SysTaskLogUtils.insertSysTaskLog(sysTask.getTaskId(), sysTask.getStatus(), getUsername(), null);
+        }
+        
         return toAjax(sysTaskService.updateSysTask(sysTask));
     }
 
