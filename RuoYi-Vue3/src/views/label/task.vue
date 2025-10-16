@@ -108,6 +108,7 @@
             :auto-upload="false"
             :on-change="handleFileChange"
             :on-exceed="handleFileExceed"
+            :file-list="fileList"
             accept=".wav"
           >
             <el-button type="primary">选择文件</el-button>
@@ -196,15 +197,18 @@ const data = reactive({
 
 const { queryParams, form, rules } = toRefs(data)
 const uploadFile = ref(null)
+const fileList = ref([]) // 用于存储el-upload的文件列表
 
 // 文件选择处理
-function handleFileChange(file) {
+function handleFileChange(file, fileList) {
   uploadFile.value = file.raw
   form.value.audioFileName = file.raw.name
+  // 更新文件列表
+  fileList.value = fileList
 }
 
 // 文件超出限制处理
-function handleFileExceed() {
+function handleFileExceed(files, fileList) {
   proxy.$modal.msgWarning("只能上传一个文件")
 }
 
@@ -246,6 +250,7 @@ function reset() {
   }
   proxy.resetForm("taskRef")
   uploadFile.value = null
+  fileList.value = []
 }
 
 /** 搜索按钮操作 */
@@ -281,6 +286,13 @@ function handleUpdate(row) {
   const _taskId = row.taskId || ids.value
   getTask(_taskId).then(response => {
     form.value = response.data
+    // 如果已有文件，则设置文件列表显示原文件
+    if (response.data.audioFileName) {
+      fileList.value = [{
+        name: response.data.audioFileName,
+        url: response.data.audioFilePath
+      }]
+    }
     open.value = true
     title.value = "修改任务"
   })
@@ -291,15 +303,22 @@ function submitForm() {
   proxy.$refs["taskRef"].validate(valid => {
     if (valid) {
       if (form.value.taskId != null) {
-        // 更新操作 - 必须包含文件
-        if (!uploadFile.value) {
+        // 更新操作
+        // 如果没有新文件但有原文件，则允许更新
+        if (!uploadFile.value && fileList.value.length === 0) {
           proxy.$modal.msgWarning("请选择音频文件");
           return;
         }
         
+        // 构造FormData对象，确保总是发送multipart/form-data请求
         const formData = new FormData();
-        formData.append("file", uploadFile.value);
+        // 添加sysTask部分（JSON字符串）
         formData.append("sysTask", new Blob([JSON.stringify(form.value)], { type: "application/json" }));
+        
+        // 如果有新文件则添加文件部分
+        if (uploadFile.value) {
+          formData.append("file", uploadFile.value);
+        }
         
         // 使用修改后的API接口上传任务和文件
         updateTask(formData).then(response => {
@@ -308,7 +327,7 @@ function submitForm() {
           getList();
         }).catch(error => {
           console.error(error);
-          proxy.$modal.msgError("上传失败：" + (error.message || "未知错误"));
+          proxy.$modal.msgError("更新失败：" + (error.message || "未知错误"));
         });
       } else {
         // 新增操作
@@ -320,9 +339,8 @@ function submitForm() {
         // 创建FormData对象用于文件上传
         const formData = new FormData();
         formData.append("file", uploadFile.value);
-        // 添加packageId参数
-        const taskData = {...form.value, packageId: taskPackageId};
-        formData.append("sysTask", new Blob([JSON.stringify(taskData)], { type: "application/json" }));
+        // 添加sysTask部分（JSON字符串）
+        formData.append("sysTask", new Blob([JSON.stringify({...form.value, packageId: taskPackageId})], { type: "application/json" }));
         
         // 使用修改后的API接口上传任务和文件
         addTask(formData).then(response => {
