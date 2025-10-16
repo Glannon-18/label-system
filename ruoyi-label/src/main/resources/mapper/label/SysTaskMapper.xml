@@ -123,4 +123,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{taskId}
         </foreach>
     </delete>
+    
+    <update id="updateSysTaskStatusByPackageId" parameterType="SysTask">
+        update sys_task
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where package_id = #{packageId}
+    </update>
 </mapper>

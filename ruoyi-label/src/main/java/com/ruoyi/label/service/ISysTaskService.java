@@ -67,4 +67,20 @@ public interface ISysTaskService
      * @return 结果
      */
     public int auditTask(SysTask sysTask);
+    
+    /**
+     * 根据任务包ID更新任务状态
+     * 
+     * @param sysTask 任务信息
+     * @return 结果
+     */
+    public int updateSysTaskStatusByPackageId(SysTask sysTask);
+    
+    /**
+     * 根据任务包ID查询任务列表
+     * 
+     * @param packageId 任务包ID
+     * @return 任务集合
+     */
+    public List<SysTask> selectSysTaskListByPackageId(Long packageId);
 }

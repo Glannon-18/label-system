@@ -1,5 +1,5 @@
 <script setup>
-import { listPackageByAssigner as listPackage, updatePackage } from "@/api/label/package"
+import { listPackageByAssigner as listPackage, getPackage, updatePackage, receptionPackage } from "@/api/label/package"
 import { getCurrentInstance, reactive, ref, toRefs } from "vue"
 import { useRouter } from "vue-router"
 
@@ -57,8 +57,11 @@ function resetQuery() {
 function handleReception(row) {
   proxy.$modal.confirm('确认接收任务包之后，将无法修改任务包，确认要接收任务包"' + row.name + '"吗？').then(function () {
     // 更新任务包状态为已接收
-    row.status = "reception"
-    return updatePackage(row)
+    const taskPackage = {
+      taskPackageId: row.taskPackageId,
+      status: "reception"
+    };
+    return receptionPackage(taskPackage)
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess("接收成功")

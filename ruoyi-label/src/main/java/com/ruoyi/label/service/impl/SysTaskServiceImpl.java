@@ -106,4 +106,31 @@ public class SysTaskServiceImpl implements ISysTaskService
         sysTask.setUpdateTime(DateUtils.getNowDate());
         return sysTaskMapper.updateSysTask(sysTask);
     }
+    
+    /**
+     * 根据任务包ID更新任务状态
+     * 
+     * @param sysTask 任务信息
+     * @return 结果
+     */
+    @Override
+    public int updateSysTaskStatusByPackageId(SysTask sysTask)
+    {
+        sysTask.setUpdateTime(DateUtils.getNowDate());
+        return sysTaskMapper.updateSysTaskStatusByPackageId(sysTask);
+    }
+    
+    /**
+     * 根据任务包ID查询任务列表
+     * 
+     * @param packageId 任务包ID
+     * @return 任务集合
+     */
+    @Override
+    public List<SysTask> selectSysTaskListByPackageId(Long packageId)
+    {
+        SysTask sysTask = new SysTask();
+        sysTask.setPackageId(packageId);
+        return sysTaskMapper.selectSysTaskList(sysTask);
+    }
 }
