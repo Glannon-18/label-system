@@ -22,10 +22,7 @@ export function addTask(data) {
   return request({
     url: '/label/task',
     method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    data: data
   })
 }
 
@@ -34,10 +31,7 @@ export function updateTask(data) {
   return request({
     url: '/label/task',
     method: 'put',
-    data: data,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    data: data
   })
 }
 

@@ -7,31 +7,15 @@
     </el-row>
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="创建时间" style="width: 308px">
-        <el-date-picker
-          v-model="daterangeCreateTime"
-          value-format="YYYY-MM-DD"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-        ></el-date-picker>
+        <el-date-picker v-model="daterangeCreateTime" value-format="YYYY-MM-DD" type="daterange" range-separator="-"
+          start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
       </el-form-item>
       <el-form-item label="任务包名" prop="name">
-        <el-input
-          v-model="queryParams.name"
-          placeholder="请输入任务包名"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.name" placeholder="请输入任务包名" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="任务包状态" label-width="auto" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择任务包状态" clearable style="width: 120px;">
-          <el-option
-            v-for="dict in package_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+          <el-option v-for="dict in package_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -42,68 +26,40 @@
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['label:project:add']"
-        >新增</el-button>
-      </el-col>
-
-      <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="Edit"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['label:project:edit']"
-        >修改</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['label:project:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['label:project:remove']"
-        >删除</el-button>
+        <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['label:project:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['label:project:export']"
-        >导出</el-button>
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['label:project:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-            type="success"
-            plain
-            icon="Upload"
-            @click="handleUpload"
-            v-hasPermi="['label:project:add']"
-        >上传任务包</el-button>
+        <el-button type="warning" plain icon="Download" @click="handleExport"
+          v-hasPermi="['label:project:export']">导出</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="packageList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="任务包名" align="center" prop="name" >
+      <el-table-column label="任务包名" align="center" prop="name">
         <template #default="scope">
           <el-link type="primary" @click="goToTask(scope.row)">
             {{ scope.row.name }}
           </el-link>
         </template>
       </el-table-column>
-      <el-table-column label="任务包状态" align="center" prop="status" >
+      <el-table-column label="任务包状态" align="center" prop="status">
         <template #default="scope">
-          <dict-tag :options="package_status" :value="scope.row.status"/>
+          <dict-tag :options="package_status" :value="scope.row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column label="任务包类型" align="center" prop="type">
+        <template #default="scope">
+          <dict-tag :options="package_type" :value="scope.row.type" />
         </template>
       </el-table-column>
       <el-table-column label="分配人" align="center" prop="assigner" />
@@ -114,34 +70,20 @@
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
-<!--      <el-table-column label="任务包id" align="center" prop="taskPackageId" />-->
+      <!--      <el-table-column label="任务包id" align="center" prop="taskPackageId" />-->
 
 
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button 
-            link 
-            type="primary" 
-            icon="Edit" 
-            @click="handleUpdate(scope.row)" 
-            v-hasPermi="['label:project:edit']"
-            :disabled="scope.row.status === 'reception'">
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['label:project:edit']" :disabled="scope.row.status === 'reception'">
             修改
           </el-button>
-          <el-button 
-            link 
-            type="primary" 
-            icon="Delete" 
-            @click="handleDelete(scope.row)" 
-            v-hasPermi="['label:project:remove']"
-            :disabled="scope.row.status === 'reception'">
+          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['label:project:remove']" :disabled="scope.row.status === 'reception'">
             删除
           </el-button>
-          <el-button 
-            link 
-            type="primary"  
-            @click="showUser(scope.row)" 
-            v-hasPermi="['label:project:edit']"
+          <el-button link type="primary" @click="showUser(scope.row)" v-hasPermi="['label:project:edit']"
             :disabled="scope.row.status === 'reception'">
             分配人员
           </el-button>
@@ -149,13 +91,8 @@
       </el-table-column>
     </el-table>
 
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <!-- 添加或修改任务包对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
@@ -163,6 +100,13 @@
         <el-form-item label="任务包名" prop="name">
           <el-input v-model="form.name" placeholder="请输入任务包名" />
         </el-form-item>
+
+        <el-form-item label="标注类型" prop="type">
+          <el-select v-model="form.type" placeholder="选择标注类型">
+            <el-option v-for="item in types" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
@@ -174,19 +118,13 @@
         </div>
       </template>
     </el-dialog>
-    
+
     <!-- 分配人员对话框 -->
     <el-dialog title="分配人员" v-model="assignUserOpen" width="500px" append-to-body>
       <el-form ref="assignUserRef" :model="assignUserForm" :rules="assignUserRules" label-width="80px">
         <el-form-item label="用户名" prop="userId">
-          <el-select 
-            v-model="assignUserForm.userId" 
-            placeholder="请选择用户" 
-            style="width: 100%">
-            <el-option
-              v-for="item in userList"
-              :key="item.userId"
-              :label="item.nickName + '(' + item.userName + ')'"
+          <el-select v-model="assignUserForm.userId" placeholder="请选择用户" style="width: 100%">
+            <el-option v-for="item in userList" :key="item.userId" :label="item.nickName + '(' + item.userName + ')'"
               :value="item.userId">
             </el-option>
           </el-select>
@@ -199,43 +137,15 @@
         </div>
       </template>
     </el-dialog>
-    
-    <!-- 上传任务包对话框 -->
-    <el-dialog title="上传任务包" v-model="uploadOpen" width="500px" append-to-body>
-      <el-form ref="uploadRef" :model="uploadForm" label-width="80px">
-        <el-form-item label="ZIP文件" prop="file">
-          <el-upload
-            ref="uploadRef"
-            :limit="1"
-            :auto-upload="false"
-            :on-change="handleFileChange"
-            :on-exceed="handleFileExceed"
-            accept=".zip"
-          >
-            <el-button type="primary">选择文件</el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                请上传.zip格式文件，且文件中wav和TextGrid文件必须成对出现
-              </div>
-            </template>
-          </el-upload>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitUpload" :loading="uploadLoading">确 定</el-button>
-          <el-button @click="cancelUpload">取 消</el-button>
-        </div>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup name="Package">
-import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser, uploadPackage } from "@/api/label/package"
+import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser } from "@/api/label/package"
 
 const { proxy } = getCurrentInstance()
 const { package_status } = proxy.useDict('package_status')
+const { package_type } = proxy.useDict('package_type')
 const route = useRoute()
 const router = useRouter()
 
@@ -252,12 +162,23 @@ const daterangeCreateTime = ref([])
 const assignUserOpen = ref(false)
 const userList = ref([])
 const currentRow = ref({})
-const uploadOpen = ref(false)
-const uploadLoading = ref(false)
-const uploadFile = ref(null)
 
 const projectId = route.params.projectId
 const projectName = route.params.projectName
+
+
+
+
+const types = [
+  {
+    value: 'text',
+    label: '文本标注',
+  },
+  {
+    value: 'audio',
+    label: '文件录音',
+  }
+]
 
 const data = reactive({
   form: {},
@@ -272,19 +193,22 @@ const data = reactive({
     name: [
       { required: true, message: "任务包名不能为空", trigger: "blur" }
     ],
+    type: [
+      { required: true, message: "标注类型不能为空", trigger: "blur" }
+    ],
   },
   assignUserForm: {
     userId: null
   },
   assignUserRules: {
     userId: [{ required: true, message: "请选择用户", trigger: "change" }]
-  },
-  uploadForm: {
-    file: null
   }
 })
 
-const { queryParams, form, rules, assignUserForm, assignUserRules, uploadForm } = toRefs(data)
+const { queryParams, form, rules, assignUserForm, assignUserRules } = toRefs(data)
+
+data.form.type = "文本标注"
+
 
 /** 查询任务包列表 */
 function getList() {
@@ -325,7 +249,8 @@ function reset() {
     name: null,
     status: null,
     assigner: null,
-    auditor: null
+    auditor: null,
+    type: null
   }
   proxy.resetForm("packageRef")
 }
@@ -379,7 +304,7 @@ function submitForm() {
           getList()
         })
       } else {
-        addPackage({...form.value, projectId: projectId}).then(response => {
+        addPackage({ ...form.value, projectId: projectId }).then(response => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
           getList()
@@ -392,12 +317,12 @@ function submitForm() {
 /** 删除按钮操作 */
 function handleDelete(row) {
   const _taskPackageIds = row.taskPackageId || ids.value
-  proxy.$modal.confirm('是否确认删除任务包编号为"' + _taskPackageIds + '"的数据项？').then(function() {
+  proxy.$modal.confirm('是否确认删除任务包编号为"' + _taskPackageIds + '"的数据项？').then(function () {
     return delPackage(_taskPackageIds)
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess("删除成功")
-  }).catch(() => {})
+  }).catch(() => { })
 }
 
 /** 导出按钮操作 */
@@ -457,57 +382,9 @@ function submitAssignUser() {
         proxy.$modal.msgSuccess("分配成功");
         assignUserOpen.value = false;
         getList(); // 重新加载任务包列表以显示更新后的状态
-      }).catch(() => {});
+      }).catch(() => { });
     }
   });
-}
-
-// 显示上传对话框
-function handleUpload() {
-  uploadOpen.value = true
-  uploadForm.value.file = null
-  uploadFile.value = null
-}
-
-// 取消上传
-function cancelUpload() {
-  uploadOpen.value = false
-  proxy.resetForm("uploadRef")
-}
-
-// 文件选择处理
-function handleFileChange(file) {
-  uploadFile.value = file.raw
-}
-
-// 文件超出限制处理
-function handleFileExceed() {
-  proxy.$modal.msgWarning("只能上传一个文件")
-}
-
-// 提交上传
-function submitUpload() {
-  if (!uploadFile.value) {
-    proxy.$modal.msgWarning("请选择文件")
-    return
-  }
-  
-  uploadLoading.value = true
-  
-  const formData = new FormData()
-  formData.append("file", uploadFile.value)
-  formData.append("projectId", projectId)
-  
-  uploadPackage(formData).then(response => {
-    proxy.$modal.msgSuccess("上传成功")
-    uploadOpen.value = false
-    getList()
-  }).catch(error => {
-    console.error(error)
-    proxy.$modal.msgError("上传失败：" + (error.message || "未知错误"))
-  }).finally(() => {
-    uploadLoading.value = false
-  })
 }
 
 getList()
