@@ -8,9 +8,11 @@
       <div> 音频文件：{{ task.data.audioFileName }}</div>
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
         <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
-        <el-button type="danger" plain @click="redo()">重做</el-button>
-        <el-button type="primary" plain @click="saveTask()">保存</el-button>
-        <el-button type="success" plain @click="submitTask()">提交</el-button>
+        <div v-if="['unstart','underway','reject'].includes(task.data.status)">
+          <el-button type="danger" plain @click="redo()">重做</el-button>
+          <el-button type="primary" plain @click="saveTask()">保存</el-button>
+          <el-button type="success" plain @click="submitTask()">提交</el-button>
+        </div>
       </div>
     </div>
     
@@ -20,16 +22,15 @@
     
 
     <div style="margin-top: 40px; display: flex; justify-content: center; align-items: center;font-size: 14px;">
-      <!-- <el-button type="primary" @click="scrollToRow(20)">滚动到第21行</el-button> -->
       <!-- {{ formatSecondsToMMSSS(currentTime)  }} / {{ formatSecondsToMMSSS(duration)}}  -->
       <el-button type="info" plain id="backward">上一段</el-button>
       <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
       <el-button type="info" plain id="forward">下一段</el-button>
       <view style="margin-left: 12px;display: flex;align-items: center;">
-        音量大小 <el-slider v-model="volume" style="width: 100px;margin-left: 3px;"/>
+        音量 <el-slider v-model="volume" style="width: 100px;margin-left: 3px;"/>
       </view>
       <view style="margin-left: 12px;display: flex;align-items: center;">
-        播放速度 <el-select v-model="playbackRate" size="small" style="width: 70px;margin-left: 3px;" >
+        倍速 <el-select v-model="playbackRate" size="small" style="width: 70px;margin-left: 3px;" >
           <el-option
             v-for="item in playbackRateList"
             :key="item.value"
@@ -45,8 +46,9 @@
 
     <!--分段标注列表-->
     <div style="margin-top: 20px; display: flex;">
-      <el-table ref="tableRef" :data="times" :highlight-current-row="false" style="width: 100%;height: 500px;" 
-        :row-class-name="tableRowClassName" @row-click="rowClick" @scrolltop="scrollToTop"> 
+      <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
+        style="width: 100%;height: 400px;"  :show-header="true" 
+        :row-class-name="tableRowClassName" @row-click="rowClick" > 
           <el-table-column label="分段序号" width="100"> 
             <template #default="scope"> 
               {{ scope.$index + 1 }}
@@ -67,14 +69,14 @@
               {{ (scope.row.end - scope.row.start).toFixed(3) }}
             </template>
           </el-table-column>
-          <el-table-column label="标注内容文本" > 
+          <el-table-column label="标注文本内容" > 
             <template #default="scope"> 
-              <el-input type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容文本" style="width:100%;" />
+              <el-input type="textarea" :readonly="!['unstart','underway','reject'].includes(task.data.status)" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容" style="width:100%;font-size:16px;" />
             </template>
           </el-table-column>
-          <el-table-column label="文本字符数" width="200"> 
+          <el-table-column label="字符数" width="100"> 
             <template #default="scope"> 
-              {{ scope.row.text.length }}
+              <span :style="scope.row.text.length>120?'color:red':''">{{ scope.row.text.length }}</span>
             </template>
           </el-table-column>
       </el-table>
@@ -239,7 +241,44 @@ function handleUpdate(row) {
 //重做标注
 function redo(){
   //刷新页面
-  proxy.$router.go(0)
+  // proxy.$router.go(0)
+  proxy.$modal.confirm('是否放弃修改并载入上一次保存的标注数据？').then(function () {
+    let newtimes = task.textGridJson.intervals.map(ts=>{
+      return {
+        start: ts.xmin,
+        end: ts.xmax,
+        text: ts.text
+      }
+    })
+    times.splice(0,times.length,...newtimes)
+
+    //清除零长区域
+    regions.getRegions().forEach((reg) => {
+        if (reg.start == reg.end) {//清除零长区域
+          reg.remove()
+        }
+        if(reg.start==activeRegion.start && reg.end==activeRegion.end){//清除（取消）前个激活区域
+          reg.remove()
+        }
+      })
+
+      //重建零长区域
+      times.forEach((e, index) => {
+        regions.addRegion({
+          start: e.start,
+          content: `${index+1}`,
+          color: '#000',
+          drag: false,
+          resize: false
+        })
+      })
+
+      activeRegion.start = 0
+      activeRegion.end = 0
+
+      proxy.$modal.msgSuccess("重新载入数据成功")
+
+  })
 }
 
 /** 保存任务  */
@@ -269,7 +308,7 @@ function saveTask() {
 
 /** 提交任务 */
 function submitTask() {
-  proxy.$modal.confirm('是否确认已完成标注并提交审核？').then(function () {
+  proxy.$modal.confirm('确定已完成该音频标注任务并提交审核吗？').then(function () {
     //将最新的times转为intervals
     let intervals = times.map((ts,i)=>{
       return {
@@ -289,7 +328,13 @@ function submitTask() {
     task.data.status = 'pending_review'
     //提交task.data修改
     updateTask(task.data).then(response => {
-      proxy.$modal.msgSuccess("保存成功")
+      proxy.$modal.msgSuccess("提交成功")
+      setTimeout(() => {
+        //proxy.$router.push(`/label/my-task/index/${taskId}/1112`)
+        proxy.$tab.closePage()  // 关闭当前页
+        proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
+      }, 1500)
+      
     })
   })
 }
@@ -705,6 +750,8 @@ async function init(){
       activateRegion(newSeg)
 
       const index = times.findIndex(seg => seg.start === newSeg.start && seg.end === newSeg.end);
+      //滚动到标注行
+      scrollToRow(index)
       console.log('++++当前激活的分段：', JSON.stringify(times[index]));
 
       
@@ -786,6 +833,8 @@ async function init(){
       region.remove()
       //激活新分段
       activateRegion(newReg)
+      //滚动到标注行
+      scrollToRow(index)
 
     })
 
@@ -897,6 +946,8 @@ async function init(){
         regionIndex = (regionIndex+1) > times.length ? times.length : (regionIndex+1)
         //3.激活下一段
         activateRegion(times[regionIndex])
+        //滚动到标注行
+        scrollToRow(regionIndex)
         // //4.跳转下一段的开始位置
         // ws.skip(times[regionIndex].start)
         // //5.重新开始播放
@@ -918,6 +969,9 @@ async function init(){
         regionIndex = (regionIndex-1) < 0 ? 0 : (regionIndex-1)
         //3.激活上一段
         activateRegion(times[regionIndex])
+        //滚动到标注行
+        scrollToRow(regionIndex)
+
         // //跳转上一段的开始位置
         // ws.skip(times[regionIndex].start)
         // //5.重新开始播放
@@ -1232,19 +1286,37 @@ const scrollToRow = (rowIndex) => {
   if (!tableRef.value) return
 
   console.log('scrollToRow-->', rowIndex, tableRef)
+
+  // tableRef.value.setScrollTop(rowIndex * 50)
+
+  const rowHeightList = [];
+  let temp = tableRef.value.$el.getElementsByClassName('el-table__row'); //获取到所有行元素
+  for (let i = 0; i < temp.length; i++) {
+    const item = temp[i];
+    rowHeightList.push(item.scrollHeight);
+  }
+  let totalHeight = 0; //求出选中行之前的的高度之和,需要注意的是,当前行的高度不能包含进去
+  for (let index = 0; index < rowHeightList.length; index++) {
+    const row = rowHeightList[index];
+    if (index < rowIndex) {
+      totalHeight += row;
+    }
+  }
+  // 滚动到指定行
+  tableRef.value.setScrollTop(totalHeight);
   
   // 设置高亮
   // tableRef.value.setCurrentRow(times[rowIndex])
   
   // 滚动到指定行
-  nextTick(() => {
-    setTimeout(()=>{
-      tableRef.value.scrollTo({ 
-        row: rowIndex, 
-        position: 'top' 
-      })
-    }, 100)    
-  })
+  // nextTick(() => {
+  //   setTimeout(()=>{
+  //     tableRef.value.scrollTo({ 
+  //       row: rowIndex, 
+  //       position: 'top' 
+  //     })
+  //   }, 100)    
+  // })
 }
 
 
@@ -1337,18 +1409,13 @@ watch(textGridText, (newValue, oldValue) => {
   background-color: rgba(255, 225, 0, 0.3) !important;
   /*color: #409EFF;*/
   font-weight: bold;
-  .cell .el-textarea__inner{
+  /*.cell .el-textarea__inner{
     font-size: 18px;
-  }
-}
-
-:deep(.el-table .special-row) {
-  background-color: #f0f9e8 !important;
-  color: #67C23A;
+  }*/
 }
 
 /* 覆盖 el-table 的行 hover 样式 */
-.el-table .el-table__body tr.hover-row > td {
-  background-color: rgba(255, 225, 0, 0.3) !important; /* 设置为透明或者你想要的背景颜色 */
+::v-deep .el-table__body tr:hover > td {
+  background-color: transparent !important;
 }
 </style>
