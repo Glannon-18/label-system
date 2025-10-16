@@ -46,84 +46,95 @@ public class SysTask extends BaseEntity
     /** 任务包分配人 */
     private String packageAssigner;
 
-    public void setTaskId(Long taskId) 
+    private String packageType;
+
+    public void setTaskId(Long taskId)
     {
         this.taskId = taskId;
     }
 
-    public Long getTaskId() 
+    public Long getTaskId()
     {
         return taskId;
     }
 
-    public void setPackageId(Long packageId) 
+    public void setPackageId(Long packageId)
     {
         this.packageId = packageId;
     }
 
-    public Long getPackageId() 
+    public Long getPackageId()
     {
         return packageId;
     }
 
-    public void setAudioFileName(String audioFileName) 
+    public void setAudioFileName(String audioFileName)
     {
         this.audioFileName = audioFileName;
     }
 
-    public String getAudioFileName() 
+    public String getAudioFileName()
     {
         return audioFileName;
     }
 
-    public void setAudioFilePath(String audioFilePath) 
+    public void setAudioFilePath(String audioFilePath)
     {
         this.audioFilePath = audioFilePath;
     }
 
-    public String getAudioFilePath() 
+    public String getAudioFilePath()
     {
         return audioFilePath;
     }
 
-    public void setStatus(String status) 
+    public void setStatus(String status)
     {
         this.status = status;
     }
 
-    public String getStatus() 
+    public String getStatus()
     {
         return status;
     }
 
-    public void setAnnotator(String annotator) 
+    public void setAnnotator(String annotator)
     {
         this.annotator = annotator;
     }
 
-    public String getAnnotator() 
+    public String getAnnotator()
     {
         return annotator;
     }
 
-    public void setAuditor(String auditor) 
+    public void setAuditor(String auditor)
     {
         this.auditor = auditor;
     }
 
-    public String getAuditor() 
+    public String getAuditor()
     {
         return auditor;
     }
-    
-    public String getPackageAssigner() 
+
+    public String getPackageAssigner()
     {
         return packageAssigner;
     }
 
-    public void setPackageAssigner(String packageAssigner) 
+    public void setPackageAssigner(String packageAssigner)
     {
         this.packageAssigner = packageAssigner;
+    }
+
+
+    public String getPackageType() {
+        return packageType;
+    }
+
+    public void setPackageType(String packageType) {
+        this.packageType = packageType;
     }
 
     public String getTextGrid()
@@ -152,7 +163,8 @@ public class SysTask extends BaseEntity
             .append("updateBy", getUpdateBy())
             .append("updateTime", getUpdateTime())
             .append("remark", getRemark())
-                .append("textGrid", getTextGrid())
+            .append("packageType", getPackageType())
+            .append("textGrid", getTextGrid())
             .toString();
     }
 }
