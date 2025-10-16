@@ -102,22 +102,7 @@
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="taskRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="音频文件名" prop="audioFileName">
-          <el-upload
-            ref="uploadRef"
-            :limit="1"
-            :auto-upload="false"
-            :on-change="handleFileChange"
-            :on-exceed="handleFileExceed"
-            :file-list="fileList"
-            accept=".wav"
-          >
-            <el-button type="primary">选择文件</el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                请选择.wav格式的音频文件
-              </div>
-            </template>
-          </el-upload>
+          <file-upload v-model="form.audioFileName" :file-size="20" :limit="1"/>
         </el-form-item>
         <el-form-item label="任务状态" prop="status">
           <el-select v-model="form.status" placeholder="请选择任务状态">
@@ -187,7 +172,7 @@ const data = reactive({
       { required: true, message: "所属包的ID不能为空", trigger: "blur" }
     ],
     audioFileName: [
-      { required: true, message: "音频文件不能为空", trigger: "change" }
+      { required: true, message: "音频文件名不能为空", trigger: "blur" }
     ],
     audioFilePath: [
       { required: true, message: "音频文件在服务器的路径不能为空", trigger: "blur" }
@@ -196,21 +181,6 @@ const data = reactive({
 })
 
 const { queryParams, form, rules } = toRefs(data)
-const uploadFile = ref(null)
-const fileList = ref([]) // 用于存储el-upload的文件列表
-
-// 文件选择处理
-function handleFileChange(file, fileList) {
-  uploadFile.value = file.raw
-  form.value.audioFileName = file.raw.name
-  // 更新文件列表
-  fileList.value = fileList
-}
-
-// 文件超出限制处理
-function handleFileExceed(files, fileList) {
-  proxy.$modal.msgWarning("只能上传一个文件")
-}
 
 /** 查询任务列表 */
 function getList() {
@@ -249,8 +219,6 @@ function reset() {
     remark: null
   }
   proxy.resetForm("taskRef")
-  uploadFile.value = null
-  fileList.value = []
 }
 
 /** 搜索按钮操作 */
@@ -277,7 +245,6 @@ function handleAdd() {
   reset()
   open.value = true
   title.value = "添加任务"
-  uploadFile.value = null
 }
 
 /** 修改按钮操作 */
@@ -286,13 +253,6 @@ function handleUpdate(row) {
   const _taskId = row.taskId || ids.value
   getTask(_taskId).then(response => {
     form.value = response.data
-    // 如果已有文件，则设置文件列表显示原文件
-    if (response.data.audioFileName) {
-      fileList.value = [{
-        name: response.data.audioFileName,
-        url: response.data.audioFilePath
-      }]
-    }
     open.value = true
     title.value = "修改任务"
   })
@@ -303,57 +263,20 @@ function submitForm() {
   proxy.$refs["taskRef"].validate(valid => {
     if (valid) {
       if (form.value.taskId != null) {
-        // 更新操作
-        // 如果没有新文件但有原文件，则允许更新
-        if (!uploadFile.value && fileList.value.length === 0) {
-          proxy.$modal.msgWarning("请选择音频文件");
-          return;
-        }
-        
-        // 构造FormData对象，确保总是发送multipart/form-data请求
-        const formData = new FormData();
-        // 添加sysTask部分（JSON字符串）
-        formData.append("sysTask", new Blob([JSON.stringify(form.value)], { type: "application/json" }));
-        
-        // 如果有新文件则添加文件部分
-        if (uploadFile.value) {
-          formData.append("file", uploadFile.value);
-        }
-        
-        // 使用修改后的API接口上传任务和文件
-        updateTask(formData).then(response => {
-          proxy.$modal.msgSuccess("修改成功");
-          open.value = false;
-          getList();
-        }).catch(error => {
-          console.error(error);
-          proxy.$modal.msgError("更新失败：" + (error.message || "未知错误"));
-        });
+        updateTask(form.value).then(response => {
+          proxy.$modal.msgSuccess("修改成功")
+          open.value = false
+          getList()
+        })
       } else {
-        // 新增操作
-        if (!uploadFile.value) {
-          proxy.$modal.msgWarning("请选择音频文件");
-          return;
-        }
-        
-        // 创建FormData对象用于文件上传
-        const formData = new FormData();
-        formData.append("file", uploadFile.value);
-        // 添加sysTask部分（JSON字符串）
-        formData.append("sysTask", new Blob([JSON.stringify({...form.value, packageId: taskPackageId})], { type: "application/json" }));
-        
-        // 使用修改后的API接口上传任务和文件
-        addTask(formData).then(response => {
-          proxy.$modal.msgSuccess("新增成功");
-          open.value = false;
-          getList();
-        }).catch(error => {
-          console.error(error);
-          proxy.$modal.msgError("上传失败：" + (error.message || "未知错误"));
-        });
+        addTask({...form.value, packageId: taskPackageId}).then(response => {
+          proxy.$modal.msgSuccess("新增成功")
+          open.value = false
+          getList()
+        })
       }
     }
-  });
+  })
 }
 
 /** 删除按钮操作 */

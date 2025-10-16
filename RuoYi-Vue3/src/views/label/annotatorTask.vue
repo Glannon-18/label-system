@@ -8,12 +8,7 @@
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="任务状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择任务状态" clearable style="width: 120px;">
-          <el-option
-              v-for="dict in task_status"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-          />
+          <el-option v-for="dict in task_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -36,7 +31,7 @@
       </el-table-column>
       <el-table-column label="任务状态" align="center" prop="status">
         <template #default="scope">
-          <dict-tag :options="task_status" :value="scope.row.status"/>
+          <dict-tag :options="task_status" :value="scope.row.status" />
         </template>
       </el-table-column>
       <!--      <el-table-column label="分配人账户名" align="center" prop="annotator" />-->
@@ -50,15 +45,8 @@
       <el-table-column label="备注" align="center" prop="remark" />
     </el-table>
 
-    <pagination
-        v-show="total>0"
-        :total="total"
-        v-model:page="queryParams.pageNum"
-        v-model:limit="queryParams.pageSize"
-        @pagination="getList"
-    />
-
-    
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize" @pagination="getList" />
   </div>
 </template>
 
@@ -118,8 +106,15 @@ function resetQuery() {
 /** 跳转到标注页面 **/
 function handleToAnnotator(row) {
   const taskId = row.taskId
+  const type = row.packageType
   const taskName = row.audioFileName
-  proxy.$router.push(`/label/annotator1/index/${taskId}`)
+
+  if (type === "text") {
+    proxy.$router.push(`/label/annotator1/index/${taskId}`)
+  }
+  else if (type === "audio") {
+    proxy.$router.push(`/label/audio-recorder/index/${taskId}`)
+  }
 }
 
 getList()
