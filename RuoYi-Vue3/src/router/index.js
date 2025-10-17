@@ -140,7 +140,7 @@ export const dynamicRoutes = [
         path: 'index/:projectId(\\d+)/:projectName',
         component: () => import('@/views/label/taskPackage'),
         name: 'project-package',
-        meta: { title: '任务包', activeMenu: '/label/project' }
+        meta: { title: '任务包管理', activeMenu: '/label/project' }
       }
     ]
   },
@@ -154,7 +154,7 @@ export const dynamicRoutes = [
         path: 'index/:taskPackageId(\\d+)/:taskPackageName',
         component: () => import('@/views/label/task'),
         name: 'project-task',
-        meta: { title: '任务', activeMenu: '/label/project' }
+        meta: { title: '任务包明细管理', activeMenu: '/label/project' }
       }
     ]
   },
@@ -168,7 +168,7 @@ export const dynamicRoutes = [
         path: 'index/:taskPackageId(\\d+)/:taskPackageName',
         component: () => import('@/views/label/annotatorTask'),
         name: 'my-task',
-        meta: { title: '我的任务', activeMenu: '/label/annotator' }
+        meta: { title: '我的任务包明细', activeMenu: '/label/annotator' }
       }
     ]
   },

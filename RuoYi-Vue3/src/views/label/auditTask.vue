@@ -28,14 +28,14 @@
 
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="音频文件名" align="center" prop="audioFileName">
+      <el-table-column label="音频文件名" align="center" prop="audioFileName" :show-overflow-tooltip="true">
         <template #default="scope">
           <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
         </template>
       </el-table-column>
       <el-table-column label="任务状态" align="center" prop="status">
         <template #default="scope">
-          <dict-tag :options="task_status" :value="scope.row.status"/>
+          <el-tag :type="getStatusTagType(scope.row.status)">{{ getStatusTagName(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="标注人员" align="center" prop="packageAssigner" />
@@ -128,6 +128,35 @@ const data = reactive({
 })
 
 const { queryParams } = toRefs(data)
+
+/** 
+ * 根据任务状态获取标签类型
+ */
+function getStatusTagType(status) {
+  switch (status) {
+    case 'unstart': // 未开始
+      return 'info'
+    case 'underway': // 标注中
+      return 'primary'
+    case 'pending_review': // 待审核
+      return 'warning'
+    case 'reject': // 已驳回
+      return 'danger'
+    case 'pass': // 审核通过
+      return 'success'
+    default:
+      return 'info'
+  }
+}
+
+/**
+ * 根据任务状态获取标签名称
+ */
+function getStatusTagName(status) {
+  // task_status 是一个 ref 对象，需要通过 .value 访问实际数组
+  const statusObj = task_status.value.find(item => item.value === status)
+  return statusObj ? statusObj.label : status
+}
 
 /** 查询任务列表 */
 function getList() {
