@@ -33,11 +33,27 @@
                 <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
                     v-hasPermi="['label:records:remove']">删除</el-button>
             </el-col>
-            <el-col :span="1.5">
-                <el-button type="warning" plain icon="Download" @click="handleExport"
-                    v-hasPermi="['label:records:export']">导出</el-button>
-            </el-col>
-            <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
+          
+            <!-- <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar> -->
+             <div class="top-right-btn" style="display: flex;flex-direction: row;gap: 0px;"> 
+                
+                <template v-if="['unstart','underway','reject','pass'].includes(task.status)">                
+                    <el-col :span="1.5">
+                        <el-button type="success" plain icon=""  @click="summitTask()"
+                            >提交审核</el-button>
+                    </el-col>
+                </template>
+
+                <template v-else-if="['pending_review'].includes(task.status)">
+                    <el-col :span="1.5">
+                        <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">驳回任务</el-button>
+                    </el-col>
+                    <el-col :span="1.5">
+                        <el-button type="success" plain @click="auditTask('pass')" vhasPermi="['label:task:audit']">审核通过</el-button>
+                    </el-col>
+                </template>
+
+            </div>
         </el-row>
 
         <el-table 
@@ -46,8 +62,8 @@
         @selection-change="handleSelectionChange"
         :row-class-name="recording"
         >
-            <el-table-column type="selection" width="55" align="center" />
-            <el-table-column label="序号" align="center" width="55">
+            <el-table-column type="selection" width="50" align="center" />
+            <el-table-column label="序号" align="center" width="50">
                 <template #default="{ $index }">
                     {{ ($index + 1) + (queryParams.pageNum - 1) * queryParams.pageSize }}
                 </template>
@@ -99,29 +115,75 @@
                             </span>
 
 
-
                             <span class="action-btn" @click="toggleRecording($index)">
 
-                                <el-icon v-if="!recordingStates[$index]" size="22">
-                                    <Microphone />
-                                </el-icon>
-                                <el-icon v-else size="22" color="#ff3939">
-                                    <Mute />
-                                </el-icon>
-                            </span>
-                            <span class="action-btn" @click="togglePlaying($index)">
+                                <el-tooltip
+                                    class="box-item"
+                                    effect="dark"
+                                    content="录音"
+                                    placement="bottom"
+                                    v-if="!recordingStates[$index]" 
+                                >
+                                    <el-icon size="22">
+                                        <Microphone />
+                                    </el-icon>
+                                </el-tooltip>
 
-                                <el-icon v-if="!playingStates[$index]" size="22">
-                                    <VideoPlay />
-                                </el-icon>
-                                <el-icon v-else size="22">
-                                    <VideoPause />
-                                </el-icon>
+                                <el-tooltip
+                                    class="box-item"
+                                    effect="dark"
+                                    content="结束"
+                                    placement="bottom"
+                                    v-else 
+                                >
+                                    <el-icon size="22" color="#ff3939">
+                                        <Mute />
+                                    </el-icon>
+                                </el-tooltip>
+
                             </span>
+
+                            <span class="action-btn" @click="togglePlaying($index)">
+                                <el-tooltip
+                                    class="box-item"
+                                    effect="dark"
+                                    content="播放"
+                                    placement="bottom"
+                                    v-if="!playingStates[$index]">
+
+                                    <el-icon  size="22">
+                                        <VideoPlay />
+                                    </el-icon>
+                                </el-tooltip>
+                                
+                                <el-tooltip
+                                    class="box-item"
+                                    effect="dark"
+                                    content="暂停"
+                                    placement="bottom"
+                                    v-else>
+
+                                    <el-icon size="22">
+                                        <VideoPause />
+                                    </el-icon>
+
+                                </el-tooltip>
+                            </span>
+
+
                             <span class="action-btn" @click="handleUpdate(row)">
-                                <el-icon size="22" color="orange">
-                                    <Edit />
-                                </el-icon>
+                                <el-tooltip
+                                    class="box-item"
+                                    effect="dark"
+                                    content="修改"
+                                    placement="bottom">
+                                
+                                    <el-icon size="22" color="orange">
+                                        <Edit />
+                                    </el-icon>
+
+                                </el-tooltip>
+                                
                             </span>
                             <span class="action-btn" @click="openDeleteDialog($index)">
                                 <el-icon size="22" color="#575757">
@@ -179,6 +241,17 @@
                 </div>
             </template>
         </el-dialog>
+
+        <!-- 审核驳回对话框 -->
+        <el-dialog v-model="dialogFormVisible" title="驳回任务" width="500">
+          <el-input v-model="dialogFormRemark" type="textarea" :rows="3" placeholder="请输入驳回原因" style="width: 100%;" />
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button @click="dialogFormVisible = false">取消</el-button>
+              <el-button type="primary" @click="rejectTask()">确定</el-button>
+            </div>
+          </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -187,6 +260,7 @@
 import { listTask, getTask, delTask, addTask, updateTask } from "@/api/label/task"
 import { listRecords, getRecords, delRecords, addRecords, updateRecords } from "@/api/label/records"
 import * as XLSX from "xlsx"
+import { getToken } from "@/utils/auth"
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -232,8 +306,64 @@ const data = reactive({
 
 const { queryParams, form, rules } = toRefs(data)
 
-var task = {}
+const task = ref({status:"?"})
+let dialogFormVisible = ref(false)
+let dialogFormRemark = ref('')
 
+//驳回任务
+function rejectTask(){
+  
+    if(!dialogFormRemark.value){
+    proxy.$modal.msgError("请填写驳回原因")
+    return
+    }
+    dialogFormVisible = false
+
+    //准备提交的参数
+    let sysTask = {
+        taskId: task.value.taskId,      
+        status: 'reject',
+        remark: '驳回原因:'+dialogFormRemark.value
+    }
+    const formData = new FormData();
+    formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
+    updateTask(formData).then(response => {
+        proxy.$modal.msgSuccess("驳回成功")
+        setTimeout(() => {
+        proxy.$tab.closePage()  // 关闭当前页
+        proxy.$tab.closeOpenPage(`/label/my-task/index/${task.value.taskId}/`) // 关闭并跳转
+        }, 1000)
+    
+  })
+
+}
+
+
+
+/** 审核任务 */
+function auditTask(status) {
+  let confirmTxt = '确定审核通过吗？'
+  if(status == 'reject'){
+    confirmTxt = '确定驳回任务吗？'
+  }
+  proxy.$modal.confirm(confirmTxt).then(function () {
+    let sysTask = {
+        taskId: task.value.taskId,
+        status: status,
+        remark: '审核通过'
+      }
+    const formData = new FormData();
+    formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
+    updateTask(formData).then(response => {
+      proxy.$modal.msgSuccess("审核成功")
+      setTimeout(() => {
+        proxy.$tab.closePage()  // 关闭当前页
+        proxy.$tab.closeOpenPage(`/label/my-task/index/${task.value.taskId}/`) // 关闭并跳转
+      }, 1000)
+      
+    })
+  })
+}
 
 /** 查询文件录音列表 */
 function getList() {
@@ -242,13 +372,18 @@ function getList() {
         if (_responseRecords.total > 0) {
             recordsList.value = _responseRecords.rows
             total.value = _responseRecords.total
+            
             loading.value = false
             _responseRecords = null
         }
     } else {
-        listRecords(queryParams.value).then(response => {
+        listRecords(queryParams.value)
+        .then(response => {
             recordsList.value = response.rows
             total.value = response.total
+            loading.value = false
+        })
+        .catch(() => {
             loading.value = false
         })
     }
@@ -349,12 +484,26 @@ function handleDelete(row) {
     }).catch(() => { })
 }
 
-/** 导出按钮操作 */
-function handleExport() {
-    proxy.download('label/records/export', {
-        ...queryParams.value
-    }, `records_${new Date().getTime()}.xlsx`)
+
+function summitTask() {
+    proxy.$modal.confirm('确定提交审核吗？').then(function () {
+        const formData = new FormData();
+        let sysTask = {
+            taskId: task.value.taskId,            
+            status: 'pending_review',
+        }
+        formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
+
+        updateTask(formData).then(response => {
+            proxy.$modal.msgSuccess("提交成功")
+            getTask(task.value.taskId).then(response => {
+                task.value = response.data
+                getList()
+            })
+        })
+    })
 }
+
 
 function openDeleteDialog(index) {
     deletingIndex.value = index
@@ -380,7 +529,6 @@ function confirmDelete() {
 }
 
 
-// 对话框
 const dialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
 const modifyingIndex = ref(-1)
@@ -414,7 +562,7 @@ function toggleRecording(index) {
     else {
 
         stopRecording()
-        proxy.$modal.msgWarning("录音结束")
+        // proxy.$modal.msgWarning("录音结束")
         hasRecording = false
         recordingRecordIndex = -1
     }
@@ -441,7 +589,7 @@ function togglePlaying(index) {
 
 
     if (index != playingIndex) {
-        audio = new Audio("http://localhost:8081/dev-api" + recordsList.value[index].audioFilePath)
+        audio = new Audio("/dev-api" + recordsList.value[index].audioFilePath)
         audio.onended = () => {
 
             playingStates.value[index] = false
@@ -484,7 +632,7 @@ const isRecording = ref(false)
 
 let recordStartTime = 0
 let recordTimer = null
-const recordDuration = ref('00.00') // 显示用
+const recordDuration = ref('00.00') 
 /**
  * 开始录音
  */
@@ -548,9 +696,143 @@ const recording = ({ row, rowIndex }) => {
   return rowIndex === recordingRecordIndexForUI.value ? 'recording' : ''
 }
 
+
+
+/**
+ * 上传文件到 /common/upload
+ * @param {File|Blob} file
+ */
+function uploadFile(file) {
+    const headers = { Authorization: "Bearer " + getToken() }
+    const formData = new FormData()
+    formData.append('file', file, file.name)
+
+    fetch('/dev-api/common/upload', {
+        method: 'POST',
+        headers: headers,
+        body: formData
+    })
+        .then(res => res.json())
+        .then(async (res) => {
+            if (res.code === 200) {
+                
+                const audio = new Audio(URL.createObjectURL(file));
+
+                const duration = await new Promise((resolve, reject) => {
+                    audio.addEventListener('loadedmetadata', () => {
+                        const d = audio.duration;
+                        const intPart = Math.floor(d);
+                        const decimal = Math.floor((d - intPart) * 100);
+                        const formatted = `${String(intPart).padStart(2, '0')}.${String(decimal).padStart(2, '0')}`;
+                        URL.revokeObjectURL(audio.src);
+                        resolve(formatted);
+                    });
+                    audio.addEventListener('error', err => {
+                        URL.revokeObjectURL(audio.src);
+                        reject(err);
+                    });
+                });
+            
+                audio.addEventListener('error', (err) => {
+                    console.error('加载音频失败:', err)
+                })
+
+                recordingRecord.audioFilePath = res.fileName
+                recordingRecord.audioDuration = duration
+                recordsList.value[recordingRecordIndex] = recordingRecord
+                updateRecords(recordingRecord).then((response) => {
+                    proxy.$modal.msgSuccess("上传成功")
+                })
+
+            } else {
+                console.error('上传失败:', res)
+                proxy.$modal.msgError('上传失败')
+            }
+        })
+        .catch(err => {
+            console.error('上传异常:', err)
+
+        })
+        .finally(() => {
+            recordingRecord = null
+            recordingRecordIndex = -1
+            recordingRecordIndexForUI.value = -1
+        })
+}
+
+
+onMounted(async () => {
+    const taskId = route.params.taskId
+
+    try {
+        const responseTask = await getTask(taskId)
+        task.value = responseTask.data
+
+        const responseRecords = await listRecords({ taskId: task.value.taskId })
+        
+        const url = `/dev-api${task.value.audioFilePath}`
+
+        if (responseRecords.total == 0) {
+            try {
+                _responseRecords = null
+                // 通过 fetch 获取文件二进制
+                const response = await fetch(url)
+                if (!response.ok) throw new Error("下载失败")
+
+                const arrayBuffer = await response.arrayBuffer()
+
+                // 解析为 workbook
+                const workbook = XLSX.read(arrayBuffer, { type: "array" })
+
+                // 获取第一个工作表
+                const sheetName = workbook.SheetNames[0]
+                const sheet = workbook.Sheets[sheetName]
+
+                // 以二维数组方式解析（每行一个数组）
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 })
+                const newRecords = []
+
+                // 按行处理
+                rows.forEach((row, index) => {
+                    const rowStr = row.join(", ")
+
+                    // console.log(`第 ${index + 1} 行:`, row)
+                    const record = {
+                        taskId: task.value.taskId,
+                        packageId: task.value.packageId,
+                        itemOrder: index + 1,
+                        text: rowStr
+                    }
+
+                    newRecords.push(record)
+
+                })
+                addRecords(newRecords).then(response => {
+                    // this.$modal.msgSuccess("新增成功")
+                    getList()
+                })
+
+            } catch (error) {
+                console.log(error)
+            }
+        } else {
+            _responseRecords = responseRecords
+            getList()
+        }
+
+    } catch (error) {
+
+    }
+
+
+})
+
+
+// === 辅助函数 ===
+
 function formatDuration(seconds) {
-    const intPart = Math.floor(seconds)       // 整数部分
-    const decimalPart = Math.floor((seconds % 1) * 100) // 小数部分两位
+    const intPart = Math.floor(seconds)
+    const decimalPart = Math.floor((seconds % 1) * 100)
 
     const intStr = intPart.toString().padStart(2, '0')
     const decimalStr = decimalPart.toString().padStart(2, '0')
@@ -612,7 +894,6 @@ const downloadWav = (blob) => {
     URL.revokeObjectURL(url)
 }
 
-// === 辅助函数 ===
 const writeString = (view, offset, string) => {
     for (let i = 0; i < string.length; i++) {
         view.setUint8(offset + i, string.charCodeAt(i))
@@ -637,129 +918,6 @@ const floatTo16BitPCM = (output, offset, input) => {
         output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true)
     }
 }
-
-import { getToken } from "@/utils/auth"
-
-/**
- * 上传文件到 /common/upload
- * @param {File|Blob} file
- */
-function uploadFile(file) {
-    const headers = { Authorization: "Bearer " + getToken() }
-    const formData = new FormData()
-    formData.append('file', file, file.name)
-
-    fetch('/dev-api/common/upload', {
-        method: 'POST',
-        headers: headers,
-        body: formData
-    })
-        .then(res => res.json())
-        .then(res => {
-            if (res.code === 200) {
-
-
-                const url = URL.createObjectURL(file)
-                const audio = new Audio(url)
-
-                audio.onloadedmetadata = () => {
-                    const duration = audio.duration // 秒，浮点数
-                    const formatted = duration.toFixed(2) // 保留两位小数
-                    console.log(`音频时长: ${formatted} 秒`)
-
-                    // 这里可以在上传时把时长也传给后端
-                }
-
-                audio.load()
-
-                recordingRecord.audioFilePath = res.fileName
-                recordsList.value[recordingRecordIndex] = recordingRecord
-                updateRecords(recordingRecord).then((response) => {
-                    proxy.$modal.msgSuccess("上传成功")
-                })
-
-            } else {
-                console.error('上传失败:', res)
-                proxy.$modal.msgError('上传失败')
-            }
-        })
-        .catch(err => {
-            console.error('上传异常:', err)
-
-        })
-        .finally(() => {
-            recordingRecord = null
-            recordingRecordIndex = -1
-            recordingRecordIndexForUI.value = -1
-        })
-}
-
-
-onMounted(async () => {
-    const taskId = route.params.taskId
-
-
-    try {
-        const responseTask = await getTask(taskId)
-        task = responseTask.data
-
-        const responseRecords = await listRecords({ taskId: task.taskId })
-        const url = `http://localhost:8081/dev-api${task.audioFileName}`
-
-        if (responseRecords.total == 0) {
-            try {
-                _responseRecords = null
-                // 通过 fetch 获取文件二进制
-                const response = await fetch(url)
-                if (!response.ok) throw new Error("下载失败")
-
-                const arrayBuffer = await response.arrayBuffer()
-
-                // 解析为 workbook
-                const workbook = XLSX.read(arrayBuffer, { type: "array" })
-
-                // 获取第一个工作表
-                const sheetName = workbook.SheetNames[0]
-                const sheet = workbook.Sheets[sheetName]
-
-                // 以二维数组方式解析（每行一个数组）
-                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 })
-                const newRecords = []
-
-                // 按行处理
-                rows.forEach((row, index) => {
-                    const rowStr = row.join(", ")
-
-                    // console.log(`第 ${index + 1} 行:`, row)
-                    const record = {
-                        taskId: task.taskId,
-                        packageId: task.packageId,
-                        itemOrder: index + 1,
-                        text: rowStr
-                    }
-
-                    newRecords.push(record)
-
-                })
-                addRecords(newRecords).then(response => {
-                    // this.$modal.msgSuccess("新增成功")
-                    getList()
-                })
-
-            } catch (error) {
-                console.log(error)
-            }
-        } else {
-            _responseRecords = responseRecords
-            getList()
-        }
-
-    } catch (error) {
-
-    }
-
-
-})
 </script>
 
 <style scoped>
@@ -770,19 +928,13 @@ onMounted(async () => {
 
 .item-container {
     width: 100%;
-
-
-    padding: 20px;
-    border-bottom: 1px solid rgb(241, 241, 241);
+    padding: 10px;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
     transition: box-shadow 0.3s;
 }
 
-.item-container:hover {
-    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); */
-}
 
 .item-text {
     font-size: 20px;

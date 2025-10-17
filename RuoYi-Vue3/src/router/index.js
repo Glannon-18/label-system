@@ -173,16 +173,16 @@ export const dynamicRoutes = [
     ]
   },
   {
-    path: '/label/audio-annotator',
+    path: '/label/view-label',
     component: Layout,
     hidden: true,
     permissions: ['label:project:list'],
     children: [
       {
-        path: 'index/:taskId(\\d+)',
-        component: () => import('@/views/label/labelEditor'),
+        path: 'index/:taskPackageId(\\d+)/:taskPackageName/:taskId(\\d+)',
+        component: () => import('@/views/label/labelEditorProject'),
         name: 'audio-annotator',
-        meta: { title: '语音标注', activeMenu: '/label/project' }//高亮“项目管理”菜单
+        meta: { title: '查看标注', activeMenu: '/label/project' }//高亮“项目管理”菜单
       }
     ]
   },
@@ -193,10 +193,24 @@ export const dynamicRoutes = [
     permissions: ['label:project:list'],
     children: [
       {
-        path: 'index/:taskId(\\d+)',
+        path: 'index/:taskPackageId(\\d+)/:taskPackageName/:taskId(\\d+)',
         component: () => import('@/views/label/labelEditor'),
         name: 'label-editor',
         meta: { title: '语音标注', activeMenu: '/label/annotator' } //高亮“我的任务”菜单
+      }
+    ]
+  },
+  {
+    path: '/label/audit-label',
+    component: Layout,
+    hidden: true,
+    permissions: ['label:project:list'],
+    children: [
+      {
+        path: 'index/:taskId(\\d+)',
+        component: () => import('@/views/label/labelEditorAudit'),
+        name: 'audit-label',
+        meta: { title: '审核标注', activeMenu: '/label/auditTask' }//高亮“我的审核”菜单
       }
     ]
   },
@@ -211,20 +225,6 @@ export const dynamicRoutes = [
         component: () => import('@/views/label/audioRecorder'),
         name: 'audio-recorder',
         meta: { title: '文件录音', activeMenu: '/label/annotator' }
-      }
-    ]
-  },
-  {
-    path: '/label/audit-label',
-    component: Layout,
-    hidden: true,
-    permissions: ['label:project:list'],
-    children: [
-      {
-        path: 'index/:taskId(\\d+)',
-        component: () => import('@/views/label/labelEditor'),
-        name: 'audit-label',
-        meta: { title: '审核标注', activeMenu: '/label/auditTask' }//高亮“我的审核”菜单
       }
     ]
   },

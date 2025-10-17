@@ -9,13 +9,13 @@
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
         <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
         
-        <div v-if="['unstart','underway','reject'].includes(task.data.status)">
+        <!-- <div v-if="['unstart','underway','reject','pass'].includes(task.data.status)">
           <el-button type="danger" plain @click="redo()">重做</el-button>
           <el-button type="primary" plain @click="saveTask()">保存更改</el-button>
           <el-button type="success" plain @click="submitTask()">提交审核</el-button>
         </div>
 
-        <!-- <div v-if="['pending_review'].includes(task.data.status)">
+        <div v-if="['pending_review'].includes(task.data.status)">
           <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">审核驳回</el-button>
           <el-button type="success" plain @click="auditTask('pass')" vhasPermi="['label:task:audit']">审核通过</el-button>
         </div> -->
@@ -419,25 +419,23 @@ function submitTask() {
     updateTask(formData).then(response => {
       proxy.$modal.msgSuccess("提交成功")
       setTimeout(() => {
-        // proxy.$tab.closePage()  // 关闭当前页
-        // // 根据来源页面跳转回相应的列表页
-        // const returnPath = getReturnPath();
-        // if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
-        //   // 对于需要参数的路由，我们需要传递参数
-        //   const route = useRoute();
-        //   if (route.params.taskPackageId && route.params.taskPackageName) {
-        //     proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
-        //   } else {
-        //     proxy.$router.push(returnPath);
-        //   }
-        // } else if (returnPath === '/label/auditTask') {
-        //   // 为auditTask页面添加时间戳参数以触发刷新
-        //   proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
-        // } else {
-        //   proxy.$router.push(returnPath);
-        // }
-        //跳转回“我的任务明细”页
-        proxy.$router.push(`/label/my-task/index/${task.data.packageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+        proxy.$tab.closePage()  // 关闭当前页
+        // 根据来源页面跳转回相应的列表页
+        const returnPath = getReturnPath();
+        if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
+          // 对于需要参数的路由，我们需要传递参数
+          const route = useRoute();
+          if (route.params.taskPackageId && route.params.taskPackageName) {
+            proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+          } else {
+            proxy.$router.push(returnPath);
+          }
+        } else if (returnPath === '/label/auditTask') {
+          // 为auditTask页面添加时间戳参数以触发刷新
+          proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
+        } else {
+          proxy.$router.push(returnPath);
+        }
       }, 1000)
       
     })
