@@ -496,7 +496,7 @@ function rejectTask(){
       //   proxy.$router.push(returnPath);
       // }
       //跳转回“我的审核”页
-        proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
+      proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
     }, 1000)
     
   })
@@ -556,7 +556,7 @@ function auditTask(status) {
         //   proxy.$router.push(returnPath);
         // }
         //跳转回“我的审核”页
-        proxy.$router.push(`/label/auditTask`);
+        proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
       }, 1000)
       
     })
