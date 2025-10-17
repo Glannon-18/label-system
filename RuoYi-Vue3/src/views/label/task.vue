@@ -385,7 +385,7 @@ function handleToAnnotator(row) {
   if (type === "audio") {
     proxy.$router.push(`/label/audio-recorder/index/${taskId}`)
   }else{
-    proxy.$router.push(`/label/audio-annotator/index/${taskId}`)
+    proxy.$router.push(`/label/view-label/index/${taskPackageId}/${taskPackageName}/${taskId}`)
   }
 }
 getList()

@@ -139,7 +139,8 @@ function handleToAnnotator(row) {
   if (type === "audio") {
     proxy.$router.push(`/label/audio-recorder/index/${taskId}`)
   }else{
-    proxy.$router.push(`/label/label-editor/index/${taskId}`)
+    // 修改跳转路径，使其与路由配置匹配
+    proxy.$router.push(`/label/label-editor/index/${taskPackageId}/${ encodeURIComponent(taskPackageName) }/${taskId}`)
   }
 }
 
