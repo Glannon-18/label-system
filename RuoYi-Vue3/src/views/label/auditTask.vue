@@ -57,6 +57,13 @@
 <!--          >-->
             审核
           </el-button>
+          <el-button 
+            type="primary" 
+            icon="View" 
+            size="default" 
+            @click="handleShowProgress(scope.row)">
+            查看进度
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -69,28 +76,30 @@
         @pagination="getList"
     />
 
-    <!-- 审核任务对话框 -->
-    <el-dialog :title="auditTitle" v-model="auditOpen" width="500px" append-to-body>
-      <el-form ref="auditRef" :model="auditForm" :rules="auditRules" label-width="80px">
-        <el-form-item label="审核结果" prop="status">
-          <el-select v-model="auditForm.status" placeholder="请选择审核结果">
-            <el-option label="审核通过" value="pass"></el-option>
-            <el-option label="审核不通过" value="reject"></el-option>
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitAudit">确 定</el-button>
-          <el-button @click="cancelAudit">取 消</el-button>
-        </div>
-      </template>
+    <!-- 任务进度弹窗 -->
+    <el-dialog title="任务进度" v-model="progressDialogVisible" width="600px" append-to-body>
+      <div v-loading="progressLoading">
+        <el-timeline>
+          <el-timeline-item
+            v-for="(log, index) in progressLogs"
+            :key="index"
+            :timestamp="parseTime(log.createTime)"
+            placement="top">
+            <div class="progress-item">
+              <h4>{{ getStatusDescription(log.status) }}</h4>
+              <p>操作人: {{ log.createBy }}</p>
+              <p v-if="log.remark">备注: {{ log.remark }}</p>
+            </div>
+          </el-timeline-item>
+        </el-timeline>
+        <div v-if="progressLogs.length === 0" class="empty-tips">暂无进度记录</div>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup name="AuditTask">
-import { listTask, auditTask } from "@/api/label/task"
+import { listTask, auditTask, getTaskProgress } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()
 const { task_status } = proxy.useDict('task_status')
@@ -100,24 +109,16 @@ const taskList = ref([])
 const loading = ref(true)
 const showSearch = ref(true)
 const total = ref(0)
-const auditOpen = ref(false)
-const auditTitle = ref("")
 const uniqueId = ref("") // 添加唯一标识用于判断是否需要刷新
+
+// 任务进度相关
+const progressDialogVisible = ref(false)
+const progressLoading = ref(false)
+const progressLogs = ref([])
 
 // 获取路由参数
 const taskPackageId = route.params.taskPackageId
 const taskPackageName = route.params.taskPackageName
-
-// 审核表单
-const auditForm = ref({
-  taskId: undefined,
-  status: ""
-})
-
-// 审核表单校验规则
-const auditRules = ref({
-  status: [{ required: true, message: "审核结果不能为空", trigger: "change" }]
-})
 
 const data = reactive({
   queryParams: {
@@ -159,6 +160,14 @@ function getStatusTagName(status) {
   return statusObj ? statusObj.label : status
 }
 
+/**
+ * 根据任务状态获取描述
+ */
+function getStatusDescription(status) {
+  const statusObj = task_status.value.find(item => item.value === status)
+  return statusObj ? statusObj.label : status
+}
+
 /** 查询任务列表 */
 function getList() {
   loading.value = true
@@ -190,52 +199,6 @@ function resetQuery() {
   handleQuery()
 }
 
-/** 审核按钮操作 */
-function handleAudit(row) {
-  auditForm.value = {
-    taskId: row.taskId,
-    status: ""
-  }
-  auditTitle.value = "审核任务"
-  auditOpen.value = true
-}
-
-/** 提交审核 */
-function submitAudit() {
-  proxy.$refs.auditRef.validate(valid => {
-    if (valid) {
-      const formData = { ...auditForm.value }
-      // 根据审核结果设置状态
-      if (formData.status === "pass") {
-        formData.status = "pass"
-      } else if (formData.status === "reject") {
-        formData.status = "reject"
-      }
-      
-      auditTask(formData).then(response => {
-        proxy.$modal.msgSuccess("审核成功")
-        auditOpen.value = false
-        getList()
-      })
-    }
-  })
-}
-
-/** 取消审核 */
-function cancelAudit() {
-  auditOpen.value = false
-  resetAuditForm()
-}
-
-/** 重置审核表单 */
-function resetAuditForm() {
-  auditForm.value = {
-    taskId: undefined,
-    status: ""
-  }
-  proxy.resetForm("auditRef")
-}
-
 /** 跳转到标注/录音页面 **/
 function handleToAnnotator(row) {
   const taskId = row.taskId
@@ -247,5 +210,34 @@ function handleToAnnotator(row) {
   }
 }
 
+/** 显示任务进度 */
+function handleShowProgress(row) {
+  progressDialogVisible.value = true
+  progressLoading.value = true
+  progressLogs.value = []
+  
+  getTaskProgress(row.taskId).then(response => {
+    progressLogs.value = response.rows || []
+    progressLoading.value = false
+  }).catch(() => {
+    progressLoading.value = false
+    proxy.$message.error("获取任务进度失败")
+  })
+}
+
 getList()
 </script>
+
+<style scoped>
+.empty-tips {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+}
+
+.progress-item {
+  padding: 10px;
+  border-left: 2px solid #e4e7ed;
+  margin-left: 5px;
+}
+</style>
