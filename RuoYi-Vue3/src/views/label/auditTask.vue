@@ -28,7 +28,11 @@
 
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="音频文件名" align="center" prop="audioFileName" />
+      <el-table-column label="音频文件名" align="center" prop="audioFileName">
+        <template #default="scope">
+          <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="任务状态" align="center" prop="status">
         <template #default="scope">
           <dict-tag :options="task_status" :value="scope.row.status"/>
@@ -48,7 +52,7 @@
             type="primary" 
             icon="Edit" 
             size="default" 
-            @click="handleAudit(scope.row)">
+            @click="handleToAnnotator(scope.row)">
 <!--            v-if="scope.row.status === 'pending_review'"-->
 <!--          >-->
             审核
@@ -191,6 +195,17 @@ function resetAuditForm() {
     status: ""
   }
   proxy.resetForm("auditRef")
+}
+
+/** 跳转到标注/录音页面 **/
+function handleToAnnotator(row) {
+  const taskId = row.taskId
+  const type = row.packageType
+  if (type === "audio") {
+    proxy.$router.push(`/label/audit-recorder/index/${taskId}`)
+  }else{
+    proxy.$router.push(`/label/audit-label/index/${taskId}`)
+  }
 }
 
 getList()

@@ -67,7 +67,11 @@
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
 <!--      <el-table-column label="任务ID" align="center" prop="taskId" />-->
-      <el-table-column label="音频文件名" align="center" prop="audioFileName" />
+      <el-table-column label="音频文件名" align="center" prop="audioFileName">
+        <template #default="scope">
+          <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="任务状态" align="center" prop="status">
         <template #default="scope">
           <dict-tag :options="task_status" :value="scope.row.status"/>
@@ -374,5 +378,15 @@ function handleExport() {
   }, `task_${new Date().getTime()}.xlsx`)
 }
 
+/** 跳转到标注/录音页面 **/
+function handleToAnnotator(row) {
+  const taskId = row.taskId
+  const type = row.packageType
+  if (type === "audio") {
+    proxy.$router.push(`/label/audio-recorder/index/${taskId}`)
+  }else{
+    proxy.$router.push(`/label/audio-annotator/index/${taskId}`)
+  }
+}
 getList()
 </script>

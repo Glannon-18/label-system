@@ -103,17 +103,14 @@ function resetQuery() {
   handleQuery()
 }
 
-/** 跳转到标注页面 **/
+/** 跳转到标注/录音页面 **/
 function handleToAnnotator(row) {
   const taskId = row.taskId
   const type = row.packageType
-  const taskName = row.audioFileName
-
-  if (type === "text") {
-    proxy.$router.push(`/label/annotator1/index/${taskId}`)
-  }
-  else if (type === "audio") {
+  if (type === "audio") {
     proxy.$router.push(`/label/audio-recorder/index/${taskId}`)
+  }else{
+    proxy.$router.push(`/label/label-editor/index/${taskId}`)
   }
 }
 

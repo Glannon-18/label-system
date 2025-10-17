@@ -744,6 +744,10 @@ async function init(){
   console.log('任务详情：', res)
   task.data = res.data;
 
+  if(!task.data.textGrid){
+    proxy.$message.error('缺少预标注文本TextGrid')
+  }
+  
   // ----将预标注文本转为json---
   // 解析TextGrid
   task.textGridJson = parseTextGridToJson(task.data.textGrid)
@@ -762,195 +766,192 @@ async function init(){
   times.splice(0, times.length);
   times.push(...realtimes);
 
+  // 等待DOM更新
+  // await nextTick()
+
+  // 创建wavesurfer实例
+  ws = WaveSurfer.create({
+    container: '#waveform-demo',
+    waveColor: '#43A047',
+    progressColor: '#1E88E5',
+    height: 100,
+    barWidth: 2,
+    responsive: true,
+    hideScrollbar: false,
+    interact: true, // 可交互
+    minPxPerSec: 45,
+    plugins: [
+      regions,
+      timeline,
+      hover,
+      ZoomPlugin.create({
+        // 每个轮步的变焦量, 例如0.5表示每次变焦量放大0.5倍
+        scale: 0.2,
+        // Optionally, specify the maximum pixels-per-second factor while zooming
+        //可选项地指定缩放时的最大每秒像素数值
+        maxZoom: 100,
+      }),
+    ],
+  })
+
+  // 加载音频文件    
+  ws.load( getAudioUrl(task.data.audioFilePath) )
+
+  ws.on('play', () => {
+    console.log('ws.currentTime-->', ws.getCurrentTime())
+    currentTime.value = ws.getCurrentTime()
+  })
+
+  ws.on('zoom', (minPxPerSec) => {
+    console.log('zoom---->minPxPerSec', minPxPerSec)
+  })
+
+  ws.on('decode', () => { 
+
+    //获得音频总时长
+    duration = ws.decodedData.duration
+    console.log(`音频总时长为 ${duration} 秒`)
+
+    //末尾分段的结束时间设为音频总时长
+    times[times.length - 1].end = duration
+
+    //添加分段标记 (零长度区域)
+    console.log(`当前点：`,times);
+    console.log('添加初始分段标记-->')
+    times.forEach( (ts,index) => {
+      regions.addRegion({
+        start: ts.start,
+        content: `${index+1}`,
+        color: '#000',
+        drag: false,
+        resize: false
+      })
+    })
+    
+  })
+
+
+  // 添加错误处理
+  ws.on('error', (error) => {
+    handleWaveSurferError('demo', error)
+  })
+
+
+  //通过拖动波形上的空白区域来创建区域。返回一个函数来禁用拖动选择。
+  regions.enableDragSelection({//允许拖拽创建区域
+    color: activeColor,
+  })
+  //创建新区域事件
+  regions.on('region-created', (region) => {
+    // console.log('新增区域：', region)
+    region.drag = false;//禁止拖拽新区域
+
+    if(!(region.start && region.end && region.start!==region.end)) return //无效区域
 
     
 
-    // 等待DOM更新
-    // await nextTick()
-
-    // 创建wavesurfer实例
-    ws = WaveSurfer.create({
-      container: '#waveform-demo',
-      waveColor: '#43A047',
-      progressColor: '#1E88E5',
-      height: 100,
-      barWidth: 2,
-      responsive: true,
-      hideScrollbar: false,
-      interact: true, // 可交互
-      minPxPerSec: 45,
-      plugins: [
-        regions,
-        timeline,
-        hover,
-        ZoomPlugin.create({
-          // 每个轮步的变焦量, 例如0.5表示每次变焦量放大0.5倍
-          scale: 0.2,
-          // Optionally, specify the maximum pixels-per-second factor while zooming
-          //可选项地指定缩放时的最大每秒像素数值
-          maxZoom: 100,
-        }),
-      ],
-    })
-
-    // 加载音频文件    
-    ws.load( getAudioUrl(task.data.audioFilePath) )
-
-    ws.on('play', () => {
-      console.log('ws.currentTime-->', ws.getCurrentTime())
-      currentTime.value = ws.getCurrentTime()
-    })
-
-    ws.on('zoom', (minPxPerSec) => {
-      console.log('zoom---->minPxPerSec', minPxPerSec)
-    })
-
-    ws.on('decode', () => { 
-
-      //获得音频总时长
-      duration = ws.decodedData.duration
-      console.log(`音频总时长为 ${duration} 秒`)
-
-      //末尾分段的结束时间设为音频总时长
-      times[times.length - 1].end = duration
-
-      //添加分段标记 (零长度区域)
-      console.log(`当前点：`,times);
-      console.log('添加初始分段标记-->')
-      times.forEach( (ts,index) => {
-        regions.addRegion({
-          start: ts.start,
-          content: `${index+1}`,
-          color: '#000',
-          drag: false,
-          resize: false
-        })
-      })
-      
-    })
+    //判断如果是框选区域新增则处理，点击激活区域则忽略
+    console.log('region.content-->',region.content)
+    if(region.content && region.content.innerText=='click'){
+      console.log(`识别是【点击】激活区域：${region.start}-${region.end}`, region);
+      return
+    }
+      //新增区域的方式：1框选新增，2点击激活（带clickAdd标识）
+    // }else{ //是拖拽创建的区域，处理drag问题
+      // console.log(`识别是【框选】新增区域：${region.start}-${region.end}`, region);
 
 
-    // 添加错误处理
-    ws.on('error', (error) => {
-      handleWaveSurferError('demo', error)
-    })
+    // 检查新建区域的起止时间点是否靠近已有边界，自动吸附边界处理
 
-
-    //通过拖动波形上的空白区域来创建区域。返回一个函数来禁用拖动选择。
-    regions.enableDragSelection({//允许拖拽创建区域
-      color: activeColor,
-    })
-    //创建新区域事件
-    regions.on('region-created', (region) => {
-      // console.log('新增区域：', region)
-      region.drag = false;//禁止拖拽新区域
-
-      if(!(region.start && region.end && region.start!==region.end)) return //无效区域
-
-      
-
-      //判断如果是框选区域新增则处理，点击激活区域则忽略
-      console.log('region.content-->',region.content)
-      if(region.content && region.content.innerText=='click'){
-        console.log(`识别是【点击】激活区域：${region.start}-${region.end}`, region);
-        return
-      }
-        //新增区域的方式：1框选新增，2点击激活（带clickAdd标识）
-      // }else{ //是拖拽创建的区域，处理drag问题
-        // console.log(`识别是【框选】新增区域：${region.start}-${region.end}`, region);
-
-
-      // 检查新建区域的起止时间点是否靠近已有边界，自动吸附边界处理
-
-      // 校验分段有效时长，不小于最小有效值
-      if(region.end-region.start < 1){
-        proxy.$message.error('新增区域时长小于1秒，请重新框选区域！')
-        region.remove()
-        return //无效区域，时长小于1秒
-      }
-
-      // 取留边界时间点3位小数，确定新区域边界
-      // region.start = Math.round(region.start * 100) / 100
-      // region.end = Math.round(region.end * 100) / 100
-
-      // 移除再重新创建新区域，以保证新建区域时间点与记录值匹配
-
-
-      //如果分段已存在则返回，不重复添加
-      if(times.findIndex(seg => seg.start == region.start && seg.end == region.end) > -1){
-        console.log(`分段[${region.start}-${region.end}]已存在，不重复添加`)
-        return
-      }
-
-      //====添加新区域到时间序列数组中===
-      console.log(`添加前：`,times);
-      let newSeg = {start:region.start.toFixed(3), end:region.end.toFixed(3)}
-      let newtimes = addSegment(times, newSeg)
-      times.splice(0, times.length);
-      times.push(...newtimes);
-      console.log(`添加后：`,times);
-
-      //清除零长区域
-      regions.getRegions().forEach((reg) => {
-        if (reg.start == reg.end) {//清除零长区域
-          reg.remove()
-        }
-        if(reg.start==activeRegion.start && reg.end==activeRegion.end){//清除（取消）前个激活区域
-          reg.remove()
-        }
-      })
-
-      //重建零长区域
-      times.forEach((e, index) => {
-        regions.addRegion({
-          start: e.start,
-          content: `${index+1}`,
-          color: '#000',
-          drag: false,
-          resize: false
-        })
-      })
-
-      //将手动新增区域视为当前激活区域（记录边界值）
-      activeRegion.start = newSeg.start
-      activeRegion.end = newSeg.end
-
-      //移除并激活新分段
-      //region.play()
+    // 校验分段有效时长，不小于最小有效值
+    if(region.end-region.start < 1){
+      proxy.$message.error('新增区域时长小于1秒，请重新框选区域！')
       region.remove()
-      activateRegion(newSeg)
+      return //无效区域，时长小于1秒
+    }
 
-      const index = times.findIndex(seg => seg.start === newSeg.start && seg.end === newSeg.end);
-      //滚动到标注行
-      scrollToRow(index)
-      console.log('++++当前激活的分段：', JSON.stringify(times[index]));
+    // 取留边界时间点3位小数，确定新区域边界
+    // region.start = Math.round(region.start * 100) / 100
+    // region.end = Math.round(region.end * 100) / 100
 
+    // 移除再重新创建新区域，以保证新建区域时间点与记录值匹配
+
+
+    //如果分段已存在则返回，不重复添加
+    if(times.findIndex(seg => seg.start == region.start && seg.end == region.end) > -1){
+      console.log(`分段[${region.start}-${region.end}]已存在，不重复添加`)
+      return
+    }
+
+    //====添加新区域到时间序列数组中===
+    console.log(`添加前：`,times);
+    let newSeg = {start:region.start.toFixed(3), end:region.end.toFixed(3)}
+    let newtimes = addSegment(times, newSeg)
+    times.splice(0, times.length);
+    times.push(...newtimes);
+    console.log(`添加后：`,times);
+
+    //清除零长区域
+    regions.getRegions().forEach((reg) => {
+      if (reg.start == reg.end) {//清除零长区域
+        reg.remove()
+      }
+      if(reg.start==activeRegion.start && reg.end==activeRegion.end){//清除（取消）前个激活区域
+        reg.remove()
+      }
+    })
+
+    //重建零长区域
+    times.forEach((e, index) => {
+      regions.addRegion({
+        start: e.start,
+        content: `${index+1}`,
+        color: '#000',
+        drag: false,
+        resize: false
+      })
+    })
+
+    //将手动新增区域视为当前激活区域（记录边界值）
+    activeRegion.start = newSeg.start
+    activeRegion.end = newSeg.end
+
+    //移除并激活新分段
+    //region.play()
+    region.remove()
+    activateRegion(newSeg)
+
+    const index = times.findIndex(seg => seg.start === newSeg.start && seg.end === newSeg.end);
+    //滚动到标注行
+    scrollToRow(index)
+    console.log('++++当前激活的分段：', JSON.stringify(times[index]));
+
+    
+    
+
+    // //删除当前区域
+    // region.remove()
+
+    // //新创建当前区域
+    // const region2 = regions.addRegion({
+    //   start: activeRegion.start,
+    //   end: activeRegion.end, // 现在设置了有效的结束时间
+    //   color: activeColor,
+    //   drag: false, //不可拖动
+    //   resize: true, //可调大小
+    //   content: 'click' //标识为点击创建的新区域
+    // });
+
+    // //监听点击区域事件，当再次点击此区域时，则清除此区域（取消激活）
+    // region2.on('click', (e) => {
+    //   console.log('region.click:',  e)
+    //   e.stopPropagation() // prevent triggering a click on the waveform
       
-      
-
-      // //删除当前区域
-      // region.remove()
-
-      // //新创建当前区域
-      // const region2 = regions.addRegion({
-      //   start: activeRegion.start,
-      //   end: activeRegion.end, // 现在设置了有效的结束时间
-      //   color: activeColor,
-      //   drag: false, //不可拖动
-      //   resize: true, //可调大小
-      //   content: 'click' //标识为点击创建的新区域
-      // });
-
-      // //监听点击区域事件，当再次点击此区域时，则清除此区域（取消激活）
-      // region2.on('click', (e) => {
-      //   console.log('region.click:',  e)
-      //   e.stopPropagation() // prevent triggering a click on the waveform
-        
-      //   //取消激活区域
-      //   region2.remove()
-      //   activeRegion.start = 0
-      //   activeRegion.end = 0
-      // })
+    //   //取消激活区域
+    //   region2.remove()
+    //   activeRegion.start = 0
+    //   activeRegion.end = 0
+    // })
 
         
 
