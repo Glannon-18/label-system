@@ -45,9 +45,9 @@
             class="box-item"
             :content="item.tip"
             placement="top-start"
-          ><el-check-tag  checked :type="item.type" @click="insertText(item.label)">
+          ><el-tag style="cursor:pointer;" checked :type="item.type" @click="insertText(item.label)">
             {{ item.label }}
-          </el-check-tag></el-tooltip>
+          </el-tag></el-tooltip>
         </div>
       </div>
       <div style="display: flex;">
@@ -77,7 +77,8 @@
     <!--分段标注列表-->
     <div style="margin-top: 10px; display: flex; flex-direction:column">
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
-        style="width: 100%;height: 400px; margin-top:10px;"  :show-header="true" 
+        style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; overflow: hidden;"  
+        :show-header="true" 
         :row-class-name="tableRowClassName" @row-click="rowClick" > 
           <el-table-column label="分段序号" width="100"> 
             <template #default="scope"> 
@@ -719,6 +720,19 @@ function adjustSegment(times, oldSegment, newSegment) {
     }
 }
 
+function splitSegment(times, oldSegment, point) {
+  //将从oldSegment分割为两个分段，其中一个分段的右边界为point
+  let newSegment = {
+    start: oldSegment.start,
+    end: point,
+    text: oldSegment.text
+  }
+  oldSegment.start = point;
+  times[index] = newSegment;
+  return times;
+
+
+}
 // 渲染demo波形
 async function init(){
   console.log('init()--->')
@@ -833,6 +847,8 @@ async function init(){
 
       if(!(region.start && region.end && region.start!==region.end)) return //无效区域
 
+      
+
       //判断如果是框选区域新增则处理，点击激活区域则忽略
       console.log('region.content-->',region.content)
       if(region.content && region.content.innerText=='click'){
@@ -847,6 +863,11 @@ async function init(){
       // 检查新建区域的起止时间点是否靠近已有边界，自动吸附边界处理
 
       // 校验分段有效时长，不小于最小有效值
+      if(region.end-region.start < 1){
+        proxy.$message.error('新增区域时长小于1秒，请重新框选区域！')
+        region.remove()
+        return //无效区域，时长小于1秒
+      }
 
       // 取留边界时间点3位小数，确定新区域边界
       // region.start = Math.round(region.start * 100) / 100
@@ -1063,10 +1084,14 @@ async function init(){
 
     if (playButton) {
       playButton.onclick = () => {
-
-        if(ws.isPlaying()){
+        console.log('playButton.onclick--->', ws.isPlaying())
+        if(ws.isPlaying()){//在播放
           ws.pause()
-        }else{
+        }else{//已暂停
+          let currentTime = ws.getCurrentTime();
+          if(currentTime>=activeRegion.end){//当前播放位置已超出激活区域，则跳转到激活区域的开始处
+            ws.setTime(activeRegion.start)
+          }
           ws.play()
         }
         
@@ -1370,6 +1395,7 @@ watch(volume,(newVal, oldVal)=>{//监听音量值改变
 
 //播放速度
 let playbackRateList = ref([
+  { label: '3.0x', value: 3.0 },
   { label: '2.0x', value: 2.0 },
   { label: '1.5x', value: 1.5 },
   { label: '1.25x', value: 1.25 },
