@@ -140,7 +140,7 @@ export const dynamicRoutes = [
         path: 'index/:projectId(\\d+)/:projectName',
         component: () => import('@/views/label/taskPackage'),
         name: 'project-package',
-        meta: { title: '任务包', activeMenu: '/label/project' }
+        meta: { title: '任务包管理', activeMenu: '/label/project' }
       }
     ]
   },
@@ -154,7 +154,7 @@ export const dynamicRoutes = [
         path: 'index/:taskPackageId(\\d+)/:taskPackageName',
         component: () => import('@/views/label/task'),
         name: 'project-task',
-        meta: { title: '任务', activeMenu: '/label/project' }
+        meta: { title: '任务包明细管理', activeMenu: '/label/project' }
       }
     ]
   },
@@ -168,12 +168,12 @@ export const dynamicRoutes = [
         path: 'index/:taskPackageId(\\d+)/:taskPackageName',
         component: () => import('@/views/label/annotatorTask'),
         name: 'my-task',
-        meta: { title: '我的任务', activeMenu: '/label/annotator' }
+        meta: { title: '我的任务包明细', activeMenu: '/label/annotator' }
       }
     ]
   },
   {
-    path: '/label/annotator1',
+    path: '/label/audio-annotator',
     component: Layout,
     hidden: true,
     permissions: ['label:project:list'],
@@ -181,8 +181,22 @@ export const dynamicRoutes = [
       {
         path: 'index/:taskId(\\d+)',
         component: () => import('@/views/label/labelEditor'),
-        name: 'my-annotator1',
-        meta: { title: '音频标注', activeMenu: '/label/annotator' }
+        name: 'audio-annotator',
+        meta: { title: '语音标注', activeMenu: '/label/project' }//高亮“项目管理”菜单
+      }
+    ]
+  },
+  {
+    path: '/label/label-editor',
+    component: Layout,
+    hidden: true,
+    permissions: ['label:project:list'],
+    children: [
+      {
+        path: 'index/:taskId(\\d+)',
+        component: () => import('@/views/label/labelEditor'),
+        name: 'label-editor',
+        meta: { title: '语音标注', activeMenu: '/label/annotator' } //高亮“我的任务”菜单
       }
     ]
   },
@@ -197,6 +211,34 @@ export const dynamicRoutes = [
         component: () => import('@/views/label/audioRecorder'),
         name: 'audio-recorder',
         meta: { title: '文件录音', activeMenu: '/label/annotator' }
+      }
+    ]
+  },
+  {
+    path: '/label/audit-label',
+    component: Layout,
+    hidden: true,
+    permissions: ['label:project:list'],
+    children: [
+      {
+        path: 'index/:taskId(\\d+)',
+        component: () => import('@/views/label/labelEditor'),
+        name: 'audit-label',
+        meta: { title: '审核标注', activeMenu: '/label/auditTask' }//高亮“我的审核”菜单
+      }
+    ]
+  },
+  {
+    path: '/label/audit-recorder',
+    component: Layout,
+    hidden: true,
+    permissions: ['label:project:list'],
+    children: [
+      {
+        path: 'index/:taskId(\\d+)',
+        component: () => import('@/views/label/audioRecorder'),
+        name: 'audit-recorder',
+        meta: { title: '审核录音', activeMenu: '/label/auditTask' }
       }
     ]
   },

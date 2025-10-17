@@ -28,10 +28,14 @@
 
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="音频文件名" align="center" prop="audioFileName" />
+      <el-table-column label="音频文件名" align="center" prop="audioFileName" :show-overflow-tooltip="true">
+        <template #default="scope">
+          <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column label="任务状态" align="center" prop="status">
         <template #default="scope">
-          <dict-tag :options="task_status" :value="scope.row.status"/>
+          <el-tag :type="getStatusTagType(scope.row.status)">{{ getStatusTagName(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="标注人员" align="center" prop="packageAssigner" />
@@ -42,6 +46,19 @@
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <template #default="scope">
+          <el-button 
+            type="primary" 
+            icon="Edit" 
+            size="default" 
+            @click="handleToAnnotator(scope.row)">
+<!--            v-if="scope.row.status === 'pending_review'"-->
+<!--          >-->
+            审核
+          </el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <pagination
@@ -85,6 +102,7 @@ const showSearch = ref(true)
 const total = ref(0)
 const auditOpen = ref(false)
 const auditTitle = ref("")
+const uniqueId = ref("") // 添加唯一标识用于判断是否需要刷新
 
 // 获取路由参数
 const taskPackageId = route.params.taskPackageId
@@ -112,6 +130,35 @@ const data = reactive({
 
 const { queryParams } = toRefs(data)
 
+/**
+ * 根据任务状态获取标签类型
+ */
+function getStatusTagType(status) {
+  switch (status) {
+    case 'unstart': // 未开始
+      return 'info'
+    case 'underway': // 标注中
+      return 'primary'
+    case 'pending_review': // 待审核
+      return 'warning'
+    case 'reject': // 已驳回
+      return 'danger'
+    case 'pass': // 审核通过
+      return 'success'
+    default:
+      return 'info'
+  }
+}
+
+/**
+ * 根据任务状态获取标签名称
+ */
+function getStatusTagName(status) {
+  // task_status 是一个 ref 对象，需要通过 .value 访问实际数组
+  const statusObj = task_status.value.find(item => item.value === status)
+  return statusObj ? statusObj.label : status
+}
+
 /** 查询任务列表 */
 function getList() {
   loading.value = true
@@ -121,6 +168,15 @@ function getList() {
     loading.value = false
   })
 }
+
+// 添加onActivated钩子，当页面被激活时检查是否需要刷新数据
+onActivated(() => {
+  const time = route.query.t
+  if (time != null && time != uniqueId.value) {
+    uniqueId.value = time
+    getList()
+  }
+})
 
 /** 搜索按钮操作 */
 function handleQuery() {
@@ -178,6 +234,17 @@ function resetAuditForm() {
     status: ""
   }
   proxy.resetForm("auditRef")
+}
+
+/** 跳转到标注/录音页面 **/
+function handleToAnnotator(row) {
+  const taskId = row.taskId
+  const type = row.packageType
+  if (type === "audio") {
+    proxy.$router.push(`/label/audit-recorder/index/${taskId}`)
+  }else{
+    proxy.$router.push(`/label/audit-label/index/${taskId}`)
+  }
 }
 
 getList()
