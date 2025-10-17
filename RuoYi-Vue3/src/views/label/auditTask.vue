@@ -102,6 +102,7 @@ const showSearch = ref(true)
 const total = ref(0)
 const auditOpen = ref(false)
 const auditTitle = ref("")
+const uniqueId = ref("") // 添加唯一标识用于判断是否需要刷新
 
 // 获取路由参数
 const taskPackageId = route.params.taskPackageId
@@ -167,6 +168,15 @@ function getList() {
     loading.value = false
   })
 }
+
+// 添加onActivated钩子，当页面被激活时检查是否需要刷新数据
+onActivated(() => {
+  const time = route.query.t
+  if (time != null && time != uniqueId.value) {
+    uniqueId.value = time
+    getList()
+  }
+})
 
 /** 搜索按钮操作 */
 function handleQuery() {

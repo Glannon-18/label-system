@@ -15,12 +15,12 @@
         </div>
 
         <div v-if="['pending_review'].includes(task.data.status)">
-          <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">驳回任务</el-button>
+          <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">审核驳回</el-button>
           <el-button type="success" plain @click="auditTask('pass')" vhasPermi="['label:task:audit']">审核通过</el-button>
         </div>
 
         <!-- 审核驳回对话框 -->
-        <el-dialog v-model="dialogFormVisible" title="驳回任务" width="500">
+        <el-dialog v-model="dialogFormVisible" title="审核驳回" width="500">
           <el-input v-model="dialogFormRemark" type="textarea" :rows="3" placeholder="请输入驳回原因" style="width: 100%;" />
           <template #footer>
             <div class="dialog-footer">
@@ -145,12 +145,15 @@ const labels = reactive([
 
 //=========================定义函数=========================
 function insertText(text) {
-  if (activeRegion) {
+  if (activeRegion && activeRegion.start !== activeRegion.end) {
     times.forEach(item => {
       if (item.start === activeRegion.start && item.end===activeRegion.end) {
         item.text += text
       }
     })
+  }else{
+    //提示：请选择一个有效区域
+    proxy.$modal.msgWarning("请先选择一个有效区域")
   }
 }
 
@@ -189,6 +192,26 @@ function handleWaveSurferError(taskId, error) {
   console.error(`加载任务 ${taskId} 的波形时出错:`, error);
 }
 
+// 添加一个函数来确定返回的页面路径
+function getReturnPath() {
+  // 根据当前路由名称确定返回路径
+  const route = useRoute();
+  
+  // 判断当前是从哪个页面进入的
+  if (route.name === 'audit-label') {
+    // 从"我的审核"进入的，返回到审核任务列表页
+    return '/label/auditTask';
+  } else if (route.name === 'label-editor') {
+    // 从"我的任务包明细"进入的，返回到我的任务列表页
+    return '/label/my-task';
+  } else if (route.name === 'audio-annotator') {
+    // 从"任务包明细管理"进入的，返回到任务包明细管理页
+    return '/label/project-task';
+  } else {
+    // 默认返回到首页
+    return '/index';
+  }
+}
 
 // 渲染波形
 function renderWaveforms() {
@@ -388,6 +411,7 @@ function submitTask() {
         taskId: taskId,
         textGrid: textGrid,
         status: 'pending_review',//待审核
+        remark:'',//备注清空
       }
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
@@ -395,7 +419,22 @@ function submitTask() {
       proxy.$modal.msgSuccess("提交成功")
       setTimeout(() => {
         proxy.$tab.closePage()  // 关闭当前页
-        proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
+        // 根据来源页面跳转回相应的列表页
+        const returnPath = getReturnPath();
+        if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
+          // 对于需要参数的路由，我们需要传递参数
+          const route = useRoute();
+          if (route.params.taskPackageId && route.params.taskPackageName) {
+            proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+          } else {
+            proxy.$router.push(returnPath);
+          }
+        } else if (returnPath === '/label/auditTask') {
+          // 为auditTask页面添加时间戳参数以触发刷新
+          proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
+        } else {
+          proxy.$router.push(returnPath);
+        }
       }, 1000)
       
     })
@@ -439,7 +478,22 @@ function rejectTask(){
     proxy.$modal.msgSuccess("驳回成功")
     setTimeout(() => {
       proxy.$tab.closePage()  // 关闭当前页
-      proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
+      // 根据来源页面跳转回相应的列表页
+      const returnPath = getReturnPath();
+      if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
+        // 对于需要参数的路由，我们需要传递参数
+        const route = useRoute();
+        if (route.params.taskPackageId && route.params.taskPackageName) {
+          proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+        } else {
+          proxy.$router.push(returnPath);
+        }
+      } else if (returnPath === '/label/auditTask') {
+        // 为auditTask页面添加时间戳参数以触发刷新
+        proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
+      } else {
+        proxy.$router.push(returnPath);
+      }
     }, 1000)
     
   })
@@ -475,7 +529,7 @@ function auditTask(status) {
         taskId: taskId,
         textGrid: textGrid,
         status: status,
-        remark: '审核通过'
+        remark: status === 'pass' ? '审核通过' : '审核驳回'
       }
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
@@ -483,7 +537,22 @@ function auditTask(status) {
       proxy.$modal.msgSuccess("审核成功")
       setTimeout(() => {
         proxy.$tab.closePage()  // 关闭当前页
-        proxy.$tab.closeOpenPage(`/label/my-task/index/${taskId}/`) // 关闭并跳转
+        // 根据来源页面跳转回相应的列表页
+        const returnPath = getReturnPath();
+        if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
+          // 对于需要参数的路由，我们需要传递参数
+          const route = useRoute();
+          if (route.params.taskPackageId && route.params.taskPackageName) {
+            proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+          } else {
+            proxy.$router.push(returnPath);
+          }
+        } else if (returnPath === '/label/auditTask') {
+          // 为auditTask页面添加时间戳参数以触发刷新
+          proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
+        } else {
+          proxy.$router.push(returnPath);
+        }
       }, 1000)
       
     })
