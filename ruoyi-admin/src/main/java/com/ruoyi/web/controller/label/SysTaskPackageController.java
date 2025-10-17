@@ -257,6 +257,7 @@ public class SysTaskPackageController extends BaseController
                 task.setAudioFileName(wavFileName);
                 task.setAudioFilePath(uploadedFileName);
                 task.setTextGrid(textGridContent);
+                task.setOriginalTextGrid(textGridContent);
                 task.setStatus(TaskStatus.UNSTART);
                 task.setCreateBy(getUsername());
                 
