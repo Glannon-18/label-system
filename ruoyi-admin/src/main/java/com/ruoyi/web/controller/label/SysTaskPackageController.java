@@ -60,7 +60,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 查询任务包列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:list')")
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysTaskPackage sysTaskPackage)
     {
@@ -72,7 +72,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 查询分配给当前用户的所有任务包列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:list')")
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/assigner/list")
     public TableDataInfo listByAssigner(SysTaskPackage sysTaskPackage)
     {
@@ -86,7 +86,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 查询可用于任务包分配的用户列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:list')")
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/users")
     public AjaxResult getUserForPackage(String userName, String nickName)
     {
@@ -97,7 +97,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 导出任务包列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:export')")
+//    @PreAuthorize("@ss.hasPermi('label:project:export')")
     @Log(title = "任务包", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysTaskPackage sysTaskPackage)
@@ -110,7 +110,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 获取任务包详细信息
      */
-    @PreAuthorize("@ss.hasPermi('label:project:query')")
+//    @PreAuthorize("@ss.hasPermi('label:project:query')")
     @GetMapping(value = "/{taskPackageId}")
     public AjaxResult getInfo(@PathVariable("taskPackageId") Long taskPackageId)
     {
@@ -120,7 +120,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 新增任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:add')")
+//    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务包", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody SysTaskPackage sysTaskPackage)
@@ -133,7 +133,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 修改任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+//    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务包", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody SysTaskPackage sysTaskPackage)
@@ -145,7 +145,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 删除任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:remove')")
+//    @PreAuthorize("@ss.hasPermi('label:project:remove')")
     @Log(title = "任务包", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{taskPackageIds}")
     public AjaxResult remove(@PathVariable Long[] taskPackageIds)
@@ -156,7 +156,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 分配任务包给用户
      */
-    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+//    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务包", businessType = BusinessType.UPDATE)
     @PostMapping("/assign")
     public AjaxResult assignPackageToUser(@RequestBody SysTaskPackage sysTaskPackage)
@@ -171,7 +171,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 接收任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @Log(title = "任务包", businessType = BusinessType.UPDATE)
     @PostMapping("/reception")
     public AjaxResult receptionPackage(@RequestBody SysTaskPackage sysTaskPackage)
@@ -205,7 +205,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 上传任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:add')")
+//    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务包", businessType = BusinessType.IMPORT)
     @PostMapping("/upload")
     public AjaxResult uploadPackage(MultipartFile file, Long projectId) throws Exception
