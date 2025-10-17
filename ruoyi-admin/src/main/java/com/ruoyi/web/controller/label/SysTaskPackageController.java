@@ -235,6 +235,7 @@ public class SysTaskPackageController extends BaseController
             taskPackage.setName(packageFileName);
             taskPackage.setProjectId(projectId);
             taskPackage.setCreateBy(getUsername());
+            taskPackage.setType("text");
             taskPackage.setStatus(TaskPackageStatus.UNALLOCATED);
             
             // 插入任务包
