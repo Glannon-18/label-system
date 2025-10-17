@@ -1,6 +1,8 @@
 package com.ruoyi.web.controller.label;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -8,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import com.ruoyi.common.config.RuoYiConfig;
@@ -268,6 +271,75 @@ public class SysTaskPackageController extends BaseController
             return AjaxResult.success("上传成功");
         } catch (Exception e) {
             return AjaxResult.error("上传失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 下载任务包
+     */
+    @Log(title = "任务包", businessType = BusinessType.EXPORT)
+    @GetMapping("/download/{taskPackageId}")
+    public void downloadPackage(@PathVariable Long taskPackageId, HttpServletResponse response) throws IOException {
+        try {
+            // 获取任务包信息
+            SysTaskPackage taskPackage = sysTaskPackageService.selectSysTaskPackageByTaskPackageId(taskPackageId);
+            if (taskPackage == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "任务包不存在");
+                return;
+            }
+            
+            // 获取任务包下的所有任务
+            List<SysTask> taskList = sysTaskService.selectSysTaskListByPackageId(taskPackageId);
+            
+            // 创建zip文件
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ZipOutputStream zos = new ZipOutputStream(baos);
+            
+            // 将每个任务的文件添加到zip中
+            for (SysTask task : taskList) {
+                // 添加wav文件
+                String audioFilePath = task.getAudioFilePath();
+                if (audioFilePath != null && !audioFilePath.isEmpty()) {
+                    // 获取文件实际路径
+                    String realPath = RuoYiConfig.getProfile() + audioFilePath.substring(audioFilePath.indexOf("/upload"));
+                    File audioFile = new File(realPath);
+                    if (audioFile.exists()) {
+                        // 添加到zip
+                        ZipEntry wavEntry = new ZipEntry(task.getAudioFileName());
+                        zos.putNextEntry(wavEntry);
+                        
+                        // 读取文件内容并写入zip
+                        byte[] fileContent = java.nio.file.Files.readAllBytes(audioFile.toPath());
+                        zos.write(fileContent, 0, fileContent.length);
+                        zos.closeEntry();
+                    }
+                }
+                
+                // 添加TextGrid文件
+                String textGridContent = task.getTextGrid();
+                if (textGridContent != null && !textGridContent.isEmpty()) {
+                    String textGridFileName = task.getAudioFileName().substring(0, task.getAudioFileName().lastIndexOf(".")) + ".TextGrid";
+                    ZipEntry textGridEntry = new ZipEntry(textGridFileName);
+                    zos.putNextEntry(textGridEntry);
+                    
+                    // 写入TextGrid内容
+                    byte[] contentBytes = textGridContent.getBytes(StandardCharsets.UTF_8);
+                    zos.write(contentBytes, 0, contentBytes.length);
+                    zos.closeEntry();
+                }
+            }
+            
+            zos.close();
+            
+            // 设置响应头
+            response.setContentType("application/zip");
+            response.setHeader("Content-Disposition", "attachment; filename=" + taskPackage.getName() + ".zip");
+            
+            // 写入响应
+            response.getOutputStream().write(baos.toByteArray());
+            response.getOutputStream().flush();
+        } catch (Exception e) {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "下载失败: " + e.getMessage());
         }
     }
     
