@@ -130,7 +130,7 @@ const data = reactive({
 
 const { queryParams } = toRefs(data)
 
-/** 
+/**
  * 根据任务状态获取标签类型
  */
 function getStatusTagType(status) {

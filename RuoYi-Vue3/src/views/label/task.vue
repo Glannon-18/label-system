@@ -113,12 +113,12 @@
             :on-change="handleFileChange"
             :on-exceed="handleFileExceed"
             :file-list="fileList"
-            accept=".wav"
+            :accept="fileSuffix"
           >
             <el-button type="primary">选择文件</el-button>
             <template #tip>
               <div class="el-upload__tip">
-                请选择.wav格式的音频文件
+                请选择 {{fileSuffix}} 格式的音频文件
               </div>
             </template>
           </el-upload>
@@ -155,7 +155,8 @@
 
 <script setup name="Task">
 import { listTask, getTask, delTask, addTask, updateTask } from "@/api/label/task"
-
+import { getPackage } from "@/api/label/package"
+import { computed } from 'vue'
 const { proxy } = getCurrentInstance()
 const { task_status } = proxy.useDict('task_status')
 const route = useRoute()
@@ -202,6 +203,10 @@ const data = reactive({
 const { queryParams, form, rules } = toRefs(data)
 const uploadFile = ref(null)
 const fileList = ref([]) // 用于存储el-upload的文件列表
+const taskPackage = ref(null)
+const fileSuffix = computed(() => {
+  return taskPackage.value && taskPackage.value.type === 'audio' ? '.xlsx' : '.wav'
+})
 
 // 文件选择处理
 function handleFileChange(file, fileList) {
@@ -388,5 +393,11 @@ function handleToAnnotator(row) {
     proxy.$router.push(`/label/view-label/index/${taskPackageId}/${taskPackageName}/${taskId}`)
   }
 }
+
+getPackage(taskPackageId).then(response => {
+  taskPackage.value = response.data
+})
 getList()
+
+
 </script>

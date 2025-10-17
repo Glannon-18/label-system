@@ -42,6 +42,9 @@ public class SysTask extends BaseEntity
 
     /** textGrid文件内容 */
     private String textGrid;
+
+    /** 保存原始的textGrid文件内容 */
+    private String originalTextGrid;
     
     /** 任务包分配人 */
     private String packageAssigner;
@@ -147,6 +150,16 @@ public class SysTask extends BaseEntity
         this.textGrid = textGrid;
     }
 
+    public String getOriginalTextGrid()
+    {
+        return originalTextGrid;
+    }
+
+    public void setOriginalTextGrid(String originalTextGrid)
+    {
+        this.originalTextGrid = originalTextGrid;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -165,6 +178,7 @@ public class SysTask extends BaseEntity
             .append("remark", getRemark())
             .append("packageType", getPackageType())
             .append("textGrid", getTextGrid())
+                .append("originalTextGrid", getOriginalTextGrid())
             .toString();
     }
 }

@@ -10,6 +10,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="audioFileName"    column="audio_file_name"    />
         <result property="audioFilePath"    column="audio_file_path"    />
         <result property="textGrid"    column="text_grid"    />
+        <result property="originalTextGrid"    column="original_text_grid"    />
         <result property="status"    column="status"    />
         <result property="annotator"    column="annotator"    />
         <result property="auditor"    column="auditor"    />
@@ -30,6 +31,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.audio_file_name,
             t.audio_file_path,
             t.text_grid,
+            t.original_text_grid,
             t.status,
             t.annotator,
             t.auditor,
@@ -76,6 +78,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateTime != null">update_time,</if>
             <if test="remark != null">remark,</if>
             <if test="textGrid != null">text_grid,</if>
+            <if test="originalTextGrid != null">original_text_grid,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="packageId != null">#{packageId},</if>
@@ -90,6 +93,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateTime != null">#{updateTime},</if>
             <if test="remark != null">#{remark},</if>
             <if test="textGrid != null">#{textGrid},</if>
+            <if test="originalTextGrid != null">#{originalTextGrid},</if>
          </trim>
     </insert>
 
@@ -100,6 +104,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="audioFileName != null and audioFileName != ''">audio_file_name = #{audioFileName},</if>
             <if test="audioFilePath != null and audioFilePath != ''">audio_file_path = #{audioFilePath},</if>
             <if test="textGrid != null and textGrid != ''">text_grid = #{textGrid},</if>
+            <if test="originalTextGrid != null and originalTextGrid != ''">original_text_grid = #{originalTextGrid},</if>
             <if test="status != null">status = #{status},</if>
             <if test="annotator != null">annotator = #{annotator},</if>
             <if test="auditor != null">auditor = #{auditor},</if>
