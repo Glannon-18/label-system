@@ -295,18 +295,28 @@ const projectId = route.params.projectId
 const projectName = route.params.projectName
 
 
+const types = ref([])
 
-
-const types = [
-  {
-    value: 'text',
-    label: '文本标注',
+watch(
+  package_type,
+  (newVal) => {
+    if (newVal && newVal.length) {
+      types.value = toRaw(newVal)
+    }
   },
-  {
-    value: 'audio',
-    label: '文件录音',
-  }
-]
+  { immediate: true }
+)
+
+// const types = [
+//   {
+//     value: 'text',
+//     label: '文本标注',
+//   },
+//   {
+//     value: 'audio',
+//     label: '文件录音',
+//   }
+// ]
 
 const data = reactive({
   form: {},

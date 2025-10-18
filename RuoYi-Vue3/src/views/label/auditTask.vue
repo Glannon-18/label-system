@@ -204,7 +204,7 @@ function handleToAnnotator(row) {
   const taskId = row.taskId
   const type = row.packageType
   if (type === "audio") {
-    proxy.$router.push(`/label/audit-recorder/index/${taskId}`)
+    proxy.$router.push(`/label/audit-audio-recorder/index/${taskId}`)
   }else{
     proxy.$router.push(`/label/audit-label/index/${taskId}`)
   }

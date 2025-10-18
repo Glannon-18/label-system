@@ -387,8 +387,8 @@ function handleExport() {
 function handleToAnnotator(row) {
   const taskId = row.taskId
   const type = row.packageType
-  if (type === "audio") {
-    proxy.$router.push(`/label/audio-recorder/index/${taskId}`)
+  if (type === "audio") { 
+    proxy.$router.push(`/label/view-audio-recorder/index/${taskPackageId}/${taskPackageName}/${taskId}`)
   }else{
     proxy.$router.push(`/label/view-label/index/${taskPackageId}/${taskPackageName}/${taskId}`)
   }
