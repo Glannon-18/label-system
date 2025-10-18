@@ -144,7 +144,7 @@
             icon="Edit" 
             @click="handleUpdate(scope.row)" 
             v-hasPermi="['label:project:edit']"
-            :disabled="scope.row.status === 'reception'">
+            :disabled="scope.row.status !== 'unallocated'">
             修改
           </el-button>
           <el-button 
@@ -153,7 +153,7 @@
             icon="Delete" 
             @click="handleDelete(scope.row)" 
             v-hasPermi="['label:project:remove']"
-            :disabled="scope.row.status === 'reception'">
+            :disabled="scope.row.status !== 'unallocated'">
             删除
           </el-button>
           <el-button 
@@ -161,7 +161,7 @@
             type="primary"  
             @click="showUser(scope.row)" 
             v-hasPermi="['label:project:edit']"
-            :disabled="scope.row.status === 'reception'">
+            :disabled="scope.row.status !== 'unallocated'">
             分配人员
           </el-button>
         </template>
