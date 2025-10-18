@@ -197,7 +197,7 @@ function goToTaskPackages(row) {
   })
 }
 
-/** 查询项目列表 */
+/** 查询项目列 表 */
 function getList() {
   loading.value = true
   listProject(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
@@ -276,6 +276,7 @@ function submitForm() {
           getList()
         })
       } else {
+        form.value.status = form.value.status?form.value.status:'underway';
         addProject(form.value).then(response => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
