@@ -66,3 +66,12 @@ export function getTaskProgress(taskId) {
     params: { taskId: taskId }
   })
 }
+
+// 查询审核员任务列表
+export function listAuditorTask(query) {
+  return request({
+    url: '/label/task/auditor/list',
+    method: 'get',
+    params: query
+  })
+}

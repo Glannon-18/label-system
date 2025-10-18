@@ -129,6 +129,21 @@ public class SysUserServiceImpl implements ISysUserService
     {
         return userMapper.selectUserForPackage(userName, nickName);
     }
+    
+    /**
+     * 根据角色和语言查询可用于任务包分配的用户列表
+     * 
+     * @param userName 用户名
+     * @param nickName 昵称
+     * @param roleKey 角色关键字
+     * @param language 语言
+     * @return 用户对象列表
+     */
+    @Override
+    public List<SysUser> selectUserForPackage(String userName, String nickName, String roleKey, String language)
+    {
+        return userMapper.selectUserForPackageByRoleAndLanguage(userName, nickName, roleKey, language);
+    }
 
     /**
      * 通过用户ID查询用户

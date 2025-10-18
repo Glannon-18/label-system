@@ -155,4 +155,18 @@ public class SysTaskController extends BaseController
         sysTask.setUpdateBy(getUsername());
         return toAjax(sysTaskService.auditTask(sysTask));
     }
+    
+    /**
+     * 查询审核员任务列表
+     */
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
+    @GetMapping("/auditor/list")
+    public TableDataInfo auditorList(SysTask sysTask)
+    {
+        startPage();
+        // 设置审计员为当前登录用户
+        sysTask.setAuditor(getUsername());
+        List<SysTask> list = sysTaskService.selectAuditorTaskList(sysTask);
+        return getDataTable(list);
+    }
 }

@@ -99,7 +99,7 @@
 </template>
 
 <script setup name="AuditTask">
-import { listTask, auditTask, getTaskProgress } from "@/api/label/task"
+import { listTask, listAuditorTask, auditTask, getTaskProgress } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()
 const { task_status } = proxy.useDict('task_status')
@@ -171,7 +171,7 @@ function getStatusDescription(status) {
 /** 查询任务列表 */
 function getList() {
   loading.value = true
-  listTask(queryParams.value).then(response => {
+  listAuditorTask(queryParams.value).then(response => {
     taskList.value = response.rows
     total.value = response.total
     loading.value = false

@@ -138,4 +138,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </trim>
         where package_id = #{packageId}
     </update>
+    
+    <select id="selectAuditorTaskList" parameterType="SysTask" resultMap="SysTaskResult">
+        <include refid="selectSysTaskVo"/>
+        <where>
+            <if test="packageId != null and packageId != ''"> and t.package_id = #{packageId}</if>
+            <if test="status != null and status != ''"> and t.status = #{status}</if>
+            <if test="auditor != null and auditor != ''"> and p.auditor = #{auditor}</if>
+        </where>
+    </select>
 </mapper>

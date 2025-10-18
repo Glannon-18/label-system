@@ -54,6 +54,20 @@ public interface SysUserMapper
     public List<SysUser> selectUserForPackage(@Param("userName") String userName, @Param("nickName") String nickName);
 
     /**
+     * 根据角色和语言查询可用于任务包分配的用户列表
+     * 
+     * @param userName 用户名
+     * @param nickName 昵称
+     * @param roleKey 角色关键字
+     * @param language 语言
+     * @return 用户对象列表
+     */
+    public List<SysUser> selectUserForPackageByRoleAndLanguage(@Param("userName") String userName, 
+                                                               @Param("nickName") String nickName,
+                                                               @Param("roleKey") String roleKey,
+                                                               @Param("language") String language);
+
+    /**
      * 通过用户ID查询用户
      * 
      * @param userId 用户ID
