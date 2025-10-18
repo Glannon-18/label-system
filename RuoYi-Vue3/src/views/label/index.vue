@@ -197,7 +197,7 @@ function goToTaskPackages(row) {
   })
 }
 
-/** 查询项目列表 */
+/** 查询项目列 表 */
 function getList() {
   loading.value = true
   listProject(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
