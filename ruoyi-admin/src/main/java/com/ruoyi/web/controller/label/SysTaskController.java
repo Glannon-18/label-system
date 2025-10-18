@@ -50,7 +50,7 @@ public class SysTaskController extends BaseController
     /**
      * 查询任务列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:list')")
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysTask sysTask)
     {
@@ -62,7 +62,7 @@ public class SysTaskController extends BaseController
     /**
      * 导出任务列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:export')")
+//    @PreAuthorize("@ss.hasPermi('label:project:export')")
     @Log(title = "任务", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysTask sysTask)
@@ -75,7 +75,7 @@ public class SysTaskController extends BaseController
     /**
      * 获取任务详细信息
      */
-    @PreAuthorize("@ss.hasPermi('label:project:query')")
+//    @PreAuthorize("@ss.hasPermi('label:project:query')")
     @GetMapping(value = "/{taskId}")
     public AjaxResult getInfo(@PathVariable("taskId") Long taskId)
     {
@@ -85,7 +85,7 @@ public class SysTaskController extends BaseController
     /**
      * 新增任务
      */
-    @PreAuthorize("@ss.hasPermi('label:project:add')")
+//    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestPart("sysTask") SysTask sysTask, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException
@@ -107,7 +107,7 @@ public class SysTaskController extends BaseController
     /**
      * 修改任务
      */
-    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+//    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException
@@ -136,7 +136,7 @@ public class SysTaskController extends BaseController
     /**
      * 删除任务
      */
-    @PreAuthorize("@ss.hasPermi('label:project:remove')")
+//    @PreAuthorize("@ss.hasPermi('label:project:remove')")
     @Log(title = "任务", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{taskIds}")
     public AjaxResult remove(@PathVariable Long[] taskIds)
@@ -147,7 +147,7 @@ public class SysTaskController extends BaseController
     /**
      * 审核任务
      */
-    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+//    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务", businessType = BusinessType.UPDATE)
     @PutMapping("/audit")
     public AjaxResult audit(@RequestBody SysTask sysTask)

@@ -89,6 +89,15 @@
             v-hasPermi="['label:project:add']"
         >上传任务包</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+            type="primary"
+            plain
+            icon="Download"
+            @click="handleDownload"
+            v-hasPermi="['label:project:export']"
+        >下载任务包</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -257,7 +266,7 @@
 </template>
 
 <script setup name="Package">
-import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser, uploadPackage } from "@/api/label/package"
+import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser, uploadPackage, downloadPackage } from "@/api/label/package"
 
 const { proxy } = getCurrentInstance()
 const { package_status } = proxy.useDict('package_status')
@@ -453,6 +462,24 @@ function handleExport() {
   proxy.download('system/package/export', {
     ...queryParams.value
   }, `package_${new Date().getTime()}.xlsx`)
+}
+
+/** 下载任务包按钮操作 */
+function handleDownload() {
+  if (ids.value.length !== 1) {
+    proxy.$modal.msgWarning("请选择一个任务包进行下载")
+    return
+  }
+  
+  const taskPackageId = ids.value[0]
+  downloadPackage(taskPackageId).then(response => {
+    const blob = new Blob([response])
+    const fileName = packageList.value.find(item => item.taskPackageId === taskPackageId)?.name || 'task_package.zip'
+    proxy.$download.saveAs(blob, `${fileName}.zip`)
+  }).catch(error => {
+    console.error(error)
+    proxy.$modal.msgError("下载失败：" + (error.message || "未知错误"))
+  })
 }
 
 function goToTask(row) {

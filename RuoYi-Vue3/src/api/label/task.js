@@ -57,3 +57,12 @@ export function auditTask(data) {
     data: data
   })
 }
+
+// 查询任务进度日志
+export function getTaskProgress(taskId) {
+  return request({
+    url: '/label/log/list',
+    method: 'get',
+    params: { taskId: taskId }
+  })
+}

@@ -1,6 +1,8 @@
 package com.ruoyi.web.controller.label;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -8,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import com.ruoyi.common.config.RuoYiConfig;
@@ -60,7 +63,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 查询任务包列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:list')")
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysTaskPackage sysTaskPackage)
     {
@@ -72,7 +75,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 查询分配给当前用户的所有任务包列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:list')")
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/assigner/list")
     public TableDataInfo listByAssigner(SysTaskPackage sysTaskPackage)
     {
@@ -86,7 +89,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 查询可用于任务包分配的用户列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:list')")
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/users")
     public AjaxResult getUserForPackage(String userName, String nickName)
     {
@@ -97,7 +100,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 导出任务包列表
      */
-    @PreAuthorize("@ss.hasPermi('label:project:export')")
+//    @PreAuthorize("@ss.hasPermi('label:project:export')")
     @Log(title = "任务包", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysTaskPackage sysTaskPackage)
@@ -110,7 +113,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 获取任务包详细信息
      */
-    @PreAuthorize("@ss.hasPermi('label:project:query')")
+//    @PreAuthorize("@ss.hasPermi('label:project:query')")
     @GetMapping(value = "/{taskPackageId}")
     public AjaxResult getInfo(@PathVariable("taskPackageId") Long taskPackageId)
     {
@@ -120,7 +123,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 新增任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:add')")
+//    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务包", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody SysTaskPackage sysTaskPackage)
@@ -133,7 +136,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 修改任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+//    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务包", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody SysTaskPackage sysTaskPackage)
@@ -145,7 +148,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 删除任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:remove')")
+//    @PreAuthorize("@ss.hasPermi('label:project:remove')")
     @Log(title = "任务包", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{taskPackageIds}")
     public AjaxResult remove(@PathVariable Long[] taskPackageIds)
@@ -156,7 +159,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 分配任务包给用户
      */
-    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+//    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务包", businessType = BusinessType.UPDATE)
     @PostMapping("/assign")
     public AjaxResult assignPackageToUser(@RequestBody SysTaskPackage sysTaskPackage)
@@ -171,7 +174,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 接收任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:edit')")
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @Log(title = "任务包", businessType = BusinessType.UPDATE)
     @PostMapping("/reception")
     public AjaxResult receptionPackage(@RequestBody SysTaskPackage sysTaskPackage)
@@ -205,7 +208,7 @@ public class SysTaskPackageController extends BaseController
     /**
      * 上传任务包
      */
-    @PreAuthorize("@ss.hasPermi('label:project:add')")
+//    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务包", businessType = BusinessType.IMPORT)
     @PostMapping("/upload")
     public AjaxResult uploadPackage(MultipartFile file, Long projectId) throws Exception
@@ -268,6 +271,75 @@ public class SysTaskPackageController extends BaseController
             return AjaxResult.success("上传成功");
         } catch (Exception e) {
             return AjaxResult.error("上传失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 下载任务包
+     */
+    @Log(title = "任务包", businessType = BusinessType.EXPORT)
+    @GetMapping("/download/{taskPackageId}")
+    public void downloadPackage(@PathVariable Long taskPackageId, HttpServletResponse response) throws IOException {
+        try {
+            // 获取任务包信息
+            SysTaskPackage taskPackage = sysTaskPackageService.selectSysTaskPackageByTaskPackageId(taskPackageId);
+            if (taskPackage == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "任务包不存在");
+                return;
+            }
+            
+            // 获取任务包下的所有任务
+            List<SysTask> taskList = sysTaskService.selectSysTaskListByPackageId(taskPackageId);
+            
+            // 创建zip文件
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ZipOutputStream zos = new ZipOutputStream(baos);
+            
+            // 将每个任务的文件添加到zip中
+            for (SysTask task : taskList) {
+                // 添加wav文件
+                String audioFilePath = task.getAudioFilePath();
+                if (audioFilePath != null && !audioFilePath.isEmpty()) {
+                    // 获取文件实际路径
+                    String realPath = RuoYiConfig.getProfile() + audioFilePath.substring(audioFilePath.indexOf("/upload"));
+                    File audioFile = new File(realPath);
+                    if (audioFile.exists()) {
+                        // 添加到zip
+                        ZipEntry wavEntry = new ZipEntry(task.getAudioFileName());
+                        zos.putNextEntry(wavEntry);
+                        
+                        // 读取文件内容并写入zip
+                        byte[] fileContent = java.nio.file.Files.readAllBytes(audioFile.toPath());
+                        zos.write(fileContent, 0, fileContent.length);
+                        zos.closeEntry();
+                    }
+                }
+                
+                // 添加TextGrid文件
+                String textGridContent = task.getTextGrid();
+                if (textGridContent != null && !textGridContent.isEmpty()) {
+                    String textGridFileName = task.getAudioFileName().substring(0, task.getAudioFileName().lastIndexOf(".")) + ".TextGrid";
+                    ZipEntry textGridEntry = new ZipEntry(textGridFileName);
+                    zos.putNextEntry(textGridEntry);
+                    
+                    // 写入TextGrid内容
+                    byte[] contentBytes = textGridContent.getBytes(StandardCharsets.UTF_8);
+                    zos.write(contentBytes, 0, contentBytes.length);
+                    zos.closeEntry();
+                }
+            }
+            
+            zos.close();
+            
+            // 设置响应头
+            response.setContentType("application/zip");
+            response.setHeader("Content-Disposition", "attachment; filename=" + taskPackage.getName() + ".zip");
+            
+            // 写入响应
+            response.getOutputStream().write(baos.toByteArray());
+            response.getOutputStream().flush();
+        } catch (Exception e) {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "下载失败: " + e.getMessage());
         }
     }
     

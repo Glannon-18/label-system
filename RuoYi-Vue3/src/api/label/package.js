@@ -90,3 +90,12 @@ export function uploadPackage(data) {
     }
   })
 }
+
+// 下载任务包
+export function downloadPackage(taskPackageId) {
+  return request({
+    url: '/label/package/download/' + taskPackageId,
+    method: 'get',
+    responseType: 'blob'
+  })
+}
