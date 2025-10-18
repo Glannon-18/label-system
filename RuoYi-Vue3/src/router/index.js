@@ -215,6 +215,20 @@ export const dynamicRoutes = [
     ]
   },
   {
+    path: '/label/view-audio-recorder',
+    component: Layout,
+    hidden: true,
+    permissions: ['label:project:list'],
+    children: [
+      {
+        path: 'index/:taskPackageId(\\d+)/:taskPackageName/:taskId(\\d+)',
+        component: () => import('@/views/label/audioRecorderProject'),
+        name: 'view-audio-recorder',
+        meta: { title: '文件录音', activeMenu: '/label/project' }
+      }
+    ]
+  },
+  {
     path: '/label/audio-recorder',
     component: Layout,
     hidden: true,
@@ -229,15 +243,15 @@ export const dynamicRoutes = [
     ]
   },
   {
-    path: '/label/audit-recorder',
+    path: '/label/audit-audio-recorder',
     component: Layout,
     hidden: true,
     permissions: ['label:project:list'],
     children: [
       {
         path: 'index/:taskId(\\d+)',
-        component: () => import('@/views/label/audioRecorder'),
-        name: 'audit-recorder',
+        component: () => import('@/views/label/audioRecorderAudit'),
+        name: 'audit-audio-recorder',
         meta: { title: '审核录音', activeMenu: '/label/auditTask' }
       }
     ]
