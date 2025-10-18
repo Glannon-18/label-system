@@ -977,14 +977,16 @@ async function init(){
     let end = Number(region.end.toFixed(3))
 
     //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则边界值等于已有分段边界值
-    if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
-      if( Math.abs( ts.start - start) < 0.2){//左边界
-        start = ts.start
+    times.forEach( ts => {
+      if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
+        if( Math.abs( ts.start - start) < 0.2){//左边界
+          start = ts.start
+        }
+        if( Math.abs( ts.end - end) < 0.2){//右边界
+          end = ts.end
+        }
       }
-      if( Math.abs( ts.end - end) < 0.2){//右边界
-        end = ts.end
-      }
-    }
+    })
 
     let newSeg = {start:start, end:end}
     let newtimes = addSegment(times, newSeg)
