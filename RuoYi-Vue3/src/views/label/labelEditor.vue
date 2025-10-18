@@ -40,7 +40,7 @@
     <!-- 操作按钮栏 -->
     <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
       <div style="display: flex; gap: 0.5rem; font-size: 12px; align-items: center; justify-content: center;">
-        <span style="color: gray;">点击插入无效时长标签:</span>
+        <span style="color: gray;">无效时长标签:</span>
         <div v-for="item in labels" :key="item.label">
           <el-tooltip 
             class="box-item"
@@ -50,6 +50,7 @@
             {{ item.label }}
           </el-tag></el-tooltip>
         </div>
+        <span style="color: gray;">(点击即可插入/移除)</span>
       </div>
       <div style="display: flex; align-items: center;">
         <span style="margin-right: 12px;">{{ currentTime  }} / {{ duration }} </span>
@@ -98,7 +99,7 @@
           </el-table-column>
           <el-table-column label="时长(秒)" width="100"> 
             <template #default="scope"> 
-              {{ (scope.row.end - scope.row.start).toFixed(3) }}
+              {{ Number((scope.row.end - scope.row.start).toFixed(3)) }}
             </template>
           </el-table-column>
           <el-table-column label="标注文本内容" > 
@@ -149,7 +150,11 @@ function insertText(text) {
   if (activeRegion && activeRegion.start !== activeRegion.end) {
     times.forEach(item => {
       if (item.start === activeRegion.start && item.end===activeRegion.end) {
-        item.text += text
+        if(item.text.indexOf(text)>-1){
+          item.text = item.text.replace(text, '')
+        }else{
+          item.text += text
+        }        
       }
     })
   }else{
@@ -728,7 +733,7 @@ function adjustSegment(times, oldSegment, newSegment) {
           //被覆盖的分段的文本需要合并到新分段文本后面；
           //不被覆盖但有重叠的分段只需要调整分段的左边界，以保持时间轴的连续性
           for (let i = index + 1; i < times.length; i++) {//遍历右边的分段
-            if(result[i].end < newSegment.end) {//分段被覆盖
+            if(result[i].end <= newSegment.end) {//分段被覆盖
               //合并文本
               result[index].text = result[index].text + " " + result[i].text;
             }else if(newSegment.end > result[i].start && newSegment.end < result[i].end ){//分段有重叠
@@ -753,7 +758,10 @@ function adjustSegment(times, oldSegment, newSegment) {
         if(seg.end==duration &&seg.end==newSegment.end && newSegment.start < seg.start){//最后一个分段被覆盖，不保留
           return false
         }
-        if((seg.start > newSegment.start && seg.end < newSegment.end)){//中间分段被覆盖，不保留
+        if( (seg.start > newSegment.start && seg.end < newSegment.end) //左右边界都在新分段中间
+          || (seg.start == newSegment.start && seg.end < newSegment.end)//左边界相同
+          || (seg.start > newSegment.start && seg.end == newSegment.end)////右边界相同
+        ){//中间分段被覆盖，不保留
           return false
         }
         return true //保留其他分段
@@ -956,7 +964,20 @@ async function init(){
 
     //====添加新区域到时间序列数组中===
     console.log(`添加前：`,times);
-    let newSeg = {start:Number(region.start.toFixed(3)), end:Number(region.end.toFixed(3))}
+    let start = Number(region.start.toFixed(3))
+    let end = Number(region.end.toFixed(3))
+
+    //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则边界值等于已有分段边界值
+    if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
+      if( Math.abs( ts.start - start) < 0.2){//左边界
+        start = ts.start
+      }
+      if( Math.abs( ts.end - end) < 0.2){//右边界
+        end = ts.end
+      }
+    }
+
+    let newSeg = {start:start, end:end}
     let newtimes = addSegment(times, newSeg)
     times.splice(0, times.length);
     times.push(...newtimes);
@@ -1033,11 +1054,23 @@ async function init(){
     regions.on('region-updated', (region) => {
       console.log('regions.region-updated');
 
-      //调整region的start和end精度保留2位小数
+      //调整region的start和end精度保留3位小数
       let start = Number(region.start.toFixed(3))
       let end = Number(region.end.toFixed(3))
 
-      console.log(`识别到调整区域：(${activeRegion.start},${activeRegion.end})-->(${region.start},${region.end})`)
+      //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则新边界值等于已有分段边界值
+      times.forEach( ts => {
+        if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
+          if( Math.abs( ts.start - start) < 0.2){//左边界
+            start = ts.start
+          }
+          if( Math.abs( ts.end - end) < 0.2){//右边界
+            end = ts.end
+          }
+        }
+      })
+
+      console.log(`识别到调整区域：(${activeRegion.start},${activeRegion.end})-->(${start},${end})`)
       
       console.log('调整前：', JSON.stringify(times))
       let oldReg = {start:activeRegion.start, end:activeRegion.end}
@@ -1072,7 +1105,7 @@ async function init(){
       
       const index = times.findIndex(seg => seg.start === start && seg.end === end);
       console.log('>>>>当前激活的分段：', JSON.stringify(times[index]));
-      //移除分段
+      //移除此分段
       region.remove()
       //激活新分段
       activateRegion(newReg)
@@ -1167,16 +1200,6 @@ async function init(){
           }
           ws.play()
         }
-        
-
-        //如果当前不在播放，并且
-        // if(!ws.isPlaying() && activeRegion.start!=activeRegion.end &&ws.currentTime>=activeRegion.end){
-        //   ws.skip(activeRegion.start)
-        //   ws.play()
-        // }else{
-        //   ws.pause()
-        // }
-
       }
     }
 
@@ -1459,6 +1482,9 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 
+
+//播放状态控制(true为播放，false为暂停)
+let playStatus = ref(true)
 
 //播放音量
 let volume = ref(50)
