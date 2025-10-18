@@ -9,7 +9,7 @@
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
         <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
         
-        <!-- <div v-if="['unstart','underway','reject','pass'].includes(task.data.status)">
+        <!-- <div v-if="['underway','reject'].includes(task.data.status)">
           <el-button type="danger" plain @click="redo()">重做</el-button>
           <el-button type="primary" plain @click="saveTask()">保存更改</el-button>
           <el-button type="success" plain @click="submitTask()">提交审核</el-button>
