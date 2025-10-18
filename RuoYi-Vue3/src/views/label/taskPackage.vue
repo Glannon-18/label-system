@@ -293,6 +293,7 @@
 
 <script setup name="Package">
 import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser, uploadPackage, downloadPackage } from "@/api/label/package"
+import { listTask } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()
 const { package_status } = proxy.useDict('package_status')
@@ -549,17 +550,28 @@ function goToTask(row) {
 
 // 显示分配人员对话框
 function showUser(row) {
-  currentRow.value = row
-  assignUserOpen.value = true
-  assignUserForm.value.userId = null
-  assignUserForm.value.assigner = null
-  assignUserForm.value.auditor = null
-  workerList.value = []
-  auditorList.value = []
-  // 加载安排人员（label_worker角色）选项
-  loadWorkersByRoleAndLanguage('label_worker', row.language)
-  // 加载审核人员（label_auditor角色）选项
-  loadAuditorsByRoleAndLanguage('label_auditor', row.language)
+  // 先检查任务包下是否有任务
+  listTask({ packageId: row.taskPackageId }).then(response => {
+    if (response.total === 0) {
+      proxy.$modal.msgWarning("这个任务包没有任务")
+      return
+    }
+    
+    currentRow.value = row
+    assignUserOpen.value = true
+    assignUserForm.value.userId = null
+    assignUserForm.value.assigner = null
+    assignUserForm.value.auditor = null
+    workerList.value = []
+    auditorList.value = []
+    // 加载安排人员（label_worker角色）选项
+    loadWorkersByRoleAndLanguage('label_worker', row.language)
+    // 加载审核人员（label_auditor角色）选项
+    loadAuditorsByRoleAndLanguage('label_auditor', row.language)
+  }).catch(error => {
+    console.error('检查任务数量失败:', error)
+    proxy.$modal.msgError("检查任务数量失败")
+  })
 }
 
 // 加载安排人员（label_worker角色）选项
