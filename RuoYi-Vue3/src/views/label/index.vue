@@ -276,6 +276,7 @@ function submitForm() {
           getList()
         })
       } else {
+        form.value.status = form.value.status?form.value.status:'underway';
         addProject(form.value).then(response => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
