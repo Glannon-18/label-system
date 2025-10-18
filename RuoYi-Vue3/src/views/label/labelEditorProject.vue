@@ -40,7 +40,7 @@
     <!-- 操作按钮栏 -->
     <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
       <div style="display: flex; gap: 0.5rem; font-size: 12px; align-items: center; justify-content: center;">
-        <span style="color: gray;">点击插入无效时长标签:</span>
+        <span style="color: gray;">无效时长标签:</span>
         <div v-for="item in labels" :key="item.label">
           <el-tooltip 
             class="box-item"
@@ -50,9 +50,10 @@
             {{ item.label }}
           </el-tag></el-tooltip>
         </div>
+        <span style="color: gray;">(点击即可插入/移除)</span>
       </div>
-      <div style="display: flex;">
-        <!-- {{ formatSecondsToMMSSS(currentTime)  }} / {{ formatSecondsToMMSSS(duration)}}  -->
+      <div style="display: flex; align-items: center;">
+        <span style="margin-right: 12px;">{{ currentTime  }} / {{ duration }} </span>
         <el-button type="info" plain id="backward">上一段</el-button>
         <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
         <el-button type="info" plain id="forward">下一段</el-button>
@@ -78,10 +79,10 @@
     <!--分段标注列表-->
     <div style="margin-top: 10px; display: flex; flex-direction:column">
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
-        style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; overflow: hidden;"  
+        style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; font-size: 16px;"  
         :show-header="true" 
         :row-class-name="tableRowClassName" @row-click="rowClick" > 
-          <el-table-column label="分段序号" width="100"> 
+          <el-table-column label="分段序号" width="80"> 
             <template #default="scope"> 
               {{ scope.$index + 1 }}
             </template>
@@ -103,7 +104,15 @@
           </el-table-column>
           <el-table-column label="标注文本内容" > 
             <template #default="scope"> 
-              <el-input type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容" style="width:100%;font-size:16px;" />
+              <el-input 
+                type="textarea" 
+                clearable 
+                autosize 
+                v-model="scope.row.text" 
+                placeholder="请输入标注内容" 
+                style="width:100%;font-size:20px;" 
+                @keyup.enter="handleTextEnter($event, scope.row)"
+              />
             </template>
           </el-table-column>
           <el-table-column label="字符数" width="100"> 
@@ -180,7 +189,39 @@ const handleSpace = (event) => {
 };
 
 
-
+/**
+ * 处理文本输入框回车事件
+ * @param {Event} event - 键盘事件
+ * @param {Object} row - 当前行数据
+ */
+function handleTextEnter(event, row) {
+  // 阻止默认的换行行为
+  event.preventDefault();
+  
+  // 获取当前文本
+  const text = row.text;
+  
+  // 查找换行符位置
+  const newlineIndex = text.indexOf('\n');
+  
+  if (newlineIndex !== -1) {
+    // 如果有换行符，则按换行符分割文本
+    const firstPart = text.substring(0, newlineIndex);
+    const secondPart = text.substring(newlineIndex + 1);
+    
+    // 更新当前行的文本为第一部分
+    row.text = firstPart;
+    
+    // 计算分割点（按时间比例）
+    // const totalTextLength = firstPart.length + secondPart.length;
+    // const splitRatio = firstPart.length / totalTextLength;
+    // const splitPoint = row.start + (row.end - row.start) * splitRatio;
+    const splitPoint = Number(((row.start+row.end) / 2).toFixed(3))
+    
+    // 调用splitSegment函数处理分段
+    splitSegment(times, row, splitPoint, secondPart);
+  }
+}
 
 // 获取音频文件URL（需要根据实际路径结构调整）
 function getAudioUrl(audioFileName) {
@@ -738,7 +779,7 @@ function adjustSegment(times, oldSegment, newSegment) {
           for (let i = index + 1; i < times.length; i++) {//遍历右边的分段
             if(result[i].end <= newSegment.end) {//分段被覆盖
               //合并文本
-              result[index].text = result[index].text + " " + result[i].text;
+              result[index].text = result[index].text + "" + result[i].text;
             }else if(newSegment.end > result[i].start && newSegment.end < result[i].end ){//分段有重叠
               //调整分段的左边界
               result[i].start = newSegment.end;
@@ -802,18 +843,53 @@ function adjustSegment(times, oldSegment, newSegment) {
     }
 }
 
-function splitSegment(times, oldSegment, point) {
+function splitSegment(times, oldSegment, point, newText = "") {
+  // 查找oldSegment在times数组中的索引
+  const index = times.findIndex(segment => segment === oldSegment);
+  
+  if (index !== -1) {
   //将从oldSegment分割为两个分段，其中一个分段的右边界为point
   let newSegment = {
     start: oldSegment.start,
     end: point,
     text: oldSegment.text
   }
+    
+    // 更新原分段
   oldSegment.start = point;
+    oldSegment.text = newText; // 设置新分段的文本
+    
+    // 替换数组中的分段
   times[index] = newSegment;
-  return times;
+    // 在index之后插入新的分段
+    times.splice(index + 1, 0, oldSegment);
 
+    //清除零长区域
+    regions.getRegions().forEach((reg) => {
+      if (reg.start == reg.end) {//清除零长区域
+        reg.remove()
+      }
+    })
 
+    //重建零长区域
+    times.forEach((e, index) => {
+      regions.addRegion({
+        start: e.start,
+        content: `${index+1}`,
+        color: '#000',
+        drag: false,
+        resize: false
+      })
+    })
+    
+    //激活index分段
+    activateRegion(newSegment)
+    
+    return times;
+  } else {
+    console.error(`找不到要调整的分段`);
+    return times;
+  }
 }
 // 渲染demo波形
 async function init(){
@@ -1680,6 +1756,17 @@ watch(textGridText, (newValue, oldValue) => {
 
 let dialogFormVisible = ref(false)
 let dialogFormRemark = ref('')
+
+// 添加键盘事件监听器
+onMounted(() => {
+  window.addEventListener('keydown', handleSpace);
+})
+
+// 移除键盘事件监听器
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleSpace);
+})
+
 </script>
 
 

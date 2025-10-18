@@ -79,10 +79,10 @@
     <!--分段标注列表-->
     <div style="margin-top: 10px; display: flex; flex-direction:column">
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
-        style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; overflow: hidden;"  
+        style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; font-size: 16px;"  
         :show-header="true" 
         :row-class-name="tableRowClassName" @row-click="rowClick" > 
-          <el-table-column label="分段序号" width="100"> 
+          <el-table-column label="分段序号" width="80"> 
             <template #default="scope"> 
               {{ scope.$index + 1 }}
             </template>
@@ -110,7 +110,7 @@
                 autosize 
                 v-model="scope.row.text" 
                 placeholder="请输入标注内容" 
-                style="width:100%;font-size:16px;" 
+                style="width:100%;font-size:20px;" 
                 @keyup.enter="handleTextEnter($event, scope.row)"
               />
             </template>
@@ -1756,6 +1756,17 @@ watch(textGridText, (newValue, oldValue) => {
 
 let dialogFormVisible = ref(false)
 let dialogFormRemark = ref('')
+
+// 添加键盘事件监听器
+onMounted(() => {
+  window.addEventListener('keydown', handleSpace);
+})
+
+// 移除键盘事件监听器
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleSpace);
+})
+
 </script>
 
 
