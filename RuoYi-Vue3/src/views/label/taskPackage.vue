@@ -466,8 +466,13 @@ function handleExport() {
 
 /** 下载任务包按钮操作 */
 function handleDownload() {
-  if (ids.value.length !== 1) {
+  if (ids.value.length === 0) {
     proxy.$modal.msgWarning("请选择一个任务包进行下载")
+    return
+  }
+  
+  if (ids.value.length > 1) {
+    proxy.$modal.msgWarning("每次只能下载一个任务包")
     return
   }
   
