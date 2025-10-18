@@ -485,23 +485,25 @@ function rejectTask(){
   updateTask(formData).then(response => {
     proxy.$modal.msgSuccess("驳回成功")
     setTimeout(() => {
-      proxy.$tab.closePage()  // 关闭当前页
-      // 根据来源页面跳转回相应的列表页
-      const returnPath = getReturnPath();
-      if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
-        // 对于需要参数的路由，我们需要传递参数
-        const route = useRoute();
-        if (route.params.taskPackageId && route.params.taskPackageName) {
-          proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
-        } else {
-          proxy.$router.push(returnPath);
-        }
-      } else if (returnPath === '/label/auditTask') {
-        // 为auditTask页面添加时间戳参数以触发刷新
-        proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
-      } else {
-        proxy.$router.push(returnPath);
-      }
+      // proxy.$tab.closePage()  // 关闭当前页
+      // // 根据来源页面跳转回相应的列表页
+      // const returnPath = getReturnPath();
+      // if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
+      //   // 对于需要参数的路由，我们需要传递参数
+      //   const route = useRoute();
+      //   if (route.params.taskPackageId && route.params.taskPackageName) {
+      //     proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+      //   } else {
+      //     proxy.$router.push(returnPath);
+      //   }
+      // } else if (returnPath === '/label/auditTask') {
+      //   // 为auditTask页面添加时间戳参数以触发刷新
+      //   proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
+      // } else {
+      //   proxy.$router.push(returnPath);
+      // }
+      //跳转回“我的审核”页
+      proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
     }, 1000)
     
   })
@@ -543,23 +545,25 @@ function auditTask(status) {
     updateTask(formData).then(response => {
       proxy.$modal.msgSuccess("审核成功")
       setTimeout(() => {
-        proxy.$tab.closePage()  // 关闭当前页
-        // 根据来源页面跳转回相应的列表页
-        const returnPath = getReturnPath();
-        if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
-          // 对于需要参数的路由，我们需要传递参数
-          const route = useRoute();
-          if (route.params.taskPackageId && route.params.taskPackageName) {
-            proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
-          } else {
-            proxy.$router.push(returnPath);
-          }
-        } else if (returnPath === '/label/auditTask') {
-          // 为auditTask页面添加时间戳参数以触发刷新
-          proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
-        } else {
-          proxy.$router.push(returnPath);
-        }
+        // proxy.$tab.closePage()  // 关闭当前页
+        // // 根据来源页面跳转回相应的列表页
+        // const returnPath = getReturnPath();
+        // if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
+        //   // 对于需要参数的路由，我们需要传递参数
+        //   const route = useRoute();
+        //   if (route.params.taskPackageId && route.params.taskPackageName) {
+        //     proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+        //   } else {
+        //     proxy.$router.push(returnPath);
+        //   }
+        // } else if (returnPath === '/label/auditTask') {
+        //   // 为auditTask页面添加时间戳参数以触发刷新
+        //   proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
+        // } else {
+        //   proxy.$router.push(returnPath);
+        // }
+        //跳转回“我的审核”页
+        proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
       }, 1000)
       
     })
@@ -822,6 +826,11 @@ async function init(){
   let res = await getTask(taskId);
   console.log('任务详情：', res)
   task.data = res.data;
+
+  getPackage(task.data.packageId).then(res=>{
+    task.package = res.data;
+    console.log('任务包详情：', task.package)
+  })
 
   if(!task.data.textGrid){
     proxy.$message.error('缺少预标注文本TextGrid')
