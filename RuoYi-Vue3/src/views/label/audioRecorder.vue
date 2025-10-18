@@ -601,7 +601,7 @@ function togglePlaying(index) {
 
 
     if (index != playingIndex) {
-        audio = new Audio("/dev-api" + recordsList.value[index].audioFilePath)
+        audio = new Audio(import.meta.env.VITE_APP_BASE_API + recordsList.value[index].audioFilePath)
         audio.onended = () => {
 
             playingStates.value[index] = false
@@ -719,7 +719,7 @@ function uploadFile(file) {
     const formData = new FormData()
     formData.append('file', file, file.name)
 
-    fetch('/dev-api/common/upload', {
+    fetch(import.meta.env.VITE_APP_BASE_API+'/common/upload', {
         method: 'POST',
         headers: headers,
         body: formData
@@ -782,7 +782,7 @@ onMounted(async () => {
 
         const responseRecords = await listRecords({ taskId: task.value.taskId })
         
-        const url = `/dev-api${task.value.audioFilePath}`
+        const url = `${import.meta.env.VITE_APP_BASE_API}${task.value.audioFilePath}`
 
         if (responseRecords.total == 0) {
             try {

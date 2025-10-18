@@ -98,7 +98,7 @@
           </el-table-column>
           <el-table-column label="时长(秒)" width="100"> 
             <template #default="scope"> 
-              {{ (scope.row.end - scope.row.start).toFixed(3) }}
+              {{ Number((scope.row.end - scope.row.start).toFixed(3)) }}
             </template>
           </el-table-column>
           <el-table-column label="标注文本内容" > 
@@ -114,10 +114,10 @@
       </el-table>
     </div>
 
-    <!-- 底部提示说明
+    <!-- 底部提示说明 -->
     <div v-if="task.data.status==='pending_review'" style="line-height: 30px;margin-top: 10px; color: gray; font-size: 12px;">
-      Tip：审核时可对标注内容进行修改，提交审核结果同时保存修改的内容。
-    </div> -->
+      Tip：审核人可对标注内容进行修改，提交审核结果同时保存修改的内容。
+    </div>
 
   </div>
 </template>
@@ -149,7 +149,11 @@ function insertText(text) {
   if (activeRegion && activeRegion.start !== activeRegion.end) {
     times.forEach(item => {
       if (item.start === activeRegion.start && item.end===activeRegion.end) {
+        if(item.text.indexOf(text)>-1){
+          item.text = item.text.replace(text, '')
+        }else{
         item.text += text
+        }        
       }
     })
   }else{
@@ -182,9 +186,9 @@ const handleSpace = (event) => {
 function getAudioUrl(audioFileName) {
   // 使用完整的API路径访问音频文件，例如：`/dev-api/profile/upload/${audioFileName}`
   if (audioFileName.startsWith('/profile/upload/')) {
-    return `/dev-api${audioFileName}`;
+    return import.meta.env.VITE_APP_BASE_API +`${audioFileName}`;
   } else {
-    return `/dev-api/profile/upload/${audioFileName}`;
+    return import.meta.env.VITE_APP_BASE_API +`/profile/upload/${audioFileName}`;
   }
 }
 
@@ -419,23 +423,25 @@ function submitTask() {
     updateTask(formData).then(response => {
       proxy.$modal.msgSuccess("提交成功")
       setTimeout(() => {
-        proxy.$tab.closePage()  // 关闭当前页
-        // 根据来源页面跳转回相应的列表页
-        const returnPath = getReturnPath();
-        if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
-          // 对于需要参数的路由，我们需要传递参数
-          const route = useRoute();
-          if (route.params.taskPackageId && route.params.taskPackageName) {
-            proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
-          } else {
-            proxy.$router.push(returnPath);
-          }
-        } else if (returnPath === '/label/auditTask') {
-          // 为auditTask页面添加时间戳参数以触发刷新
-          proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
-        } else {
-          proxy.$router.push(returnPath);
-        }
+        // proxy.$tab.closePage()  // 关闭当前页
+        // // 根据来源页面跳转回相应的列表页
+        // const returnPath = getReturnPath();
+        // if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
+        //   // 对于需要参数的路由，我们需要传递参数
+        //   const route = useRoute();
+        //   if (route.params.taskPackageId && route.params.taskPackageName) {
+        //     proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+        //   } else {
+        //     proxy.$router.push(returnPath);
+        //   }
+        // } else if (returnPath === '/label/auditTask') {
+        //   // 为auditTask页面添加时间戳参数以触发刷新
+        //   proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
+        // } else {
+        //   proxy.$router.push(returnPath);
+        // }
+        //跳转回“我的任务明细”页
+        proxy.$router.push(`/label/my-task/index/${task.data.packageId}/${encodeURIComponent(route.params.taskPackageName)}`);
       }, 1000)
       
     })
@@ -478,23 +484,25 @@ function rejectTask(){
   updateTask(formData).then(response => {
     proxy.$modal.msgSuccess("驳回成功")
     setTimeout(() => {
-      proxy.$tab.closePage()  // 关闭当前页
-      // 根据来源页面跳转回相应的列表页
-      const returnPath = getReturnPath();
-      if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
-        // 对于需要参数的路由，我们需要传递参数
-        const route = useRoute();
-        if (route.params.taskPackageId && route.params.taskPackageName) {
-          proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
-        } else {
-          proxy.$router.push(returnPath);
-        }
-      } else if (returnPath === '/label/auditTask') {
-        // 为auditTask页面添加时间戳参数以触发刷新
-        proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
-      } else {
-        proxy.$router.push(returnPath);
-      }
+      // proxy.$tab.closePage()  // 关闭当前页
+      // // 根据来源页面跳转回相应的列表页
+      // const returnPath = getReturnPath();
+      // if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
+      //   // 对于需要参数的路由，我们需要传递参数
+      //   const route = useRoute();
+      //   if (route.params.taskPackageId && route.params.taskPackageName) {
+      //     proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+      //   } else {
+      //     proxy.$router.push(returnPath);
+      //   }
+      // } else if (returnPath === '/label/auditTask') {
+      //   // 为auditTask页面添加时间戳参数以触发刷新
+      //   proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
+      // } else {
+      //   proxy.$router.push(returnPath);
+      // }
+      //跳转回“我的审核”页
+      proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
     }, 1000)
     
   })
@@ -536,23 +544,25 @@ function auditTask(status) {
     updateTask(formData).then(response => {
       proxy.$modal.msgSuccess("审核成功")
       setTimeout(() => {
-        proxy.$tab.closePage()  // 关闭当前页
-        // 根据来源页面跳转回相应的列表页
-        const returnPath = getReturnPath();
-        if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
-          // 对于需要参数的路由，我们需要传递参数
-          const route = useRoute();
-          if (route.params.taskPackageId && route.params.taskPackageName) {
-            proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
-          } else {
-            proxy.$router.push(returnPath);
-          }
-        } else if (returnPath === '/label/auditTask') {
-          // 为auditTask页面添加时间戳参数以触发刷新
-          proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
-        } else {
-          proxy.$router.push(returnPath);
-        }
+        // proxy.$tab.closePage()  // 关闭当前页
+        // // 根据来源页面跳转回相应的列表页
+        // const returnPath = getReturnPath();
+        // if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
+        //   // 对于需要参数的路由，我们需要传递参数
+        //   const route = useRoute();
+        //   if (route.params.taskPackageId && route.params.taskPackageName) {
+        //     proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
+        //   } else {
+        //     proxy.$router.push(returnPath);
+        //   }
+        // } else if (returnPath === '/label/auditTask') {
+        //   // 为auditTask页面添加时间戳参数以触发刷新
+        //   proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
+        // } else {
+        //   proxy.$router.push(returnPath);
+        // }
+        //跳转回“我的审核”页
+        proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
       }, 1000)
       
     })
@@ -726,7 +736,7 @@ function adjustSegment(times, oldSegment, newSegment) {
           //被覆盖的分段的文本需要合并到新分段文本后面；
           //不被覆盖但有重叠的分段只需要调整分段的左边界，以保持时间轴的连续性
           for (let i = index + 1; i < times.length; i++) {//遍历右边的分段
-            if(result[i].end < newSegment.end) {//分段被覆盖
+            if(result[i].end <= newSegment.end) {//分段被覆盖
               //合并文本
               result[index].text = result[index].text + " " + result[i].text;
             }else if(newSegment.end > result[i].start && newSegment.end < result[i].end ){//分段有重叠
@@ -751,7 +761,10 @@ function adjustSegment(times, oldSegment, newSegment) {
         if(seg.end==duration &&seg.end==newSegment.end && newSegment.start < seg.start){//最后一个分段被覆盖，不保留
           return false
         }
-        if((seg.start > newSegment.start && seg.end < newSegment.end)){//中间分段被覆盖，不保留
+        if( (seg.start > newSegment.start && seg.end < newSegment.end) //左右边界都在新分段中间
+          || (seg.start == newSegment.start && seg.end < newSegment.end)//左边界相同
+          || (seg.start > newSegment.start && seg.end == newSegment.end)////右边界相同
+        ){//中间分段被覆盖，不保留
           return false
         }
         return true //保留其他分段
@@ -812,6 +825,11 @@ async function init(){
   let res = await getTask(taskId);
   console.log('任务详情：', res)
   task.data = res.data;
+
+  getPackage(task.data.packageId).then(res=>{
+    task.package = res.data;
+    console.log('任务包详情：', task.package)
+  })
 
   if(!task.data.textGrid){
     proxy.$message.error('缺少预标注文本TextGrid')
@@ -934,9 +952,9 @@ async function init(){
 
     // 校验分段有效时长，不小于最小有效值
     if(region.end-region.start < 1){
-      proxy.$message.error('新增区域时长小于1秒，请重新框选区域！')
-      region.remove()
-      return //无效区域，时长小于1秒
+      // proxy.$message.error('新增区域时长小于1秒，请重新框选区域！')
+      // region.remove()
+      // return //无效区域，时长小于1秒
     }
 
     // 取留边界时间点3位小数，确定新区域边界
@@ -954,7 +972,20 @@ async function init(){
 
     //====添加新区域到时间序列数组中===
     console.log(`添加前：`,times);
-    let newSeg = {start:region.start.toFixed(3), end:region.end.toFixed(3)}
+    let start = Number(region.start.toFixed(3))
+    let end = Number(region.end.toFixed(3))
+
+    //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则边界值等于已有分段边界值
+    if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
+      if( Math.abs( ts.start - start) < 0.2){//左边界
+        start = ts.start
+      }
+      if( Math.abs( ts.end - end) < 0.2){//右边界
+        end = ts.end
+      }
+    }
+
+    let newSeg = {start:start, end:end}
     let newtimes = addSegment(times, newSeg)
     times.splice(0, times.length);
     times.push(...newtimes);
@@ -1031,11 +1062,23 @@ async function init(){
     regions.on('region-updated', (region) => {
       console.log('regions.region-updated');
 
-      //调整region的start和end精度保留2位小数
-      let start = region.start.toFixed(3)
-      let end = region.end.toFixed(3)
+      //调整region的start和end精度保留3位小数
+      let start = Number(region.start.toFixed(3))
+      let end = Number(region.end.toFixed(3))
 
-      console.log(`识别到调整区域：(${activeRegion.start},${activeRegion.end})-->(${region.start},${region.end})`)
+      //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则新边界值等于已有分段边界值
+      times.forEach( ts => {
+        if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
+          if( Math.abs( ts.start - start) < 0.2){//左边界
+            start = ts.start
+          }
+          if( Math.abs( ts.end - end) < 0.2){//右边界
+            end = ts.end
+          }
+        }
+      })
+
+      console.log(`识别到调整区域：(${activeRegion.start},${activeRegion.end})-->(${start},${end})`)
       
       console.log('调整前：', JSON.stringify(times))
       let oldReg = {start:activeRegion.start, end:activeRegion.end}
@@ -1070,7 +1113,7 @@ async function init(){
       
       const index = times.findIndex(seg => seg.start === start && seg.end === end);
       console.log('>>>>当前激活的分段：', JSON.stringify(times[index]));
-      //移除分段
+      //移除此分段
       region.remove()
       //激活新分段
       activateRegion(newReg)
@@ -1116,7 +1159,7 @@ async function init(){
       // 获取点击位置的时间点
       // relativeX 是点击位置相对于波形图宽度的比例（范围0到1）
       const duration = ws.getDuration(); // 获取音频总时长（秒）
-      const clickTime = (x * duration).toFixed(3); // 计算点击处的时间点
+      const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
       console.log(`单击位置的时间点：${clickTime}`)
 
       times.forEach((ts, index) => {
@@ -1130,9 +1173,10 @@ async function init(){
 
     })
 
-    ws.on('timeupdate', (currentTime) => {
+    ws.on('timeupdate', (ctime) => {
+      currentTime.value = ctime.toFixed(3)
       // When the end of the region is reached
-      if (activeRegion && currentTime >= activeRegion.end) {
+      if (activeRegion && ctime >= activeRegion.end) {
         // Stop playing
         ws.pause()
       }
@@ -1144,7 +1188,7 @@ async function init(){
       // 1. 计算点击的时间点
       // relativeX 是点击位置相对于波形图宽度的比例（范围0到1）
       const duration = ws.getDuration(); // 获取音频总时长（秒）
-      const clickTime = (x * duration).toFixed(3); // 计算点击处的时间点
+      const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
       console.log(`双击的时间点：${clickTime}---${times}`)
     })
 
@@ -1164,16 +1208,6 @@ async function init(){
           }
           ws.play()
         }
-        
-
-        //如果当前不在播放，并且
-        // if(!ws.isPlaying() && activeRegion.start!=activeRegion.end &&ws.currentTime>=activeRegion.end){
-        //   ws.skip(activeRegion.start)
-        //   ws.play()
-        // }else{
-        //   ws.pause()
-        // }
-
       }
     }
 
@@ -1456,6 +1490,9 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 
+
+//播放状态控制(true为播放，false为暂停)
+let playStatus = ref(true)
 
 //播放音量
 let volume = ref(50)

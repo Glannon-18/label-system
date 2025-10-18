@@ -187,9 +187,9 @@ const handleSpace = (event) => {
 function getAudioUrl(audioFileName) {
   // 使用完整的API路径访问音频文件，例如：`/dev-api/profile/upload/${audioFileName}`
   if (audioFileName.startsWith('/profile/upload/')) {
-    return `/dev-api${audioFileName}`;
+    return import.meta.env.VITE_APP_BASE_API +`${audioFileName}`;
   } else {
-    return `/dev-api/profile/upload/${audioFileName}`;
+    return import.meta.env.VITE_APP_BASE_API +`/profile/upload/${audioFileName}`;
   }
 }
 
