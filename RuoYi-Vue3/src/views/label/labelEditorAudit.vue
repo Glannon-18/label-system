@@ -116,7 +116,7 @@
 
     <!-- 底部提示说明 -->
     <div v-if="task.data.status==='pending_review'" style="line-height: 30px;margin-top: 10px; color: gray; font-size: 12px;">
-      Tip：审核人可对标注内容进行修改，提交审核结果同时保存修改的内容。
+      Tip：审核时可对标注内容进行修改，提交审核结果同时保存修改的内容。
     </div>
 
   </div>

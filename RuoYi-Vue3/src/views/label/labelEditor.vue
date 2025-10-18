@@ -51,8 +51,8 @@
           </el-tag></el-tooltip>
         </div>
       </div>
-      <div style="display: flex;">
-        <!-- {{ formatSecondsToMMSSS(currentTime)  }} / {{ formatSecondsToMMSSS(duration)}}  -->
+      <div style="display: flex; align-items: center;">
+        <span style="margin-right: 12px;">{{ currentTime  }} / {{ duration }} </span>
         <el-button type="info" plain id="backward">上一段</el-button>
         <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
         <el-button type="info" plain id="forward">下一段</el-button>
@@ -936,9 +936,9 @@ async function init(){
 
     // 校验分段有效时长，不小于最小有效值
     if(region.end-region.start < 1){
-      proxy.$message.error('新增区域时长小于1秒，请重新框选区域！')
-      region.remove()
-      return //无效区域，时长小于1秒
+      // proxy.$message.error('新增区域时长小于1秒，请重新框选区域！')
+      // region.remove()
+      // return //无效区域，时长小于1秒
     }
 
     // 取留边界时间点3位小数，确定新区域边界
@@ -956,7 +956,7 @@ async function init(){
 
     //====添加新区域到时间序列数组中===
     console.log(`添加前：`,times);
-    let newSeg = {start:region.start.toFixed(3), end:region.end.toFixed(3)}
+    let newSeg = {start:Number(region.start.toFixed(3)), end:Number(region.end.toFixed(3))}
     let newtimes = addSegment(times, newSeg)
     times.splice(0, times.length);
     times.push(...newtimes);
@@ -1034,8 +1034,8 @@ async function init(){
       console.log('regions.region-updated');
 
       //调整region的start和end精度保留2位小数
-      let start = region.start.toFixed(3)
-      let end = region.end.toFixed(3)
+      let start = Number(region.start.toFixed(3))
+      let end = Number(region.end.toFixed(3))
 
       console.log(`识别到调整区域：(${activeRegion.start},${activeRegion.end})-->(${region.start},${region.end})`)
       
@@ -1118,7 +1118,7 @@ async function init(){
       // 获取点击位置的时间点
       // relativeX 是点击位置相对于波形图宽度的比例（范围0到1）
       const duration = ws.getDuration(); // 获取音频总时长（秒）
-      const clickTime = (x * duration).toFixed(3); // 计算点击处的时间点
+      const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
       console.log(`单击位置的时间点：${clickTime}`)
 
       times.forEach((ts, index) => {
@@ -1132,9 +1132,10 @@ async function init(){
 
     })
 
-    ws.on('timeupdate', (currentTime) => {
+    ws.on('timeupdate', (ctime) => {
+      currentTime.value = ctime.toFixed(3)
       // When the end of the region is reached
-      if (activeRegion && currentTime >= activeRegion.end) {
+      if (activeRegion && ctime >= activeRegion.end) {
         // Stop playing
         ws.pause()
       }
@@ -1146,7 +1147,7 @@ async function init(){
       // 1. 计算点击的时间点
       // relativeX 是点击位置相对于波形图宽度的比例（范围0到1）
       const duration = ws.getDuration(); // 获取音频总时长（秒）
-      const clickTime = (x * duration).toFixed(3); // 计算点击处的时间点
+      const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
       console.log(`双击的时间点：${clickTime}---${times}`)
     })
 
