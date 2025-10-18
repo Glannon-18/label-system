@@ -133,4 +133,16 @@ public class SysTaskServiceImpl implements ISysTaskService
         sysTask.setPackageId(packageId);
         return sysTaskMapper.selectSysTaskList(sysTask);
     }
+    
+    /**
+     * 查询审核员任务列表
+     * 
+     * @param sysTask 任务
+     * @return 任务集合
+     */
+    @Override
+    public List<SysTask> selectAuditorTaskList(SysTask sysTask)
+    {
+        return sysTaskMapper.selectAuditorTaskList(sysTask);
+    }
 }

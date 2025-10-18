@@ -83,4 +83,12 @@ public interface ISysTaskService
      * @return 任务集合
      */
     public List<SysTask> selectSysTaskListByPackageId(Long packageId);
+    
+    /**
+     * 查询审核员任务列表
+     * 
+     * @param sysTask 任务
+     * @return 任务集合
+     */
+    public List<SysTask> selectAuditorTaskList(SysTask sysTask);
 }
