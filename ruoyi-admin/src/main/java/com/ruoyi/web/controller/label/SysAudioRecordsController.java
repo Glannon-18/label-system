@@ -39,7 +39,7 @@ public class SysAudioRecordsController extends BaseController
     /**
      * 查询文件录音列表
      */
-    @PreAuthorize("@ss.hasPermi('system:records:list')")
+    //@PreAuthorize("@ss.hasPermi('system:records:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysAudioRecords sysAudioRecords)
     {
@@ -51,7 +51,7 @@ public class SysAudioRecordsController extends BaseController
     /**
      * 导出文件录音列表
      */
-    @PreAuthorize("@ss.hasPermi('system:records:export')")
+    //@PreAuthorize("@ss.hasPermi('system:records:export')")
     @Log(title = "文件录音", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysAudioRecords sysAudioRecords)
@@ -64,7 +64,7 @@ public class SysAudioRecordsController extends BaseController
     /**
      * 获取文件录音详细信息
      */
-    @PreAuthorize("@ss.hasPermi('system:records:query')")
+    //@PreAuthorize("@ss.hasPermi('system:records:query')")
     @GetMapping(value = "/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id)
     {
@@ -74,7 +74,7 @@ public class SysAudioRecordsController extends BaseController
     /**
      * 新增文件录音
      */
-    @PreAuthorize("@ss.hasPermi('system:records:add')")
+    //@PreAuthorize("@ss.hasPermi('system:records:add')")
     @Log(title = "文件录音", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody List<SysAudioRecords> sysAudioRecords)
@@ -91,7 +91,7 @@ public class SysAudioRecordsController extends BaseController
     /**
      * 修改文件录音
      */
-    @PreAuthorize("@ss.hasPermi('system:records:edit')")
+    //@PreAuthorize("@ss.hasPermi('system:records:edit')")
     @Log(title = "文件录音", businessType = BusinessType.UPDATE)
     @PutMapping
     public AjaxResult edit(@RequestBody SysAudioRecords sysAudioRecords)
@@ -102,7 +102,7 @@ public class SysAudioRecordsController extends BaseController
     /**
      * 删除文件录音
      */
-    @PreAuthorize("@ss.hasPermi('system:records:remove')")
+    //@PreAuthorize("@ss.hasPermi('system:records:remove')")
     @Log(title = "文件录音", businessType = BusinessType.DELETE)
 	@DeleteMapping("/{ids}")
     public AjaxResult remove(@PathVariable Long[] ids)

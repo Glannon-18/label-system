@@ -43,6 +43,13 @@
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <template #default="scope">
+          <el-button v-if="['underway','reject'].includes(scope.row.status)"  
+          type="primary" icon="Edit" size="default" 
+          @click="handleToAnnotator(scope.row)">标注</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"

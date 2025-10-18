@@ -9,7 +9,7 @@
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
         <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
         
-        <div v-if="['unstart','underway','reject'].includes(task.data.status)">
+        <div v-if="['underway','reject'].includes(task.data.status)">
           <el-button type="danger" plain @click="redo()">重做</el-button>
           <el-button type="primary" plain @click="saveTask()">保存更改</el-button>
           <el-button type="success" plain @click="submitTask()">提交审核</el-button>
@@ -187,9 +187,9 @@ const handleSpace = (event) => {
 function getAudioUrl(audioFileName) {
   // 使用完整的API路径访问音频文件，例如：`/dev-api/profile/upload/${audioFileName}`
   if (audioFileName.startsWith('/profile/upload/')) {
-    return `/dev-api${audioFileName}`;
+    return import.meta.env.VITE_APP_BASE_API +`${audioFileName}`;
   } else {
-    return `/dev-api/profile/upload/${audioFileName}`;
+    return import.meta.env.VITE_APP_BASE_API +`/profile/upload/${audioFileName}`;
   }
 }
 
@@ -977,14 +977,16 @@ async function init(){
     let end = Number(region.end.toFixed(3))
 
     //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则边界值等于已有分段边界值
-    if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
-      if( Math.abs( ts.start - start) < 0.2){//左边界
-        start = ts.start
+    times.forEach( ts => {
+      if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
+        if( Math.abs( ts.start - start) < 0.2){//左边界
+          start = ts.start
+        }
+        if( Math.abs( ts.end - end) < 0.2){//右边界
+          end = ts.end
+        }
       }
-      if( Math.abs( ts.end - end) < 0.2){//右边界
-        end = ts.end
-      }
-    }
+    })
 
     let newSeg = {start:start, end:end}
     let newtimes = addSegment(times, newSeg)
