@@ -1,10 +1,24 @@
 <template>
   <div class="app-container" >
-
     <!-- <textarea id="textarea" v-model="textGridText" style="width: 100%; height: 100px; display: none;"></textarea> -->
-
     <div style="display: flex; justify-content: space-between; ">
       <!-- <div> 任务包：{{ taskPackageName }}</div> -->
+      <el-popover
+              ref="popoverRef"
+              placement="bottom-start"
+              :width="1000"
+              :height="600"
+              trigger="click"
+              :visible="popoverVisible"
+              @hide="onPopoverHide"
+      >
+        <AnnotatorTask @mouseleave="hidePopover"/>
+        <template #reference>
+          <el-button type="primary" plain @click="togglePopover">
+            当前任务音频列表
+          </el-button>
+        </template>
+      </el-popover>
       <div> 音频文件：{{ task.data.audioFileName }}</div>
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
         <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
@@ -152,7 +166,23 @@ const labels = reactive([
   { type: 'warning', label: '<OOV>', 'tip': '表示整段非目标语种，包括：中文、英文等' },
 ])
 
-
+// ********* s 当前任务音频列表 *********
+import AnnotatorTask from './annotatorTask'
+const popoverVisible = ref(false)
+const popoverRef = ref()
+const togglePopover = () => {
+  popoverVisible.value = !popoverVisible.value
+}
+const hidePopover = () => {
+  popoverVisible.value = false
+}
+const handleSubmit = (data) => {
+  hidePopover()
+}
+const onPopoverHide = () => {
+  console.log('Popover 已关闭')
+}
+// ********* e 当前任务音频列表 *********
 //=========================定义函数=========================
 function insertText(text) {
   if (activeRegion && activeRegion.start !== activeRegion.end) {
