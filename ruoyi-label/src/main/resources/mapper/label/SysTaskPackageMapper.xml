@@ -18,14 +18,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="auditor"    column="auditor"    />
         <result property="projectName"    column="project_name"    />
         <result property="type"    column="type"    />
+        <result property="language"    column="language"    />
     </resultMap>
 
     <sql id="selectSysTaskPackageVo">
-        select create_by, create_time, update_by, update_time, remark, task_package_id, project_id, name, status, assigner, auditor, type from sys_task_package
+        select create_by, create_time, update_by, update_time, remark, task_package_id, project_id, name, status, assigner, auditor, type, language from sys_task_package
     </sql>
 
     <sql id="selectSysTaskPackageVoWithProject">
-        select t.create_by, t.create_time, t.update_by, t.update_time, t.remark, t.task_package_id, t.project_id, t.name, t.status, t.assigner, t.auditor, p.name as project_name, t.type from sys_task_package t left join sys_project p on t.project_id = p.project_id
+        select t.create_by, t.create_time, t.update_by, t.update_time, t.remark, t.task_package_id, t.project_id, t.name, t.status, t.assigner, t.auditor, p.name as project_name, t.type, t.language from sys_task_package t left join sys_project p on t.project_id = p.project_id
     </sql>
 
     <select id="selectSysTaskPackageList" parameterType="SysTaskPackage" resultMap="SysTaskPackageResult">
@@ -67,6 +68,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="assigner != null">assigner,</if>
             <if test="auditor != null">auditor,</if>
             <if test="type != null">type,</if>
+            <if test="language != null">language,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="createBy != null">#{createBy},</if>
@@ -80,6 +82,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="assigner != null">#{assigner},</if>
             <if test="auditor != null">#{auditor},</if>
             <if test="type != null">#{type},</if>
+            <if test="language != null">#{language},</if>
          </trim>
     </insert>
 
@@ -97,6 +100,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="assigner != null">assigner = #{assigner},</if>
             <if test="auditor != null">auditor = #{auditor},</if>
             <if test="type != null">type = #{type},</if>
+            <if test="language != null">language = #{language},</if>
         </trim>
         where task_package_id = #{taskPackageId}
     </update>

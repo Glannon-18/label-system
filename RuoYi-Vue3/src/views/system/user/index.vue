@@ -28,6 +28,12 @@
                   <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
                 </el-select>
               </el-form-item>
+              <!-- 添加语言查询条件 -->
+              <el-form-item label="语言" prop="language">
+                <el-select v-model="queryParams.language" placeholder="语言" clearable style="width: 240px">
+                  <el-option v-for="dict in language" :key="dict.value" :label="dict.label" :value="dict.value" />
+                </el-select>
+              </el-form-item>
               <el-form-item label="创建时间" style="width: 308px">
                 <el-date-picker v-model="dateRange" value-format="YYYY-MM-DD" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期"></el-date-picker>
               </el-form-item>
@@ -76,6 +82,12 @@
               <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
                 <template #default="scope">
                   <span>{{ parseTime(scope.row.createTime) }}</span>
+                </template>
+              </el-table-column>
+              <!-- 添加语言列 -->
+              <el-table-column label="语言" align="center" key="language" prop="language" v-if="columns.language.visible">
+                <template #default="scope">
+                  <dict-tag :options="language" :value="scope.row.language" />
                 </template>
               </el-table-column>
               <el-table-column label="操作" align="center" width="150" class-name="small-padding fixed-width">
@@ -172,6 +184,16 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <!-- 添加语言选择 -->
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="语言">
+              <el-select v-model="form.language" placeholder="请选择语言" clearable>
+                <el-option v-for="item in language" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-row>
           <el-col :span="24">
             <el-form-item label="备注">
@@ -224,6 +246,8 @@ const router = useRouter()
 const appStore = useAppStore()
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable, sys_user_sex } = proxy.useDict("sys_normal_disable", "sys_user_sex")
+// 添加语言字典
+const { language } = proxy.useDict('language')
 
 const userList = ref([])
 const open = ref(false)
@@ -264,7 +288,8 @@ const columns = ref({
   deptName: { label: '部门', visible: true },
   phonenumber: { label: '手机号码', visible: true },
   status: { label: '状态', visible: true },
-  createTime: { label: '创建时间', visible: true }
+  createTime: { label: '创建时间', visible: true },
+  language: { label: '语言', visible: true } // 添加语言列
 })
 
 const data = reactive({
@@ -275,7 +300,8 @@ const data = reactive({
     userName: undefined,
     phonenumber: undefined,
     status: undefined,
-    deptId: undefined
+    deptId: undefined,
+    language: undefined // 添加语言查询字段
   },
   rules: {
     userName: [{ required: true, message: "用户名称不能为空", trigger: "blur" }, { min: 2, max: 20, message: "用户名称长度必须介于 2 和 20 之间", trigger: "blur" }],
@@ -489,7 +515,8 @@ function reset() {
     status: "0",
     remark: undefined,
     postIds: [],
-    roleIds: []
+    roleIds: [],
+    language: undefined // 添加语言字段
   }
   proxy.resetForm("userRef")
 }

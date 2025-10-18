@@ -91,9 +91,8 @@ public class SysTaskPackageController extends BaseController
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/users")
-    public AjaxResult getUserForPackage(String userName, String nickName)
-    {
-        List<SysUser> users = sysUserService.selectUserForPackage(userName, nickName);
+    public AjaxResult getUserForPackage(String userName, String nickName, String roleKey, String language) {
+        List<SysUser> users = sysUserService.selectUserForPackage(userName, nickName, roleKey, language);
         return AjaxResult.success(users);
     }
 
@@ -211,7 +210,7 @@ public class SysTaskPackageController extends BaseController
 //    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务包", businessType = BusinessType.IMPORT)
     @PostMapping("/upload")
-    public AjaxResult uploadPackage(MultipartFile file, Long projectId) throws Exception
+    public AjaxResult uploadPackage(MultipartFile file, Long projectId, String language) throws Exception
     {
         try {
             // 校验文件
@@ -240,6 +239,7 @@ public class SysTaskPackageController extends BaseController
             taskPackage.setCreateBy(getUsername());
             taskPackage.setType("text");
             taskPackage.setStatus(TaskPackageStatus.UNALLOCATED);
+            taskPackage.setLanguage(language);
             
             // 插入任务包
             sysTaskPackageService.insertSysTaskPackage(taskPackage);

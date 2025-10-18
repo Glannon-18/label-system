@@ -92,6 +92,8 @@ public class SysUser extends BaseEntity
     /** 角色ID */
     private Long roleId;
 
+    private String language;
+
     public SysUser()
     {
 
@@ -310,6 +312,14 @@ public class SysUser extends BaseEntity
         this.roleId = roleId;
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -333,6 +343,7 @@ public class SysUser extends BaseEntity
             .append("updateTime", getUpdateTime())
             .append("remark", getRemark())
             .append("dept", getDept())
+                .append("language",getLanguage())
             .toString();
     }
 }

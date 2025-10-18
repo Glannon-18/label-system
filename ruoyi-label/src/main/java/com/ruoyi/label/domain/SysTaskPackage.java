@@ -38,6 +38,8 @@ public class SysTaskPackage extends BaseEntity
     /** 审核人账户名 */
     private String auditor;
 
+    private String language;
+
     /** 项目名 */
     private String projectName;
 
@@ -117,6 +119,15 @@ public class SysTaskPackage extends BaseEntity
         this.type = type;
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -132,6 +143,7 @@ public class SysTaskPackage extends BaseEntity
             .append("assigner", getAssigner())
             .append("auditor", getAuditor())
             .append("type", getType())
+                .append("language",getLanguage())
             .toString();
     }
 }

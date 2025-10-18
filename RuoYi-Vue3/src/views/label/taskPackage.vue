@@ -110,6 +110,11 @@
           </el-link>
         </template>
       </el-table-column>
+      <el-table-column label="语言" align="center" prop="status" >
+        <template #default="scope">
+          <dict-tag :options="language" :value="scope.row.language" />
+        </template>
+      </el-table-column>
       <el-table-column label="任务包状态" align="center" prop="status" >
         <template #default="scope">
           <dict-tag :options="package_status" :value="scope.row.status" />
@@ -184,6 +189,17 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="语言" prop="language">
+          <el-select v-model="form.language" placeholder="请选择语言" clearable>
+            <el-option
+              v-for="item in language"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
@@ -202,10 +218,10 @@
         <el-form-item label="安排人员" prop="assigner">
           <el-select
             v-model="assignUserForm.assigner"
-            placeholder="请选择用户"
+            placeholder="请选择安排人员"
             style="width: 100%">
             <el-option
-              v-for="item in userList"
+              v-for="item in workerList"
               :key="item.userId"
               :label="item.userName + '(' + item.nickName + ')'"
               :value="item.userName">
@@ -218,7 +234,7 @@
             placeholder="请选择审核人员"
             style="width: 100%">
             <el-option
-              v-for="item in userList"
+              v-for="item in auditorList"
               :key="item.userId"
               :label="item.userName + '(' + item.nickName + ')'"
               :value="item.userName">
@@ -236,7 +252,7 @@
     
     <!-- 上传任务包对话框 -->
     <el-dialog title="上传任务包" v-model="uploadOpen" width="500px" append-to-body>
-      <el-form ref="uploadRef" :model="uploadForm" label-width="80px">
+      <el-form ref="uploadRef" :model="uploadForm" :rules="uploadRules" label-width="80px">
         <el-form-item label="ZIP文件" prop="file">
           <el-upload
             ref="uploadRef"
@@ -253,6 +269,16 @@
               </div>
             </template>
           </el-upload>
+        </el-form-item>
+        <el-form-item label="语言" prop="language">
+          <el-select v-model="uploadForm.language" placeholder="请选择语言" clearable>
+            <el-option
+              v-for="item in language"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -271,6 +297,7 @@ import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUser
 const { proxy } = getCurrentInstance()
 const { package_status } = proxy.useDict('package_status')
 const { package_type } = proxy.useDict('package_type')
+const { language } = proxy.useDict('language')
 const route = useRoute()
 const router = useRouter()
 
@@ -285,7 +312,8 @@ const total = ref(0)
 const title = ref("")
 const daterangeCreateTime = ref([])
 const assignUserOpen = ref(false)
-const userList = ref([])
+const workerList = ref([])  // 安排人员列表
+const auditorList = ref([])  // 审核人员列表
 const currentRow = ref({})
 const uploadOpen = ref(false)
 const uploadLoading = ref(false)
@@ -307,19 +335,23 @@ watch(
   { immediate: true }
 )
 
-// const types = [
-//   {
-//     value: 'text',
-//     label: '文本标注',
-//   },
-//   {
-//     value: 'audio',
-//     label: '文件录音',
-//   }
-// ]
 
 const data = reactive({
-  form: {},
+  form: {
+    createBy: null,
+    createTime: null,
+    updateBy: null,
+    updateTime: null,
+    remark: null,
+    taskPackageId: null,
+    projectId: null,
+    name: null,
+    status: null,
+    assigner: null,
+    auditor: null,
+    type: "文本标注",
+    language: null
+  },
   queryParams: {
     pageNum: 1,
     pageSize: 10,
@@ -334,6 +366,9 @@ const data = reactive({
     type: [
       { required: true, message: "标注类型不能为空", trigger: "blur" }
     ],
+    language: [
+      { required: true, message: "语言不能为空", trigger: "change" }
+    ]
   },
   assignUserForm: {
 
@@ -342,12 +377,17 @@ const data = reactive({
     assigner: [{ required: true, message: "请选择安排人员", trigger: "change" }],
     auditor: [{ required: true, message: "请选择审核人员", trigger: "change" }]
   },
+  uploadRules: {
+    // file: [{ required: true, message: "请选择文件", trigger: "change" }],
+    language: [{ required: true, message: "语言不能为空", trigger: "change" }]
+  },
   uploadForm: {
-    file: null
+    file: null,
+    language: null
   }
 })
 
-const { queryParams, form, rules, assignUserForm, assignUserRules } = toRefs(data)
+const { queryParams, form, rules, assignUserForm, assignUserRules, uploadRules ,uploadForm} = toRefs(data)
 
 data.form.type = "文本标注"
 
@@ -512,21 +552,40 @@ function showUser(row) {
   currentRow.value = row
   assignUserOpen.value = true
   assignUserForm.value.userId = null
-  // 加载所有用户
-  loadAllUsers()
+  assignUserForm.value.assigner = null
+  assignUserForm.value.auditor = null
+  workerList.value = []
+  auditorList.value = []
+  // 加载安排人员（label_worker角色）选项
+  loadWorkersByRoleAndLanguage('label_worker', row.language)
+  // 加载审核人员（label_auditor角色）选项
+  loadAuditorsByRoleAndLanguage('label_auditor', row.language)
+}
+
+// 加载安排人员（label_worker角色）选项
+function loadWorkersByRoleAndLanguage(roleKey, language) {
+  getUserForPackage({roleKey: roleKey, language: language}).then(response => {
+    workerList.value = response.data || []
+  }).catch(error => {
+    console.error('获取安排人员列表失败:', error)
+    proxy.$modal.msgError("获取安排人员列表失败")
+  })
+}
+
+// 加载审核人员（label_auditor角色）选项
+function loadAuditorsByRoleAndLanguage(roleKey, language) {
+  getUserForPackage({roleKey: roleKey, language: language}).then(response => {
+    auditorList.value = response.data || []
+  }).catch(error => {
+    console.error('获取审核人员列表失败:', error)
+    proxy.$modal.msgError("获取审核人员列表失败")
+  })
 }
 
 // 取消分配人员
 function cancelAssignUser() {
   assignUserOpen.value = false
   proxy.resetForm("assignUserRef")
-}
-
-// 加载所有用户
-function loadAllUsers() {
-  getUserForPackage().then(response => {
-    userList.value = response.data
-  })
 }
 
 // 提交分配用户
@@ -577,26 +636,33 @@ function handleFileExceed() {
 
 // 提交上传
 function submitUpload() {
-  if (!uploadFile.value) {
-    proxy.$modal.msgWarning("请选择文件")
-    return
-  }
-  
-  uploadLoading.value = true
-  
-  const formData = new FormData()
-  formData.append("file", uploadFile.value)
-  formData.append("projectId", projectId)
-  
-  uploadPackage(formData).then(response => {
-    proxy.$modal.msgSuccess("上传成功")
-    uploadOpen.value = false
-    getList()
-  }).catch(error => {
-    console.error(error)
-    proxy.$modal.msgError("上传失败：" + (error.message || "未知错误"))
-  }).finally(() => {
-    uploadLoading.value = false
+  proxy.$refs["uploadRef"].validate(valid => {
+    if (valid) {
+      if (!uploadFile.value) {
+        proxy.$modal.msgWarning("请选择文件")
+        return
+      }
+      
+      uploadLoading.value = true
+      
+      const formData = new FormData()
+      formData.append("file", uploadFile.value)
+      formData.append("projectId", projectId)
+      if (data.uploadForm.language) {
+        formData.append("language", data.uploadForm.language)
+      }
+      
+      uploadPackage(formData).then(response => {
+        proxy.$modal.msgSuccess("上传成功")
+        uploadOpen.value = false
+        getList()
+      }).catch(error => {
+        console.error(error)
+        proxy.$modal.msgError("上传失败：" + (error.message || "未知错误"))
+      }).finally(() => {
+        uploadLoading.value = false
+      })
+    }
   })
 }
 
