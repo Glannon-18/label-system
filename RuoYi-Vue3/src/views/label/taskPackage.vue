@@ -2,7 +2,14 @@
   <div class="app-container">
     <el-row :gutter="10" class="mb8">
       <el-col :span="24">
-        <h2>项目：{{ projectName }}</h2>
+        <el-form-item>
+          <template #label>
+            <div style="font-size: 21px;font-weight: 600">项目：</div>
+          </template>
+          <el-select v-model="activeProjectId" placeholder="请选择项目">
+            <el-option  v-for="(project, index) in projectList" :label="project.name" :value="project.projectId" @click="selectActiveProject(project)"></el-option>
+          </el-select>
+        </el-form-item>
       </el-col>
     </el-row>
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
@@ -105,7 +112,7 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="任务包名" align="center" prop="name" >
         <template #default="scope">
-          <el-link type="primary" @click="goToTask(scope.row)">
+          <el-link type="primary" @click="goToTask(scope.row, route.params)">
             {{ scope.row.name }}
           </el-link>
         </template>
@@ -293,6 +300,7 @@
 
 <script setup name="Package">
 import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser, uploadPackage, downloadPackage } from "@/api/label/package"
+import {listProject, getProject, delProject, addProject, updateProject} from "@/api/label/project"
 import { listTask } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()
@@ -538,12 +546,13 @@ function handleDownload() {
   })
 }
 
-function goToTask(row) {
+function goToTask(row, route_params) {
   router.push({
     name: 'project-task',
     params: {
       taskPackageId: row.taskPackageId,
-      taskPackageName: row.name
+      taskPackageName: row.name,
+      projectId: route_params.projectId
     }
   })
 }
@@ -678,5 +687,32 @@ function submitUpload() {
   })
 }
 
+
+/** 头部下拉切换项目列表任务包 */
+const projectList = ref([])
+const activeProjectId = ref(null)
+function getProjectList() {
+  listProject(proxy.addDateRange({
+    pageNum: null,
+    pageSize: null,
+    name: null,
+    status: null
+  }, [])).then(response => {
+    projectList.value = response.rows;
+    projectList.value.forEach((item) => {
+      if(item.projectId.toString() === route.params.projectId.toString()){
+        activeProjectId.value = item.projectId
+      }
+    })
+  })
+}
+function selectActiveProject(project){
+  proxy.$router.push({
+    name: 'project-package',
+    params: { projectId: project.projectId ,projectName: project.name}
+  })
+}
+
 getList()
+getProjectList()
 </script>

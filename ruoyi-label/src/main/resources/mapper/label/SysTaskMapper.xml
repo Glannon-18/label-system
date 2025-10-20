@@ -12,8 +12,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="textGrid"    column="text_grid"    />
         <result property="originalTextGrid"    column="original_text_grid"    />
         <result property="status"    column="status"    />
-        <result property="annotator"    column="annotator"    />
-        <result property="auditor"    column="auditor"    />
         <result property="createBy"    column="create_by"    />
         <result property="createTime"    column="create_time"    />
         <result property="updateBy"    column="update_by"    />
@@ -33,8 +31,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.text_grid,
             t.original_text_grid,
             t.status,
-            t.annotator,
-            t.auditor,
             t.create_by,
             t.create_time,
             t.update_by,
@@ -51,8 +47,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <where>  
             <if test="audioFileName != null  and audioFileName != ''"> and t.audio_file_name like concat('%', #{audioFileName}, '%')</if>
             <if test="status != null  and status != ''"> and t.status = #{status}</if>
-            <if test="annotator != null  and annotator != ''"> and t.annotator = #{annotator}</if>
-            <if test="auditor != null  and auditor != ''"> and t.auditor = #{auditor}</if>
             <if test="params.beginCreateBy != null and params.beginCreateBy != '' and params.endCreateBy != null and params.endCreateBy != ''"> and t.create_by between #{params.beginCreateBy} and #{params.endCreateBy}</if>
             <if test="packageId != null and packageId != ''"> and t.package_id = #{packageId}</if>
         </where>
@@ -70,8 +64,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="audioFileName != null and audioFileName != ''">audio_file_name,</if>
             <if test="audioFilePath != null and audioFilePath != ''">audio_file_path,</if>
             <if test="status != null">status,</if>
-            <if test="annotator != null">annotator,</if>
-            <if test="auditor != null">auditor,</if>
             <if test="createBy != null">create_by,</if>
             <if test="createTime != null">create_time,</if>
             <if test="updateBy != null">update_by,</if>
@@ -85,8 +77,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="audioFileName != null and audioFileName != ''">#{audioFileName},</if>
             <if test="audioFilePath != null and audioFilePath != ''">#{audioFilePath},</if>
             <if test="status != null">#{status},</if>
-            <if test="annotator != null">#{annotator},</if>
-            <if test="auditor != null">#{auditor},</if>
             <if test="createBy != null">#{createBy},</if>
             <if test="createTime != null">#{createTime},</if>
             <if test="updateBy != null">#{updateBy},</if>
@@ -106,8 +96,6 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="textGrid != null and textGrid != ''">text_grid = #{textGrid},</if>
             <if test="originalTextGrid != null and originalTextGrid != ''">original_text_grid = #{originalTextGrid},</if>
             <if test="status != null">status = #{status},</if>
-            <if test="annotator != null">annotator = #{annotator},</if>
-            <if test="auditor != null">auditor = #{auditor},</if>
             <if test="createBy != null">create_by = #{createBy},</if>
             <if test="createTime != null">create_time = #{createTime},</if>
             <if test="updateBy != null">update_by = #{updateBy},</if>
@@ -139,11 +127,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where package_id = #{packageId}
     </update>
     
-    <select id="selectAuditorTaskList" parameterType="SysTask" resultMap="SysTaskResult">
+    <select id="selectAuditorTaskList" resultMap="SysTaskResult">
         <include refid="selectSysTaskVo"/>
         <where>
-            <if test="packageId != null and packageId != ''"> and t.package_id = #{packageId}</if>
-            <if test="status != null and status != ''"> and t.status = #{status}</if>
+            <if test="sysTask.packageId != null and sysTask.packageId != ''"> and t.package_id = #{sysTask.packageId}</if>
+            <if test="sysTask.status != null and sysTask.status != ''"> and t.status = #{sysTask.status}</if>
             <if test="auditor != null and auditor != ''"> and p.auditor = #{auditor}</if>
         </where>
     </select>

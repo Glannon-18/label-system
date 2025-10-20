@@ -151,7 +151,7 @@ export const dynamicRoutes = [
     permissions: ['label:project:list'],
     children: [
       {
-        path: 'index/:taskPackageId(\\d+)/:taskPackageName',
+        path: 'index/:taskPackageId(\\d+)/:taskPackageName/:projectId(\\d+)',
         component: () => import('@/views/label/task'),
         name: 'project-task',
         meta: { title: '任务包明细管理', activeMenu: '/label/project' }

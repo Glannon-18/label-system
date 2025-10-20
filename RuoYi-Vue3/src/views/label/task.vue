@@ -2,7 +2,36 @@
   <div class="app-container">
     <el-row :gutter="10" class="mb8">
       <el-col :span="24">
-        <h2> 任务包名称：{{ taskPackageName }}</h2>
+        <el-row :gutter="15">
+          <el-col :span="2">
+            <el-button type="primary" @click="goBack">
+              <template #icon>
+                <svg  t="1760936392222" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1549" data-spm-anchor-id="a313x.search_index.0.i3.784e3a81Ak2FwA" width="200" height="200"><path d="M475.591111 300.373333V175.217778c-11.377778-52.337778-54.613333-20.48-54.613333-20.48L120.604444 411.875556c-65.991111 45.511111-4.551111 79.644444-4.551111 79.644444l295.822223 254.862222c59.164444 43.235556 63.715556-22.755556 63.715555-22.755555v-116.053334C775.964444 514.275556 898.844444 887.466667 898.844444 887.466667c11.377778 20.48 18.204444 0 18.204445 0 116.053333-559.786667-441.457778-587.093333-441.457778-587.093334z" fill="#ffffff" p-id="1550"></path></svg>
+              </template>
+              返回
+            </el-button>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item>
+              <template #label>
+                <div style="font-size: 21px;font-weight: 600">项目：</div>
+              </template>
+              <el-select v-model="activeProjectId" placeholder="请选择项目">
+                <el-option  v-for="(project, index) in projectList" :label="project.name" :value="project.projectId" @click="getPackageList"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8" style="margin-left: 80px;">
+            <el-form-item>
+              <template #label>
+                <div style="font-size: 21px;font-weight: 600">任务包：</div>
+              </template>
+              <el-select v-model="activeProjectPackageId" placeholder="请选择任务包">
+                <el-option  v-for="(item, index) in packageList" :label="item.name" :value="item.taskPackageId"  @click="selectActiveProjectPackage(item, activeProjectId, route.params)"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-col>
     </el-row>
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
@@ -156,7 +185,7 @@
 <script setup name="Task">
 import { listTask, getTask, delTask, addTask, updateTask } from "@/api/label/task"
 import { getPackage } from "@/api/label/package"
-import { computed } from 'vue'
+import {computed, watch} from 'vue'
 const { proxy } = getCurrentInstance()
 const { task_status } = proxy.useDict('task_status')
 const route = useRoute()
@@ -180,23 +209,11 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
-    audioFileName: null,
-    status: null,
-    annotator: null,
-    auditor: null,
-    createBy: null,
+
     taskPackageId: taskPackageId  // 添加任务包ID作为查询条件
   },
   rules: {
-    packageId: [
-      { required: true, message: "所属包的ID不能为空", trigger: "blur" }
-    ],
-    audioFileName: [
-      { required: true, message: "音频文件不能为空", trigger: "change" }
-    ],
-    audioFilePath: [
-      { required: true, message: "音频文件在服务器的路径不能为空", trigger: "blur" }
-    ],
+
   }
 })
 
@@ -400,4 +417,77 @@ getPackage(taskPackageId).then(response => {
 getList()
 
 
+/** 头部下拉切换项目列表任务包 */
+import {listProject, getProject, delProject, addProject, updateProject} from "@/api/label/project"
+import { listPackage } from "@/api/label/package"
+const projectList = ref([])
+const packageList = ref([])
+const activeProjectId = ref(route.params.projectId)
+const activeProjectPackageId = ref(null)
+function getProjectList() {
+  listProject(proxy.addDateRange({
+    pageNum: null,
+    pageSize: null,
+    name: null,
+    status: null
+  }, [])).then(response => {
+    projectList.value = response.rows;
+    projectList.value.forEach((item) => {
+      if(item.projectId.toString() === route.params.projectId.toString()){
+        activeProjectId.value = item.projectId
+      }
+    })
+  })
+}
+watch(activeProjectId.value, (newVal, oldVal) => {
+  getPackageList()
+}, { immediate: true, deep: true })
+watch(packageList, () => {
+  const exists = packageList.value.some(item => item.taskPackageId === activeProjectPackageId.value);
+  if (!exists) {
+    activeProjectPackageId.value = null;
+  }
+}, { immediate: true, deep: true });
+function getPackageList() {
+  listPackage({
+    pageNum: null,
+    pageSize: null,
+    createTime: null,
+    name: null,
+    status: null,
+    projectId: activeProjectId.value?activeProjectId.value:route.params.taskPackageId
+  }).then(response => {
+    packageList.value = []
+    packageList.value = response.rows
+    packageList.value.forEach((item) => {
+      if(item.taskPackageId.toString() === route.params.taskPackageId.toString()){
+        activeProjectPackageId.value = item.taskPackageId
+      }
+    })
+  })
+}
+import { useRouter } from "vue-router"
+const router = useRouter()
+function selectActiveProjectPackage(package_, activeProjectId, route_params){
+  router.push({
+    name: 'project-task',
+    params: {
+      taskPackageId: package_.taskPackageId,
+      taskPackageName: package_.name,
+      projectId: activeProjectId
+    }
+  })
+}
+getProjectList()
+getPackageList()
+
+function goBack() {
+  getProject(route.params.projectId).then(response => {
+    proxy.$router.push({
+      name: 'project-package',
+      params: { projectId: response.data.projectId ,projectName: response.data.name}
+    })
+  })
+
+}
 </script>

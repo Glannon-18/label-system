@@ -43,7 +43,8 @@
     </div>
 
     <!-- 语音标注音波图 -->
-    <div id="waveform-demo" class="waveform-container" style="width: 100%; height: 100px; margin-top: 10px;"></div>
+    <LabelEditorLoading v-show="!audioLoadOver" :audioFileName="task.data.audioFileName?task.data.audioFileName:''" :audioLoadprogress="audioLoadprogress"/>
+    <div id="waveform-demo" v-show="audioLoadOver" class="waveform-container" style="width: 100%; height: 100px; margin-top: 10px;"></div>
 
     <!-- 操作按钮栏 -->
     <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
@@ -202,7 +203,10 @@ import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js'
 import ZoomPlugin from 'wavesurfer.js/dist/plugins/zoom.esm.js'
 import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
 import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
+import LabelEditorLoading from './labelEditorLoading'
 
+const audioLoadprogress = ref(0)
+const audioLoadOver = ref(false)
 
 const labels = reactive([
   { type: 'primary', label: '<NOISE>', 'tip': '表示非人声噪音' },
@@ -565,7 +569,11 @@ function handleUpdate(row) {
     })
   })
 }
-
+const historyTimes = []
+watch(times, (newVal, oldVal) => {
+  console.log(`Count changed from ${oldVal} to ${newVal}`)
+  historyTimes.push(newVal)
+}, { immediate: true, deep: true })
 //重做标注
 function redo(){
   //刷新页面
@@ -1167,6 +1175,10 @@ async function init(){
   // 加载音频文件    
   ws.load( getAudioUrl(task.data.audioFilePath) )
 
+    ws.on('loading', (percent) => {
+      audioLoadprogress.value = percent;
+    })
+
   ws.on('play', () => {
     console.log('ws.currentTime-->', ws.getCurrentTime())
     currentTime.value = ws.getCurrentTime()
@@ -1181,6 +1193,7 @@ async function init(){
     //获得音频总时长
     duration = ws.decodedData.duration
     console.log(`音频总时长为 ${duration} 秒`)
+    audioLoadOver.value = true;
 
     //末尾分段的结束时间设为音频总时长
     times[times.length - 1].end = duration

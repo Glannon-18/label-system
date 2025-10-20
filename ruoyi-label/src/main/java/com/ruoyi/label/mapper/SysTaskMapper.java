@@ -1,6 +1,7 @@
 package com.ruoyi.label.mapper;
 
 import com.ruoyi.label.domain.SysTask;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -72,7 +73,8 @@ public interface SysTaskMapper
      * 查询审核员任务列表
      * 
      * @param sysTask 任务
+     * @param auditor 审核员
      * @return 任务集合
      */
-    public List<SysTask> selectAuditorTaskList(SysTask sysTask);
+    public List<SysTask> selectAuditorTaskList(@Param("sysTask") SysTask sysTask, @Param("auditor") String auditor);
 }
