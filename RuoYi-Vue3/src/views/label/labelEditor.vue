@@ -569,11 +569,7 @@ function handleUpdate(row) {
     })
   })
 }
-const historyTimes = []
-watch(times, (newVal, oldVal) => {
-  console.log(`Count changed from ${oldVal} to ${newVal}`)
-  historyTimes.push(newVal)
-}, { immediate: true, deep: true })
+
 //重做标注
 function redo(){
   //刷新页面
@@ -1898,6 +1894,34 @@ let times = reactive([
   // {start: 45, end: 50, text: '1010'},
   // {start: 50, end: 55, text: '1111'},
 ])
+
+const historyTimes = []
+watch(times, (newVal, oldVal) => {
+  console.log(`Count changed from ${oldVal} to ${newVal}`)
+  historyTimes.push({
+    timesData: newVal,
+    currentRegion: activeRegion,
+    time: formatDateTime(new Date(), 'yyyy-MM-dd HH:mm:ss')
+})
+}, { immediate: true, deep: true })
+
+//获取常用时间
+function formatDateTime(date, format) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return format
+    .replace('yyyy', year)
+    .replace('MM', month)
+    .replace('dd', day)
+    .replace('HH', hours)
+    .replace('mm', minutes)
+    .replace('ss', seconds);
+}
+
 //表格
 const tableRef = ref()
 
