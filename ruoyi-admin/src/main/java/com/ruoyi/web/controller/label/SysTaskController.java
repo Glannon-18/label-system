@@ -1,8 +1,10 @@
 package com.ruoyi.web.controller.label;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 import com.ruoyi.common.constant.TaskStatus;
 import com.ruoyi.label.utils.SysTaskLogUtils;
@@ -31,6 +33,7 @@ import com.ruoyi.label.service.ISysTaskService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.utils.file.FileUploadUtils;
+import com.ruoyi.common.utils.audio.AudioUtils;
 
 /**
  * 任务Controller
@@ -44,8 +47,26 @@ public class SysTaskController extends BaseController
 {
     @Autowired
     private ISysTaskService sysTaskService;
-    @Autowired
-    private SysTaskLogUtils sysTaskLogUtils;
+    
+
+    private static final String INIT_TEXTGRID="File type = \"ooTextFile\"\n" +
+            "Object class = \"TextGrid\"\n" +
+            "\n" +
+            "xmin = 0.0\n" +
+            "xmax = %s\n" +
+            "tiers? <exists>\n" +
+            "size = 1\n" +
+            "item []:\n" +
+            "    item[1]:\n" +
+            "        class = \"IntervalTier\"\n" +
+            "        name = \"Subtitle-Tier\"\n" +
+            "        xmin = 0.0\n" +
+            "        xmax = %s\n" +
+            "        intervals: size = 1\n" +
+            "        intervals [1]\n" +
+            "            xmin = 0.0\n" +
+            "            xmax = %s\n" +
+            "            text = \"\"";
 
     /**
      * 查询任务列表
@@ -92,11 +113,24 @@ public class SysTaskController extends BaseController
     {
         if (file != null) {
             // 保存文件并获取访问路径
-            String filePath = FileUploadUtils.upload(RuoYiConfig.getProfile(), file);
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), file);
             
             // 设置任务属性
             sysTask.setAudioFileName(file.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
+            
+            // 获取音频时长并格式化TextGrid
+            try {
+                String absolutePath = RuoYiConfig.getProfile() + filePath.substring(filePath.indexOf("/upload"));
+                double duration = AudioUtils.getWavDuration(absolutePath);
+                String formattedDuration = String.format("%.3f", duration);
+                String textGridContent = String.format(INIT_TEXTGRID, formattedDuration, formattedDuration, formattedDuration);
+                sysTask.setTextGrid(textGridContent);
+                sysTask.setOriginalTextGrid(textGridContent);
+            } catch (UnsupportedAudioFileException e) {
+                logger.error("不支持的音频文件格式: {}", file.getOriginalFilename(), e);
+                return AjaxResult.error("不支持的音频文件格式");
+            }
         }
         sysTask.setCreateBy(getUsername());
         int rows = sysTaskService.insertSysTask(sysTask);
@@ -117,11 +151,24 @@ public class SysTaskController extends BaseController
         
         if (file != null) {
             // 保存文件并获取访问路径
-            String filePath = FileUploadUtils.upload(RuoYiConfig.getProfile(), file);
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), file);
             
             // 设置任务属性
             sysTask.setAudioFileName(file.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
+            
+            // 获取音频时长并格式化TextGrid
+            try {
+                String absolutePath = RuoYiConfig.getProfile() + filePath.substring(filePath.indexOf("/upload"));
+                double duration = AudioUtils.getWavDuration(absolutePath);
+                String formattedDuration = String.format("%.3f", duration);
+                String textGridContent = String.format(INIT_TEXTGRID, formattedDuration, formattedDuration, formattedDuration);
+                sysTask.setTextGrid(textGridContent);
+                sysTask.setOriginalTextGrid(textGridContent);
+            } catch (UnsupportedAudioFileException e) {
+                logger.error("不支持的音频文件格式: {}", file.getOriginalFilename(), e);
+                return AjaxResult.error("不支持的音频文件格式");
+            }
         }
         sysTask.setUpdateBy(getUsername());
         
