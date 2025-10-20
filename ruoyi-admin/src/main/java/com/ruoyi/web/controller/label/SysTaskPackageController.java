@@ -152,6 +152,12 @@ public class SysTaskPackageController extends BaseController
 	@DeleteMapping("/{taskPackageIds}")
     public AjaxResult remove(@PathVariable Long[] taskPackageIds)
     {
+        // 检查每个任务包是否包含任务
+        for (Long taskPackageId : taskPackageIds) {
+            if (sysTaskPackageService.hasTaskInPackage(taskPackageId)) {
+                return AjaxResult.error("该任务包中含有任务，无法删除");
+            }
+        }
         return toAjax(sysTaskPackageService.deleteSysTaskPackageByTaskPackageIds(taskPackageIds));
     }
 

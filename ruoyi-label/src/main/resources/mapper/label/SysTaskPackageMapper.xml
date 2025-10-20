@@ -54,6 +54,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where task_package_id = #{taskPackageId}
     </select>
 
+    <select id="countTaskPackageByProjectId" parameterType="Long" resultType="int">
+        select count(1) from sys_task_package
+        where project_id = #{projectId}
+    </select>
+
     <insert id="insertSysTaskPackage" parameterType="SysTaskPackage" useGeneratedKeys="true" keyProperty="taskPackageId">
         insert into sys_task_package
         <trim prefix="(" suffix=")" suffixOverrides=",">
