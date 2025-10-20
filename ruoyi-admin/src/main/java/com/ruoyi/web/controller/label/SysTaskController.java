@@ -212,9 +212,9 @@ public class SysTaskController extends BaseController
     public TableDataInfo auditorList(SysTask sysTask)
     {
         startPage();
-        // 设置审计员为当前登录用户
-        sysTask.setAuditor(getUsername());
-        List<SysTask> list = sysTaskService.selectAuditorTaskList(sysTask);
+        // 获取审计员为当前登录用户
+        String auditor = getUsername();
+        List<SysTask> list = sysTaskService.selectAuditorTaskList(sysTask, auditor);
         return getDataTable(list);
     }
 }

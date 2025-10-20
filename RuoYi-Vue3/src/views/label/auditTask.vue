@@ -1,6 +1,14 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
+      <el-form-item label="任务名称" prop="audioFileName">
+        <el-input
+            v-model="queryParams.audioFileName"
+            placeholder="请输入任务名称"
+            clearable
+            @keyup.enter="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="任务状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择任务状态" clearable style="width: 120px;">
           <el-option
@@ -93,7 +101,7 @@
 </template>
 
 <script setup name="AuditTask">
-import { listTask, listAuditorTask, auditTask, getTaskProgress } from "@/api/label/task"
+import { listAuditorTask,  getTaskProgress } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()
 const { task_status } = proxy.useDict('task_status')
@@ -110,15 +118,12 @@ const progressDialogVisible = ref(false)
 const progressLoading = ref(false)
 const progressLogs = ref([])
 
-// 获取路由参数
-const taskPackageId = route.params.taskPackageId
-const taskPackageName = route.params.taskPackageName
-
 const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
     status: null,
+    audioFileName:null,
     packageId: route.params.taskPackageId  // 添加任务包ID作为查询条件
   }
 })

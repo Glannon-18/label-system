@@ -32,14 +32,6 @@ public class SysTask extends BaseEntity
     @Excel(name = "任务状态")
     private String status;
 
-    /** 分配人账户名 */
-    @Excel(name = "分配人账户名")
-    private String annotator;
-
-    /** 审核人员账户名 */
-    @Excel(name = "审核人员账户名")
-    private String auditor;
-
     /** textGrid文件内容 */
     private String textGrid;
 
@@ -49,6 +41,7 @@ public class SysTask extends BaseEntity
     /** 任务包分配人 */
     private String packageAssigner;
 
+    /** 任务包类型 */
     private String packageType;
 
     public void setTaskId(Long taskId)
@@ -101,26 +94,6 @@ public class SysTask extends BaseEntity
         return status;
     }
 
-    public void setAnnotator(String annotator)
-    {
-        this.annotator = annotator;
-    }
-
-    public String getAnnotator()
-    {
-        return annotator;
-    }
-
-    public void setAuditor(String auditor)
-    {
-        this.auditor = auditor;
-    }
-
-    public String getAuditor()
-    {
-        return auditor;
-    }
-
     public String getPackageAssigner()
     {
         return packageAssigner;
@@ -168,8 +141,6 @@ public class SysTask extends BaseEntity
             .append("audioFileName", getAudioFileName())
             .append("audioFilePath", getAudioFilePath())
             .append("status", getStatus())
-            .append("annotator", getAnnotator())
-            .append("auditor", getAuditor())
             .append("packageAssigner", getPackageAssigner())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
