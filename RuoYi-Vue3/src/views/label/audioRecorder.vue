@@ -25,10 +25,7 @@
                 <el-button type="primary" plain icon="Plus" @click="handleAdd"
                     v-hasPermi="['label:records:add']">新增</el-button>
             </el-col>
-            <el-col :span="1.5">
-                <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
-                    v-hasPermi="['label:records:edit']">修改</el-button>
-            </el-col>
+ 
             <el-col :span="1.5">
                 <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
                     v-hasPermi="['label:records:remove']">删除</el-button>
@@ -39,7 +36,7 @@
                 
                 <template v-if="['unstart','underway','reject','pass'].includes(task.status)">                
                     <el-col :span="1.5">
-                        <el-button type="success" plain icon=""  @click="summitTask()"
+                        <el-button type="success" plain icon=""  @click="clickSummitTask()"
                             >提交审核</el-button>
                     </el-col>
                 </template>
@@ -83,9 +80,23 @@
                     <div class="item-container">
                         <!-- 上部文本 -->
                         <div style="display: flex;flex-direction: row;gap:15px;align-items: center;">
-                            <div class="item-text" style="text-align: left !important;">
+
+                            <el-input
+                                v-if="$index==editingIndex"
+                                ref="editInput"
+                                class="item-text__edit"
+                                style="color: #333 !important;"
+                                v-model="row.text"                                
+                                autosize
+                                type="textarea"
+                                @keydown.enter.prevent="keyEnterConfirmEdit(row, $index)"
+                                @keydown.esc="keyEscCancelEdit()"
+                            />
+
+                            <div v-else @click="clickStartEdit($index)" class="item-text" style="text-align: left !important;">
                                 {{ row.modifiedText != null ? row.modifiedText : row.text }}
                             </div>
+
                         </div>
 
 
@@ -171,7 +182,7 @@
                             </span>
 
 
-                            <span class="action-btn" @click="handleUpdate(row)">
+                            <span class="action-btn" @click="handleUpdate(row)" style="display:none">
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
@@ -181,10 +192,9 @@
                                     <el-icon size="22" color="orange">
                                         <Edit />
                                     </el-icon>
-
-                                </el-tooltip>
-                                
+                                </el-tooltip>                                
                             </span>
+
                             <span class="action-btn" @click="openDeleteDialog($index)">
                                 <el-icon size="22" color="#575757">
                                     <Delete />
@@ -499,8 +509,35 @@ function handleDelete(row) {
     }).catch(() => { })
 }
 
+const editingIndex = ref(-1)
+const editInput = ref(null)
+var editingText = ""
 
-function summitTask() {
+function clickStartEdit(index) {
+    editingIndex.value = index
+    editingText = recordsList.value[index].text
+    nextTick(() => {
+        editInput.value?.focus()
+    })
+}
+
+function keyEscCancelEdit(){
+    editingIndex.value = -1
+}
+
+function keyEnterConfirmEdit(row, index) {
+
+    editingIndex.value = -1
+    if(editingText != row.text){
+        updateRecords(row).then((response) => {
+            proxy.$modal.msgSuccess("修改成功")
+        })
+    }
+  
+}
+
+
+function clickSummitTask() {
     proxy.$modal.confirm('确定提交审核吗？').then(function () {
         const formData = new FormData();
         let sysTask = {
@@ -572,7 +609,7 @@ function toggleRecordingWithConfirmation(index) {
         proxy.$modal.msgError("请停止录音后再开始其他录音。")
         return
     }
-    
+
     if(playingIndex != -1){
         playingStates.value[playingIndex] = false
         playingIndex = -1
@@ -985,8 +1022,15 @@ const floatTo16BitPCM = (output, offset, input) => {
     transition: box-shadow 0.3s;
 }
 
+.item-text__edit{
+    font-size: 20px;
+    color: #333 !important;
+    word-wrap: break-word;
+}
+
 
 .item-text {
+    width: 100%;
     font-size: 20px;
     color: #333;
     line-height: 1.6;
