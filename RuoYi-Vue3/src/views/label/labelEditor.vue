@@ -1898,12 +1898,71 @@ let times = reactive([
 const historyTimes = []
 watch(times, (newVal, oldVal) => {
   console.log(`Count changed from ${oldVal} to ${newVal}`)
-  historyTimes.push({
-    timesData: newVal,
-    currentRegion: activeRegion,
-    time: formatDateTime(new Date(), 'yyyy-MM-dd HH:mm:ss')
-})
+  let same = false
+  historyTimes.forEach(e=>{
+    if(deepEqual(e, newVal)){
+      same = true
+    }
+  })
+
+  if(!same){
+    historyTimes.push({
+        timesData: newVal,
+        currentRegion: activeRegion,
+        time: formatDateTime(new Date(), 'yyyy-MM-dd HH:mm:ss')
+    })
+  }
+  
 }, { immediate: true, deep: true })
+
+
+function deepEqual(obj1, obj2) {
+  // 严格相等检查（处理基本类型和相同引用）
+  if (obj1 === obj2) {
+    return true;
+  }
+  
+  // null 和 undefined 检查
+  if (obj1 == null || obj2 == null) {
+    return obj1 === obj2;
+  }
+  
+  // 类型检查
+  if (typeof obj1 !== typeof obj2) {
+    return false;
+  }
+  
+  // 处理基本类型
+  if (typeof obj1 !== 'object') {
+    return obj1 === obj2;
+  }
+  
+  // 处理数组
+  if (Array.isArray(obj1) !== Array.isArray(obj2)) {
+    return false;
+  }
+  
+  // 获取对象的键
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+  
+  // 键的数量比较
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+  
+  // 递归比较每个属性
+  for (let key of keys1) {
+    if (!keys2.includes(key)) {
+      return false;
+    }
+    if (!deepEqual(obj1[key], obj2[key])) {
+      return false;
+    }
+  }
+  
+  return true;
+}
 
 //获取常用时间
 function formatDateTime(date, format) {
