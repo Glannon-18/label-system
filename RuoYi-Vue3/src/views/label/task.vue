@@ -2,7 +2,28 @@
   <div class="app-container">
     <el-row :gutter="10" class="mb8">
       <el-col :span="24">
-        <h2> 任务包名称：{{ taskPackageName }}</h2>
+        <el-row :gutter="15">
+          <el-col :span="8">
+            <el-form-item>
+              <template #label>
+                <div style="font-size: 21px;font-weight: 600">项目：</div>
+              </template>
+              <el-select v-model="activeProjectId" placeholder="请选择项目">
+                <el-option  v-for="(project, index) in projectList" :label="project.name" :value="project.projectId" @click="getPackageList"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8" style="margin-left: 80px;">
+            <el-form-item>
+              <template #label>
+                <div style="font-size: 21px;font-weight: 600">任务包：</div>
+              </template>
+              <el-select v-model="activeProjectPackageId" placeholder="请选择任务包">
+                <el-option  v-for="(item, index) in packageList" :label="item.name" :value="item.taskPackageId"  @click="selectActiveProjectPackage(item, activeProjectId, route.params)"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-col>
     </el-row>
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
@@ -123,6 +144,22 @@
             </template>
           </el-upload>
         </el-form-item>
+        <el-form-item label="任务状态" prop="status">
+          <el-select v-model="form.status" placeholder="请选择任务状态">
+            <el-option
+              v-for="dict in task_status"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+<!--        <el-form-item label="分配人账户名" prop="annotator">-->
+<!--          <el-input v-model="form.annotator" placeholder="请输入分配人账户名" />-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="审核人员账户名" prop="auditor">-->
+<!--          <el-input v-model="form.auditor" placeholder="请输入审核人员账户名" />-->
+<!--        </el-form-item>-->
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
@@ -140,7 +177,7 @@
 <script setup name="Task">
 import { listTask, getTask, delTask, addTask, updateTask } from "@/api/label/task"
 import { getPackage } from "@/api/label/package"
-import { computed } from 'vue'
+import {computed, watch} from 'vue'
 const { proxy } = getCurrentInstance()
 const { task_status } = proxy.useDict('task_status')
 const route = useRoute()
@@ -372,4 +409,67 @@ getPackage(taskPackageId).then(response => {
 getList()
 
 
+/** 头部下拉切换项目列表任务包 */
+import {listProject, getProject, delProject, addProject, updateProject} from "@/api/label/project"
+import { listPackage } from "@/api/label/package"
+const projectList = ref([])
+const packageList = ref([])
+const activeProjectId = ref(route.params.projectId)
+const activeProjectPackageId = ref(null)
+function getProjectList() {
+  listProject(proxy.addDateRange({
+    pageNum: null,
+    pageSize: null,
+    name: null,
+    status: null
+  }, [])).then(response => {
+    projectList.value = response.rows;
+    projectList.value.forEach((item) => {
+      if(item.projectId.toString() === route.params.projectId.toString()){
+        activeProjectId.value = item.projectId
+      }
+    })
+  })
+}
+watch(activeProjectId.value, (newVal, oldVal) => {
+  getPackageList()
+}, { immediate: true, deep: true })
+watch(packageList, () => {
+  const exists = packageList.value.some(item => item.taskPackageId === activeProjectPackageId.value);
+  if (!exists) {
+    activeProjectPackageId.value = null;
+  }
+}, { immediate: true, deep: true });
+function getPackageList() {
+  listPackage({
+    pageNum: null,
+    pageSize: null,
+    createTime: null,
+    name: null,
+    status: null,
+    projectId: activeProjectId.value?activeProjectId.value:route.params.taskPackageId
+  }).then(response => {
+    packageList.value = []
+    packageList.value = response.rows
+    packageList.value.forEach((item) => {
+      if(item.taskPackageId.toString() === route.params.taskPackageId.toString()){
+        activeProjectPackageId.value = item.taskPackageId
+      }
+    })
+  })
+}
+import { useRouter } from "vue-router"
+const router = useRouter()
+function selectActiveProjectPackage(package_, activeProjectId, route_params){
+  router.push({
+    name: 'project-task',
+    params: {
+      taskPackageId: package_.taskPackageId,
+      taskPackageName: package_.name,
+      projectId: activeProjectId
+    }
+  })
+}
+getProjectList()
+getPackageList()
 </script>

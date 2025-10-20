@@ -112,7 +112,7 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="任务包名" align="center" prop="name" >
         <template #default="scope">
-          <el-link type="primary" @click="goToTask(scope.row)">
+          <el-link type="primary" @click="goToTask(scope.row, route.params)">
             {{ scope.row.name }}
           </el-link>
         </template>
@@ -546,12 +546,13 @@ function handleDownload() {
   })
 }
 
-function goToTask(row) {
+function goToTask(row, route_params) {
   router.push({
     name: 'project-task',
     params: {
       taskPackageId: row.taskPackageId,
-      taskPackageName: row.name
+      taskPackageName: row.name,
+      projectId: route_params.projectId
     }
   })
 }
