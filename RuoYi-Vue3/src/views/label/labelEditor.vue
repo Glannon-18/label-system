@@ -104,9 +104,17 @@
           </template>
         </el-table-column>
         <el-table-column label="标注文本内容">
+          <template #header>
+            <div style="display: flex; justify-content: space-between;">
+              <div>标注文本内容</div>
+              <div>
+                <!-- <el-input v-model="search" size="small" placeholder="查找与替换" /> -->
+              </div>              
+            </div>
+          </template>
           <template #default="scope">
             <el-input type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
-              style="width:100%;font-size:20px;" @keydown="handleTextEnter2($event, scope.row)"
+              style="width:100%;font-size:24px;" @keydown="handleTextArrow($event, scope.row)"
               @keyup="handleTextEnter($event, scope.row)" />
           </template>
         </el-table-column>
@@ -137,7 +145,11 @@
         </p>
         <p><strong class="ql-size-large">合并分段</strong><span class="ql-size-large">：在新增/调整分段时,使高亮区域完全包含(覆盖)要合并的分段</span>
         </p>
-        <p><strong class="ql-size-large">切割分段</strong><span class="ql-size-large">：在分段列表的标注文本内容输入框内,按【回车】键进行切分</span>
+        <p style="display: flex; justify-content: flex-start;">
+          <span><strong class="ql-size-large">切割分段</strong>：</span>
+          <span>方法① 在激活(高亮)的区域内，双击鼠标进行切分<br/>
+            方法② 在分段标注文本内容输入框内,按【回车】键进行切分
+          </span>
         </p>
         <p>-------------快捷键-------------</p>
         <p><strong class="ql-size-large">跳上一段</strong><span class="ql-size-large">：按方向</span><span
@@ -151,7 +163,7 @@
       </div>
     </el-dialog>
     <!-- 标注规范 -->
-    <el-dialog v-model="labelStandardDialogVisible" title="文本标注规则要求" width="800">
+    <el-dialog v-model="labelStandardDialogVisible" title="标注规则要求" width="800">
       <div data-v-2bde42cb="" style="font-size: 16px; line-height: 18px;">
         <p><strong class="ql-size-large">1）文本</strong><span
             class="ql-size-large">：有效语音段内字音一致，句首顶格书写，无多字、漏字、错字现象，规范使用空格，根据目标语种规范正确使用大小写。 </span></p>
@@ -243,12 +255,21 @@ function showLabelStandard(){
 function insertText(text) {
   if (activeRegion && activeRegion.start !== activeRegion.end) {
     times.forEach(item => {
-      if (item.start === activeRegion.start && item.end===activeRegion.end) {
-        if(item.text.indexOf(text)>-1){
-          item.text = item.text.replace(text, '')
+      if (item.start === activeRegion.start && item.end===activeRegion.end) {//当前分段
+        //插入/移除标签
+        if(item.text.indexOf(text)>-1){//如果已包含指定标签
+          item.text = item.text.replace(new RegExp(text, 'g'), '')//则移除指定标签
         }else{
-          item.text += text
-        }        
+          item.text += text//否则插入指定标签
+        }      
+        //移除其它标签
+        labels.forEach(e => {
+          if(e.label != text){
+            item.text = item.text.replace(new RegExp(e.label, 'g'), '')//移除标签
+          }
+        })  
+        //去除首尾空格
+        item.text = item.text.replace(/^\s+|\s+$/g, '')
       }
     })
   }else{
@@ -300,11 +321,11 @@ const handleSpace = (event) => {
 
 
 /**
- * 处理文本输入框回车事件
+ * 处理文本输入框方向键事件
  * @param {Event} event - 键盘事件
  * @param {Object} row - 当前行数据
  */
-function handleTextEnter2(event, row) {
+function handleTextArrow(event, row) {
   // 阻止默认的换行行为
   // event.preventDefault();
 
@@ -340,8 +361,8 @@ function handleTextEnter2(event, row) {
     document.body.removeChild(hiddenDiv);
     
     // 判断光标是否在视觉上的第一行或最后一行
-    const isAtFirstLine = currentLine === 1;
-    const isAtLastLine = currentLine === totalLines;
+    const isAtFirstLine = currentLine === 1 || !textarea.value;
+    const isAtLastLine = currentLine === totalLines || !textarea.value;
     
     // 只有光标在视觉上的第一行(上键)或最后一行(下键)时才切换分段
     if ((event.key === 'ArrowUp' && (isAtFirstLine || cursorPos === 0)) || 
@@ -388,7 +409,13 @@ function handleTextEnter(event, row) {
       const splitPoint = Number(((row.start+row.end) / 2).toFixed(3))
       
       // 调用splitSegment函数处理分段
-      splitSegment(times, row, splitPoint, secondPart);
+      let res = splitSegment(times, row, splitPoint, secondPart);
+
+      if(res){
+        //提示切分成功，并注意调整分段边界
+        proxy.$message.success(`切分成功，注意调整分段边界`)
+      }
+      
     }
   }
 }
@@ -1063,15 +1090,11 @@ function splitSegment(times, oldSegment, point, newText = "") {
     //激活index分段
     activateRegion(newSegment)
     
-    //提示切分成功，并注意调整分段边界
-    proxy.$message.success(`切分成功，注意调整分段边界`)
-    
-    // 返回更新后的times数组
-    return times;
+    return true;
     
   } else {
     console.error(`找不到要调整的分段`);
-    return times;
+    return false;
   }
 }
 // 渲染demo波形
@@ -1235,13 +1258,13 @@ async function init(){
     let start = Number(region.start.toFixed(3))
     let end = Number(region.end.toFixed(3))
 
-    //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则边界值等于已有分段边界值
+    //吸附边界：如果新边界值与已有分段边界值距离小于0.5秒，则边界值等于已有分段边界值
     times.forEach( ts => {
       if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
-        if( Math.abs( ts.start - start) < 0.2){//左边界
+        if( Math.abs( ts.start - start) < 0.5){//左边界
           start = ts.start
         }
-        if( Math.abs( ts.end - end) < 0.2){//右边界
+        if( Math.abs( ts.end - end) < 0.5){//右边界
           end = ts.end
         }
       }
@@ -1328,13 +1351,13 @@ async function init(){
       let start = Number(region.start.toFixed(3))
       let end = Number(region.end.toFixed(3))
 
-      //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则新边界值等于已有分段边界值
+      //吸附边界：如果新边界值与已有分段边界值距离小于0.5秒，则新边界值等于已有分段边界值
       times.forEach( ts => {
         if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
-          if( Math.abs( ts.start - start) < 0.2){//左边界
+          if( Math.abs( ts.start - start) < 0.5){//左边界
             start = ts.start
           }
-          if( Math.abs( ts.end - end) < 0.2){//右边界
+          if( Math.abs( ts.end - end) < 0.5){//右边界
             end = ts.end
           }
         }
@@ -1450,6 +1473,7 @@ async function init(){
           activateRegion(ts)
           //滚动到标注行
           scrollToRow(index)
+          // focusInput(ts);
         }
       });
 
@@ -1458,10 +1482,18 @@ async function init(){
     ws.on('timeupdate', (ctime) => {
       let ct = ctime.toFixed(3)
       currentTime.value = ct
-      // When the end of the region is reached
-      if (activeRegion && ct >= activeRegion.end) {
-        // Stop playing
+      if (activeRegion && ctime > activeRegion.end) {//播放到达当前激活分段的末尾
         ws.pause()
+        // if(playMode=='single_cycle'){//单段循环
+        //   //重新激活当前分段
+          // activateRegion(activeRegion)
+        // }else if(playMode=='play_in_order'){//分段顺序播放
+        //   //激活下一分段
+          // let index = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end)
+          // activateRegion(index + 1)
+        // }else{//单段不循环
+        //   ws.pause()
+        // }  
       }
     })
 
@@ -1472,7 +1504,11 @@ async function init(){
       // relativeX 是点击位置相对于波形图宽度的比例（范围0到1）
       const duration = ws.getDuration(); // 获取音频总时长（秒）
       const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
-      console.log(`双击的时间点：${clickTime}---${times}`)
+      console.log(`双击的时间点：${clickTime}`)
+
+      let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
+      splitSegment(times, times[index], clickTime, '')
+
     })
 
     const playButton = document.querySelector('#play')
@@ -1510,6 +1546,7 @@ async function init(){
         activateRegion(times[regionIndex])
         //滚动到标注行
         scrollToRow(regionIndex)
+        // focusInput(times[regionIndex]);
         // //4.跳转下一段的开始位置
         // ws.skip(times[regionIndex].start)
         // //5.重新开始播放
@@ -1533,6 +1570,7 @@ async function init(){
         activateRegion(times[regionIndex])
         //滚动到标注行
         scrollToRow(regionIndex)
+        // focusInput(times[regionIndex]);
 
         // //跳转上一段的开始位置
         // ws.skip(times[regionIndex].start)
@@ -1776,6 +1814,8 @@ const title = ref("")
 
 //播放状态控制(true为播放，false为暂停)
 let playStatus = ref(true)
+
+let playMode = 'single_cycle' //播放模式（）
 
 //播放音量
 let volume = ref(50)
