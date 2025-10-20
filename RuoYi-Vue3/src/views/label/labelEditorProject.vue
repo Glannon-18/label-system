@@ -7,7 +7,8 @@
       <!-- <div> 任务包：{{ taskPackageName }}</div> -->
       <div> 音频文件：{{ task.data.audioFileName }}</div>
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
-        <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
+        <el-link underline style="margin-right: 12px;" @click="showOperationTip()">快捷键</el-link>
+        <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">标注规范</el-link>
         
         <!-- <div v-if="['underway','reject'].includes(task.data.status)">
           <el-button type="danger" plain @click="redo()">重做</el-button>
