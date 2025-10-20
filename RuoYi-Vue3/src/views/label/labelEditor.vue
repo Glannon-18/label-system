@@ -542,7 +542,11 @@ function handleUpdate(row) {
     })
   })
 }
-
+const historyTimes = []
+watch(times, (newVal, oldVal) => {
+  console.log(`Count changed from ${oldVal} to ${newVal}`)
+  historyTimes.push(newVal)
+}, { immediate: true, deep: true })
 //重做标注
 function redo(){
   //刷新页面
