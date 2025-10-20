@@ -18,6 +18,7 @@
         <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">标注规范</el-link>
 
         <div v-if="['underway','reject'].includes(task.data.status)">
+          <el-button type="primary" @click="openHisoryOperDrawer">历史记录</el-button>
           <el-button type="danger" plain @click="redo()">重做</el-button>
           <el-button type="primary" plain @click="saveTask()">保存</el-button>
           <el-button type="success" @click="submitTask()">提交</el-button>
@@ -187,6 +188,17 @@
         <p><span class="ql-size-large">④上述标注结果需符合语言规范、语境及母语者使用习惯。</span></p>
       </div>
     </el-dialog>
+    <!-- 抽屉组件 -->
+    <el-drawer
+            title="历史记录"
+            :model-value="drawerHisoryOperVisible"
+            :direction="directionHisoryOper"
+            :before-close="handleDrawerCloseHisoryOper"
+            @update:model-value="handleCloseHisoryOper"
+    >
+      <LabelEditorHistoryOper :historyTimes="historyTimes"  :key="new Date().getTime().toString()" :handleCloseHisoryOper="handleCloseHisoryOper" :updateFormHistory="updateFormHistory"/>
+    </el-drawer>
+
 
   </div>
 </template>
@@ -204,6 +216,7 @@ import ZoomPlugin from 'wavesurfer.js/dist/plugins/zoom.esm.js'
 import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
 import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
 import LabelEditorLoading from './labelEditorLoading'
+import LabelEditorHistoryOper from './labelEditorHistoryOper'
 
 const audioLoadprogress = ref(0)
 const audioLoadOver = ref(false)
@@ -232,8 +245,21 @@ const onPopoverHide = () => {
   console.log('Popover 已关闭')
 }
 // ********* e 当前任务音频列表 *********
-
-
+const drawerHisoryOperVisible = ref(false)
+const directionHisoryOper = ref('rtl')
+const openHisoryOperDrawer = () => {
+  drawerHisoryOperVisible.value = true
+}
+const handleCloseHisoryOper = (val) => {
+  drawerHisoryOperVisible.value = val
+}
+const handleDrawerCloseHisoryOper = (done) => {
+ done()
+}
+function updateFormHistory(history) {
+  console.log(history)
+  proxy.$message.success(`恢复成功`)
+}
 //=========================定义函数=========================
 //操作方法
 const operationTipDialogVisible = ref(false)
@@ -2138,5 +2164,12 @@ onUnmounted(() => {
 /* 覆盖 el-table 的行 hover 样式 */
 ::v-deep .el-table__body tr:hover > td {
   background-color: transparent !important;
+}
+
+>>> .el-drawer[aria-label="历史记录"] header {
+  display: none !important;
+}
+>>> .el-drawer[aria-label="历史记录"]  .el-drawer__body {
+  padding: 0px !important;
 }
 </style>

@@ -40,6 +40,14 @@ public interface SysTaskPackageMapper
     public List<SysTaskPackage> selectSysTaskPackageListByAssigner(SysTaskPackage sysTaskPackage);
 
     /**
+     * 根据项目ID查询任务包数量
+     * 
+     * @param projectId 项目ID
+     * @return 任务包数量
+     */
+    public int countTaskPackageByProjectId(Long projectId);
+    
+    /**
      * 新增任务包
      * 
      * @param sysTaskPackage 任务包

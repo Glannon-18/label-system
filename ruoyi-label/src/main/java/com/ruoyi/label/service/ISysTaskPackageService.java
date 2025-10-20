@@ -59,6 +59,15 @@ public interface ISysTaskPackageService
      * @return 结果
      */
     public int assignSysTaskPackageToUser(SysTaskPackage sysTaskPackage);
+    
+    /**
+     * 检查项目是否包含任务包
+     * 
+     * @param projectId 项目ID
+     * @return 结果 true表示包含，false表示不包含
+     */
+    public boolean hasTaskPackageByProjectId(Long projectId);
+    
 
     /**
      * 批量删除任务包
@@ -75,4 +84,12 @@ public interface ISysTaskPackageService
      * @return 结果
      */
     public int deleteSysTaskPackageByTaskPackageId(Long taskPackageId);
+    
+    /**
+     * 检查任务包是否包含任务
+     * 
+     * @param taskPackageId 任务包ID
+     * @return 是否包含任务
+     */
+    public boolean hasTaskInPackage(Long taskPackageId);
 }
