@@ -1,10 +1,5 @@
 <template>
   <div class="app-container">
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="24">
-        <h2> 任务包名称：{{ taskPackageName }}</h2>
-      </el-col>
-    </el-row>
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="任务状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择任务状态" clearable style="width: 120px;">
@@ -58,8 +53,7 @@
             审核
           </el-button>
           <el-button 
-            type="primary" 
-            icon="View" 
+            icon="View"
             size="default" 
             @click="handleShowProgress(scope.row)">
             查看进度
