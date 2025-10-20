@@ -123,22 +123,6 @@
             </template>
           </el-upload>
         </el-form-item>
-        <el-form-item label="任务状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择任务状态">
-            <el-option
-              v-for="dict in task_status"
-              :key="dict.value"
-              :label="dict.label"
-              :value="dict.value"
-            ></el-option>
-          </el-select>
-        </el-form-item>
-<!--        <el-form-item label="分配人账户名" prop="annotator">-->
-<!--          <el-input v-model="form.annotator" placeholder="请输入分配人账户名" />-->
-<!--        </el-form-item>-->
-<!--        <el-form-item label="审核人员账户名" prop="auditor">-->
-<!--          <el-input v-model="form.auditor" placeholder="请输入审核人员账户名" />-->
-<!--        </el-form-item>-->
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
@@ -180,23 +164,11 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
-    audioFileName: null,
-    status: null,
-    annotator: null,
-    auditor: null,
-    createBy: null,
+
     taskPackageId: taskPackageId  // 添加任务包ID作为查询条件
   },
   rules: {
-    packageId: [
-      { required: true, message: "所属包的ID不能为空", trigger: "blur" }
-    ],
-    audioFileName: [
-      { required: true, message: "音频文件不能为空", trigger: "change" }
-    ],
-    audioFilePath: [
-      { required: true, message: "音频文件在服务器的路径不能为空", trigger: "blur" }
-    ],
+
   }
 })
 

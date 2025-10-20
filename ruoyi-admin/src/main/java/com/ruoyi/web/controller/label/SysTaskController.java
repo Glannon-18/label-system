@@ -133,6 +133,7 @@ public class SysTaskController extends BaseController
             }
         }
         sysTask.setCreateBy(getUsername());
+        sysTask.setStatus(TaskStatus.UNSTART);
         int rows = sysTaskService.insertSysTask(sysTask);
         SysTaskLogUtils.insertSysTaskLog(sysTask.getTaskId(), TaskStatus.UNSTART, getUsername(), null);
         return toAjax(rows);
