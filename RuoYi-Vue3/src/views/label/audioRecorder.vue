@@ -115,7 +115,7 @@
                             </span>
 
 
-                            <span class="action-btn" @click="toggleRecording($index)">
+                            <span class="action-btn" @click="toggleRecordingWithConfirmation($index)">
 
                                 <el-tooltip
                                     class="box-item"
@@ -238,6 +238,20 @@
                 <div class="dialog-footer">
                     <el-button @click="cancelDelete">取消</el-button>
                     <el-button type="danger" @click="confirmDelete">删除</el-button>
+                </div>
+            </template>
+        </el-dialog>
+
+        <!-- 覆盖录音对话框 -->
+        <el-dialog v-model="overwriteRecordDialogVisible" title="确认覆盖" width="400px">
+            <div class="delete-dialog-content">
+                <p>已存在录音，确定要覆盖这条录音吗？</p>
+            </div>
+
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="cancelOverwriteRecord">取消</el-button>
+                    <el-button type="danger" @click="confirmOverwriteRecord">覆盖</el-button>
                 </div>
             </template>
         </el-dialog>
@@ -505,6 +519,18 @@ function summitTask() {
     })
 }
 
+const overwriteRecordDialogVisible = ref(false)
+const overwriteRecordIndex = ref(-1)
+
+function cancelOverwriteRecord() {
+    overwriteRecordDialogVisible.value = false
+    overwriteRecordIndex.value = -1
+}
+
+function confirmOverwriteRecord() { 
+    overwriteRecordDialogVisible.value = false
+    toggleRecording(overwriteRecordIndex.value)
+}
 
 function openDeleteDialog(index) {
     deletingIndex.value = index
@@ -541,18 +567,30 @@ const playingStates = ref(Array(recordsList.value.length).fill(false))
 var _responseRecords = {}
 var hasRecording = false
 
-function toggleRecording(index) {
-    if (index != recordingRecordIndex) {
-        if (hasRecording) {
-            proxy.$modal.msgError("请停止录音后再开始其他录音。")
-            return
-        }
+function toggleRecordingWithConfirmation(index) {
+    if (index != recordingRecordIndex && hasRecording) {
+        proxy.$modal.msgError("请停止录音后再开始其他录音。")
+        return
     }
+    
     if(playingIndex != -1){
         playingStates.value[playingIndex] = false
         playingIndex = -1
         hasPalying = false
     }
+
+    if(!hasRecording){
+        if(recordsList.value[index].audioFilePath != null){
+            overwriteRecordDialogVisible.value = true
+            overwriteRecordIndex.value = index
+        }else{        
+            toggleRecording(index)
+        }
+    }else{
+        toggleRecording(index)
+    }
+}
+function toggleRecording(index) {
 
     recordingStates.value[index] = !recordingStates.value[index]    
     if (recordingStates.value[index]) {
