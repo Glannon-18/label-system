@@ -7,7 +7,8 @@
       <!-- <div> 任务包：{{ taskPackageName }}</div> -->
       <div> 音频文件：{{ task.data.audioFileName }}</div>
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
-        <!-- <el-link underline style="margin-right: 50px;" @click="toSpecification()">标注规范</el-link> -->
+        <el-link underline style="margin-right: 12px;" @click="showOperationTip()">快捷键</el-link>
+        <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">标注规范</el-link>
         
         <!-- <div v-if="['unstart','underway','reject','pass'].includes(task.data.status)">
           <el-button type="danger" plain @click="redo()">重做</el-button>
@@ -42,32 +43,24 @@
       <div style="display: flex; gap: 0.5rem; font-size: 12px; align-items: center; justify-content: center;">
         <span style="color: gray;">无效时长标签:</span>
         <div v-for="item in labels" :key="item.label">
-          <el-tooltip 
-            class="box-item"
-            :content="item.tip"
-            placement="top-start"
-          ><el-tag style="cursor:pointer;" checked :type="item.type" @click="insertText(item.label)">
+          <el-tooltip class="box-item" :content="item.tip" placement="top-start"><el-tag style="cursor:pointer;" checked
+              :type="item.type" @click="insertText(item.label)">
             {{ item.label }}
           </el-tag></el-tooltip>
         </div>
         <span style="color: gray;">(点击即可插入/移除)</span>
       </div>
       <div style="display: flex; align-items: center;">
-        <span style="margin-right: 12px;">{{ currentTime  }} / {{ duration }} </span>
+        <span style="margin-right: 12px;">{{ currentTime }} / {{ duration }} </span>
         <el-button type="info" plain id="backward">上一段</el-button>
         <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
         <el-button type="info" plain id="forward">下一段</el-button>
         <view style="margin-left: 12px;display: flex;align-items: center;">
-          音量 <el-slider v-model="volume" style="width: 100px;margin-left: 3px;"/>
+          音量 <el-slider v-model="volume" style="width: 100px;margin-left: 3px;" />
         </view>
         <view style="margin-left: 12px;display: flex;align-items: center;">
-          倍速 <el-select v-model="playbackRate" size="small" style="width: 70px;margin-left: 3px;" >
-            <el-option
-              v-for="item in playbackRateList"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
+          倍速 <el-select v-model="playbackRate" size="small" style="width: 70px;margin-left: 3px;">
+            <el-option v-for="item in playbackRateList" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </view>
         <!-- <view style="margin-left: 12px;display: flex;align-items: center;">
@@ -80,39 +73,34 @@
     <div style="margin-top: 10px; display: flex; flex-direction:column">
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
         style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; font-size: 16px;"  
-        :show-header="true" 
-        :row-class-name="tableRowClassName" @row-click="rowClick" > 
+        :show-header="true" :row-class-name="tableRowClassName" @row-click="rowClick">
           <el-table-column label="分段序号" width="80"> 
             <template #default="scope"> 
               {{ scope.$index + 1 }}
             </template>
           </el-table-column>
-          <el-table-column label="开始时间" width="100"> 
+        <el-table-column label="开始位置" width="100">
             <template #default="scope"> 
               {{ scope.row.start }}
             </template>
           </el-table-column>
-          <el-table-column label="结束时间" width="100"> 
+        <el-table-column label="结束位置" width="100">
             <template #default="scope"> 
               {{ scope.row.end }}
             </template>
           </el-table-column>
           <el-table-column label="时长(秒)" width="100"> 
             <template #default="scope"> 
+            <span :style="Number((scope.row.end - scope.row.start).toFixed(3))>15?'color:red':''">
               {{ Number((scope.row.end - scope.row.start).toFixed(3)) }}
+            </span>
             </template>
           </el-table-column>
-          <el-table-column label="标注文本内容" > 
+        <el-table-column label="标注文本内容">
             <template #default="scope"> 
-              <el-input 
-                type="textarea" 
-                clearable 
-                autosize 
-                v-model="scope.row.text" 
-                placeholder="请输入标注内容" 
-                style="width:100%;font-size:16px;" 
-                @keyup.enter="handleTextEnter($event, scope.row)"
-              />
+            <el-input type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
+              style="width:100%;font-size:20px;" @keydown="handleTextEnter2($event, scope.row)"
+              @keyup="handleTextEnter($event, scope.row)" />
             </template>
           </el-table-column>
           <el-table-column label="字符数" width="100"> 
@@ -124,9 +112,61 @@
     </div>
 
     <!-- 底部提示说明 -->
-    <div v-if="task.data.status==='pending_review'" style="line-height: 30px;margin-top: 10px; color: gray; font-size: 12px;">
+    <div v-if="task.data.status==='pending_review'"
+      style="line-height: 30px;margin-top: 10px; color: gray; font-size: 12px;">
       Tip：审核人可对标注内容进行修改，提交审核结果同时保存修改的内容。
     </div>
+
+
+    <!-- 操作方法 -->
+    <el-dialog v-model="operationTipDialogVisible" title="" width="600">
+      <div data-v-2bde42cb="" style="font-size: 16px;">
+        <p>-------------操作方法-------------</p>
+        <p><strong class="ql-size-large">缩放波形</strong><span class="ql-size-large">：鼠标指针在波形图内，滚动鼠标滚轮进行缩放</span></p>
+        <p><strong class="ql-size-large">激活分段</strong><span class="ql-size-large">：点击波形图非高亮区域，相应分段被激活</span></p>
+        <p><strong class="ql-size-large">取消激活</strong><span class="ql-size-large">：点击波形图的高亮区域，相应分段取消激活</span></p>
+        <p><strong class="ql-size-large">新增分段</strong><span class="ql-size-large">：在非激活(非高亮)区域，点击并拖动鼠标选择区域</span></p>
+        <p><strong class="ql-size-large">调整分段</strong><span class="ql-size-large">：在高亮区域的边界,鼠标指针变成 ↔ 时,点击拖动边界线</span>
+        </p>
+        <p><strong class="ql-size-large">合并分段</strong><span class="ql-size-large">：在新增/调整分段时,使高亮区域完全包含(覆盖)要合并的分段</span>
+        </p>
+        <p><strong class="ql-size-large">切割分段</strong><span class="ql-size-large">：在分段列表的标注文本内容输入框内,按【回车】键进行切分</span>
+        </p>
+        <p>-------------快捷键-------------</p>
+        <p><strong class="ql-size-large">跳上一段</strong><span class="ql-size-large">：按方向</span><span
+            style="background-color: rgb(255, 255, 255); color: rgb(51, 51, 51);" class="ql-size-large">【↑】键</span></p>
+        <p><strong class="ql-size-large">跳下一段</strong><span class="ql-size-large">：按方向</span><span class="ql-size-large"
+            style="color: rgb(51, 51, 51); background-color: rgb(255, 255, 255);">【</span><span
+            class="ql-size-large">↓</span><span class="ql-size-large"
+            style="color: rgb(51, 51, 51); background-color: rgb(255, 255, 255);">】键</span></p>
+        <p><strong class="ql-size-large">播放/暂停</strong><span class="ql-size-large">：按【空格】键</span></p>
+        <p><strong class="ql-size-large">保存更改</strong><span class="ql-size-large">：按【Ctrl+S】键</span></p>
+      </div>
+    </el-dialog>
+    <!-- 标注规范 -->
+    <el-dialog v-model="labelStandardDialogVisible" title="文本标注规则要求" width="800">
+      <div data-v-2bde42cb="" style="font-size: 16px; line-height: 18px;">
+        <p><strong class="ql-size-large">1）文本</strong><span
+            class="ql-size-large">：有效语音段内字音一致，句首顶格书写，无多字、漏字、错字现象，规范使用空格，根据目标语种规范正确使用大小写。 </span></p>
+        <p><strong class="ql-size-large">2）分段</strong><span class="ql-size-large">： </span></p>
+        <p><span class="ql-size-large">①单个有效语音段不大于120个字符。 </span></p>
+        <p><span class="ql-size-large">②单个有效语音段控制在15s以内并注意保证句意的相对完整性。 </span></p>
+        <p><span class="ql-size-large">③无效时长的部分大于1s需要切分并给对应标签。 </span></p>
+        <p><strong class="ql-size-large">3）无效时长标签：</strong><span class="ql-size-large"> </span></p>
+        <p><span class="ql-size-large">&lt;NOISE&gt;表示非人声噪音。 </span></p>
+        <p><span class="ql-size-large">&lt;DEAF&gt;表示无法转写的人声。 </span></p>
+        <p><span class="ql-size-large">&lt;OVERLAP&gt;表示多人同时发音：混读、听不清、文本无法转写出来。 </span></p>
+        <p><span class="ql-size-large">备注：如多人同时说话且可听清主说话人，则标注主说话人数据。 </span></p>
+        <p><span class="ql-size-large">&lt;OOV&gt;表示整段非目标语种，包括：中文、英文等。 </span></p>
+        <p><strong class="ql-size-large">4）标点符号</strong><span
+            class="ql-size-large">：根据语义语法规则，采用“逗号、句号、问号、感叹号等进行标注，不可遗漏省文撇、重音符号、发音符号等目标语种语言规范所要求的符号。 </span></p>
+        <p><strong class="ql-size-large">5）用词规范</strong><span class="ql-size-large">： </span></p>
+        <p><span class="ql-size-large">①数字需标注为常用的阿拉伯数字形式（例：sixtyeight标注为68）。 </span></p>
+        <p><span class="ql-size-large">②常用发音符号（如@、、&amp;、%等需标注为符号形式（例：fivepercent标注为5%）。 </span></p>
+        <p><span class="ql-size-large">③常用单位（如℃C、kg、km、$等）需标注成符号形式（例：fiftykilograms标注为50kg）。 </span></p>
+        <p><span class="ql-size-large">④上述标注结果需符合语言规范、语境及母语者使用习惯。</span></p>
+      </div>
+    </el-dialog>
 
   </div>
 </template>
@@ -154,6 +194,27 @@ const labels = reactive([
 
 
 //=========================定义函数=========================
+//操作方法
+const operationTipDialogVisible = ref(false)
+const operationTipContent = ref('')
+function showOperationTip(){
+  operationTipDialogVisible.value = true
+  // getNotice(1).then(res=>{
+  //   console.log(res)
+  //   operationTipContent.value = res.data.noticeContent
+  // })
+}
+//标注规范
+const labelStandardDialogVisible = ref(false)
+const labelStandardContent = ref('')
+function showLabelStandard(){
+  labelStandardDialogVisible.value = true
+  // getNotice(2).then(res=>{
+  //   console.log(res)
+  //   labelStandardContent.value = res.data.noticeContent
+  // })
+}
+
 function insertText(text) {
   if (activeRegion && activeRegion.start !== activeRegion.end) {
     times.forEach(item => {
@@ -185,6 +246,30 @@ const handleSpace = (event) => {
   if (event.key === ' ') { // 确保是空格键被按下
     console.log('空格键被按下');
     ws.playPause()
+  } else if (event.ctrlKey && event.key === 's') { // Ctrl+S 保存
+    event.preventDefault(); // 阻止浏览器默认保存行为
+    console.log('Ctrl+S 保存');
+    saveTask();
+  }
+  // 处理方向键
+  else if (event.ctrlKey && event.key === 'ArrowUp') {
+    console.log('上方向键被按下', activeRegion);
+    // 上方向键 - 切换到上一行
+    const currentIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end);
+    if (currentIndex > 0) {
+      focusInput(times[currentIndex - 1]);
+      activateRegion(times[currentIndex - 1]);
+    }
+    return;
+  } else if (event.ctrlKey && event.key === 'ArrowDown') {
+    console.log('下方向键被按下', activeRegion);
+    // 下方向键 - 切换到下一行
+    const currentIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end);
+    if (currentIndex < times.length - 1) {
+      focusInput(times[currentIndex + 1]);
+      activateRegion(times[currentIndex + 1]);
+    }
+    return;
   }
 };
 
@@ -194,33 +279,104 @@ const handleSpace = (event) => {
  * @param {Event} event - 键盘事件
  * @param {Object} row - 当前行数据
  */
+function handleTextEnter2(event, row) {
+  // 阻止默认的换行行为
+  // event.preventDefault();
+
+  // 处理方向键
+  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    const textarea = event.target;
+    const cursorPos = textarea.selectionStart;
+    
+    // 创建一个隐藏的div来模拟textarea的布局
+    const hiddenDiv = document.createElement('div');
+    hiddenDiv.style.position = 'absolute';
+    hiddenDiv.style.visibility = 'hidden';
+    hiddenDiv.style.whiteSpace = 'pre-wrap';
+    hiddenDiv.style.width = textarea.clientWidth + 'px';
+    hiddenDiv.style.font = window.getComputedStyle(textarea).font;
+    hiddenDiv.style.padding = window.getComputedStyle(textarea).padding;
+    hiddenDiv.style.border = window.getComputedStyle(textarea).border;
+    hiddenDiv.style.lineHeight = window.getComputedStyle(textarea).lineHeight;
+    
+    // 设置div内容为textarea的文本
+    hiddenDiv.textContent = textarea.value.substring(0, cursorPos);
+    
+    // 将div添加到DOM中
+    document.body.appendChild(hiddenDiv);
+    
+    // 获取div的高度
+    const divHeight = hiddenDiv.clientHeight;
+    const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight, 10);
+    const currentLine = Math.floor(divHeight / lineHeight);
+    const totalLines = Math.floor(textarea.scrollHeight / lineHeight);
+    
+    // 移除隐藏的div
+    document.body.removeChild(hiddenDiv);
+    
+    // 判断光标是否在视觉上的第一行或最后一行
+    const isAtFirstLine = currentLine === 1;
+    const isAtLastLine = currentLine === totalLines;
+    
+    // 只有光标在视觉上的第一行(上键)或最后一行(下键)时才切换分段
+    if ((event.key === 'ArrowUp' && (isAtFirstLine || cursorPos === 0)) || 
+        (event.key === 'ArrowDown' && isAtLastLine)) {
+      const currentIndex = times.findIndex(seg => seg.start === row.start && seg.end === row.end);
+      if (event.key === 'ArrowUp' && currentIndex > 0) {
+        focusInput(times[currentIndex - 1]);
+        activateRegion(times[currentIndex - 1]);
+      } else if (event.key === 'ArrowDown' && currentIndex < times.length - 1) {
+        focusInput(times[currentIndex + 1]);
+        activateRegion(times[currentIndex + 1]);
+      }
+    } else {
+      // 如果不在第一行或最后一行，允许默认的方向键行为（移动光标）
+      return;
+    }
+    return;
+  }
+}
+
 function handleTextEnter(event, row) {
   // 阻止默认的换行行为
   event.preventDefault();
+
+  // 处理回车键
+  if(event.key === 'Enter') {
+    console.log('回车键被按下', row);
   
-  // 获取当前文本
-  const text = row.text;
-  
-  // 查找换行符位置
-  const newlineIndex = text.indexOf('\n');
-  
-  if (newlineIndex !== -1) {
-    // 如果有换行符，则按换行符分割文本
-    const firstPart = text.substring(0, newlineIndex);
-    const secondPart = text.substring(newlineIndex + 1);
+    // 获取当前文本
+    const text = row.text;
     
-    // 更新当前行的文本为第一部分
-    row.text = firstPart;
+    // 查找换行符位置
+    const newlineIndex = text.indexOf('\n');
     
-    // 计算分割点（按时间比例）
-    // const totalTextLength = firstPart.length + secondPart.length;
-    // const splitRatio = firstPart.length / totalTextLength;
-    // const splitPoint = row.start + (row.end - row.start) * splitRatio;
-    const splitPoint = Number(((row.start+row.end) / 2).toFixed(3))
-    
-    // 调用splitSegment函数处理分段
-    splitSegment(times, row, splitPoint, secondPart);
+    if (newlineIndex !== -1) {
+      // 如果有换行符，则按换行符分割文本
+      const firstPart = text.substring(0, newlineIndex);
+      const secondPart = text.substring(newlineIndex + 1);
+      
+      // 更新当前行的文本为第一部分
+      row.text = firstPart;
+      
+      // 计算分割点（按时间比例）
+      const splitPoint = Number(((row.start+row.end) / 2).toFixed(3))
+      
+      // 调用splitSegment函数处理分段
+      splitSegment(times, row, splitPoint, secondPart);
+    }
   }
+}
+
+// 聚焦到指定行的输入框
+function focusInput(row) {
+  nextTick(() => {
+    const inputs = document.querySelectorAll('.el-textarea__inner');
+    const index = times.indexOf(row);
+    if (inputs[index]) {
+      inputs[index].focus();
+    }
+  });
 }
 
 // 获取音频文件URL（需要根据实际路径结构调整）
@@ -387,7 +543,7 @@ function redo(){
         regions.addRegion({
           start: e.start,
           content: `${index+1}`,
-          color: '#000',
+          color: '#666',
           drag: false,
           resize: false
         })
@@ -418,13 +574,10 @@ function saveTask() {
   //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
   let textGrid = convertJsonToTextGrid(task.textGridJson)
   task.data.textGrid = textGrid
-  //将任务状态改为“标注中”
-  task.data.status = 'underway'
   //准备保存的参数
   let sysTask = {
       taskId: taskId,
       textGrid: textGrid,
-      status: 'underway',//标注中
     }
   const formData = new FormData();
   formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
@@ -690,19 +843,19 @@ function adjustSegment(times, oldSegment, newSegment) {
     // 参数验证
     if(!Array.isArray(times) || !newSegment || !oldSegment) {
       console.log("参数验证失败");
-      return times;
+      return null;
     }
     if(newSegment.start >= newSegment.end) {
       console.log("新分段起始时间大于等于结束时间，调整失败");
-      return times;
+      return null;
     }
     if(newSegment.start == oldSegment.start && newSegment.end == oldSegment.end) {
       console.log("新旧分段的起止和结束时间相同，无需调整");
-      return times;
+      return null;
     }
-    if(newSegment.end - newSegment.start < 0.2 ) {
+    if(newSegment.end - newSegment.start < 0.1 ) {
       console.log("新分段时长小于0.1秒，调整失败");
-      return times;
+      return null
     }
 
     // 深拷贝原数组避免修改原数据
@@ -876,7 +1029,7 @@ function splitSegment(times, oldSegment, point, newText = "") {
       regions.addRegion({
         start: e.start,
         content: `${index+1}`,
-        color: '#000',
+        color: '#666',
         drag: false,
         resize: false
       })
@@ -885,7 +1038,12 @@ function splitSegment(times, oldSegment, point, newText = "") {
     //激活index分段
     activateRegion(newSegment)
     
+    //提示切分成功，并注意调整分段边界
+    proxy.$message.success(`切分成功，注意调整分段边界`)
+    
+    // 返回更新后的times数组
     return times;
+    
   } else {
     console.error(`找不到要调整的分段`);
     return times;
@@ -943,16 +1101,17 @@ async function init(){
     hideScrollbar: false,
     interact: true, // 可交互
     minPxPerSec: 45,
+    autoCenter: true, // 自动居中播放位置
     plugins: [
       regions,
       timeline,
-      hover,
+      // hover,
       ZoomPlugin.create({
         // 每个轮步的变焦量, 例如0.5表示每次变焦量放大0.5倍
         scale: 0.2,
         // Optionally, specify the maximum pixels-per-second factor while zooming
         //可选项地指定缩放时的最大每秒像素数值
-        maxZoom: 100,
+        maxZoom: 150,
       }),
     ],
   })
@@ -985,7 +1144,7 @@ async function init(){
       regions.addRegion({
         start: ts.start,
         content: `${index+1}`,
-        color: '#000',
+        color: '#666',
         drag: false,
         resize: false
       })
@@ -1084,7 +1243,7 @@ async function init(){
       regions.addRegion({
         start: e.start,
         content: `${index+1}`,
-        color: '#000',
+        color: '#666',
         drag: false,
         resize: false
       })
@@ -1156,14 +1315,34 @@ async function init(){
         }
       })
 
+      if( Math.abs(end - start) < 0.1 ) {
+        console.log("新分段时长小于0.1秒，调整失败");
+        activateRegion(activeRegion)
+        return 
+      }
+      if(start >= end) {
+        console.log("新分段起始时间大于等于结束时间，调整失败");
+        activateRegion(activeRegion)
+        return 
+      }
+      if(start == activeRegion.start && end == activeRegion.end) {
+        console.log("新旧分段的起止和结束时间相同，无需调整");
+        activateRegion(activeRegion)
+        return 
+      }
+
+      
+
       console.log(`识别到调整区域：(${activeRegion.start},${activeRegion.end})-->(${start},${end})`)
       
       console.log('调整前：', JSON.stringify(times))
       let oldReg = {start:activeRegion.start, end:activeRegion.end}
       let newReg = {start:start, end:end}
       let newtimes  = adjustSegment(times, oldReg, newReg)
-      times.splice(0, times.length)
-      times.push(...newtimes)
+      if(newtimes && newtimes.length > 0){
+        times.splice(0, times.length)
+        times.push(...newtimes)
+      }      
       console.log(`调整后：`, JSON.stringify(times))
 
       //清除零长区域
@@ -1178,7 +1357,7 @@ async function init(){
         regions.addRegion({
           start: e.start,
           content: `${index+1}`,
-          color: '#000',
+          color: '#666',
           drag: false,
           resize: false
         })
@@ -1252,9 +1431,10 @@ async function init(){
     })
 
     ws.on('timeupdate', (ctime) => {
-      currentTime.value = ctime.toFixed(3)
+      let ct = ctime.toFixed(3)
+      currentTime.value = ct
       // When the end of the region is reached
-      if (activeRegion && ctime >= activeRegion.end) {
+      if (activeRegion && ct >= activeRegion.end) {
         // Stop playing
         ws.pause()
       }
@@ -1340,7 +1520,7 @@ async function init(){
 
 //激活分段
 function activateRegion(ts){
-  console.log('****当前激活分段：', JSON.stringify(ts))
+  console.log('>>>激活目标分段>>>', JSON.stringify(ts))
 
   // 1.清除非零长区域（取消激活区域）
   regions.getRegions().forEach((region) => {
@@ -1685,7 +1865,11 @@ const scrollToRow = (rowIndex) => {
 // 初始化区域插件
 let regions = RegionsPlugin.create()
 // 初始化时间轴插件
-const timeline = TimelinePlugin.create()
+const timeline = TimelinePlugin.create({
+  formatTimeCallback: (time) => {
+    return `${time.toFixed(0)}`
+  },
+})
 // 初始化hover插件
 const hover = Hover.create({
   formatTimeCallback: (time) => {
@@ -1782,6 +1966,9 @@ onUnmounted(() => {
   background-color: rgba(255, 225, 0, 0.3) !important;
   /*color: #409EFF;*/
   font-weight: bold;
+  caret-color: red;
+  caret-shape: block;
+
   /*.cell .el-textarea__inner{
     font-size: 18px;
   }*/
