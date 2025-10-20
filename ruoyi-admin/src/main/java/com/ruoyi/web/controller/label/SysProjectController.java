@@ -18,6 +18,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.label.domain.SysProject;
 import com.ruoyi.label.service.ISysProjectService;
+import com.ruoyi.label.service.ISysTaskPackageService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
 
@@ -33,7 +34,9 @@ public class SysProjectController extends BaseController
 {
     @Autowired
     private ISysProjectService sysProjectService;
-
+    
+    @Autowired
+    private ISysTaskPackageService sysTaskPackageService;
     /**
      * 查询项目列表
      */
@@ -101,6 +104,12 @@ public class SysProjectController extends BaseController
 	@DeleteMapping("/{projectIds}")
     public AjaxResult remove(@PathVariable Long[] projectIds)
     {
+        // 检查每个项目是否包含任务包
+        for (Long projectId : projectIds) {
+            if (sysTaskPackageService.hasTaskPackageByProjectId(projectId)) {
+                return AjaxResult.error("该项目中含有任务包，无法删除");
+            }
+        }
         return toAjax(sysProjectService.deleteSysProjectByProjectIds(projectIds));
     }
 }

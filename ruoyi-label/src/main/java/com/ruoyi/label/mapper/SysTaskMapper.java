@@ -46,6 +46,14 @@ public interface SysTaskMapper
     public int updateSysTask(SysTask sysTask);
 
     /**
+     * 根据任务包ID查询任务数量
+     * 
+     * @param packageId 任务包ID
+     * @return 任务数量
+     */
+    public int countTaskByPackageId(Long packageId);
+    
+    /**
      * 删除任务
      * 
      * @param taskId 任务主键

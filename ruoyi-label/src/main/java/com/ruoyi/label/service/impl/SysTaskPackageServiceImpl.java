@@ -2,6 +2,7 @@ package com.ruoyi.label.service.impl;
 
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.label.mapper.SysTaskMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.label.mapper.SysTaskPackageMapper;
@@ -19,6 +20,9 @@ public class SysTaskPackageServiceImpl implements ISysTaskPackageService
 {
     @Autowired
     private SysTaskPackageMapper sysTaskPackageMapper;
+    
+    @Autowired
+    private SysTaskMapper sysTaskMapper;
 
     /**
      * 查询任务包
@@ -96,6 +100,19 @@ public class SysTaskPackageServiceImpl implements ISysTaskPackageService
         // 更新任务包的分配者和状态
         return sysTaskPackageMapper.updateSysTaskPackage(sysTaskPackage);
     }
+    
+    /**
+     * 检查项目是否包含任务包
+     * 
+     * @param projectId 项目ID
+     * @return 是否包含任务包
+     */
+    @Override
+    public boolean hasTaskPackageByProjectId(Long projectId) {
+        int count = sysTaskPackageMapper.countTaskPackageByProjectId(projectId);
+        return count > 0;
+    }
+    
 
     /**
      * 批量删除任务包
@@ -119,5 +136,18 @@ public class SysTaskPackageServiceImpl implements ISysTaskPackageService
     public int deleteSysTaskPackageByTaskPackageId(Long taskPackageId)
     {
         return sysTaskPackageMapper.deleteSysTaskPackageByTaskPackageId(taskPackageId);
+    }
+    
+    /**
+     * 检查任务包是否包含任务
+     * 
+     * @param taskPackageId 任务包ID
+     * @return 是否包含任务
+     */
+    @Override
+    public boolean hasTaskInPackage(Long taskPackageId)
+    {
+        int count = sysTaskMapper.countTaskByPackageId(taskPackageId);
+        return count > 0;
     }
 }
