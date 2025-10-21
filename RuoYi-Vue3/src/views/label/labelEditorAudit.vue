@@ -43,18 +43,8 @@
     
     <!-- 操作按钮栏 -->
     <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
-      <div style="display: flex; gap: 0.5rem; font-size: 12px; align-items: center; justify-content: center;">
-        <span style="color: gray;">无效时长标签:</span>
-        <div v-for="item in labels" :key="item.label">
-          <el-tooltip class="box-item" :content="item.tip" placement="top-start"><el-tag style="cursor:pointer;" checked
-              :type="item.type" @click="insertText(item.label)">
-            {{ item.label }}
-          </el-tag></el-tooltip>
-        </div>
-        <span style="color: gray;">(点击即可插入/移除)</span>
-      </div>
       <div style="display: flex; align-items: center;">
-        <span style="margin-right: 12px;">{{ currentTime }} / {{ duration }} </span>
+        <span style="margin-right: 12px;width:120px;">{{ currentTime }} / {{ duration }} </span>
         <el-button type="info" plain id="backward">上一段</el-button>
         <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
         <el-button type="info" plain id="forward">下一段</el-button>
@@ -70,10 +60,20 @@
           循环播放<el-switch v-model="loopPlay" />
         </view> -->
       </div>
+      <div style="display: flex; gap: 0.5rem; font-size: 12px; align-items: center; justify-content: center;">
+        <span style="color: gray;">无效时长标签:</span>
+        <div v-for="item in labels" :key="item.label">
+          <el-tooltip class="box-item" :content="item.tip" placement="top-start"><el-tag style="cursor:pointer;" checked
+              :type="item.type" @click="insertText(item.label)">
+              {{ item.label }}
+            </el-tag></el-tooltip>
+        </div>
+        <span style="color: gray;">(点击即可插入/移除)</span>
+      </div>
     </div>
 
     <!--分段标注列表-->
-    <div style="margin-top: 10px; display: flex; flex-direction:column">
+    <div style="margin-top: 0px; display: flex; flex-direction:column">
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
         style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; font-size: 16px;"  
         :show-header="true" :row-class-name="tableRowClassName" @row-click="rowClick">
@@ -100,6 +100,14 @@
             </template>
           </el-table-column>
         <el-table-column label="标注文本内容">
+          <template #header>
+            <div style="display: flex; justify-content: space-between;">
+              <div>标注文本内容</div>
+              <div>
+                <!-- <el-input v-model="search" size="small" placeholder="查找与替换" /> -->
+              </div>
+            </div>
+          </template>
             <template #default="scope"> 
             <el-input type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
               style="width:100%;font-size:24px;" @keydown="handleTextArrow($event, scope.row)"
@@ -123,55 +131,51 @@
 
     <!-- 操作方法 -->
     <el-dialog v-model="operationTipDialogVisible" title="" width="600">
-      <div data-v-2bde42cb="" style="font-size: 16px;">
+      <div data-v-2bde42cb="" style="font-size: 16px;color: rgb(51, 51, 51);">
         <p>-------------操作方法-------------</p>
-        <p><strong class="ql-size-large">缩放波形</strong><span class="ql-size-large">：鼠标指针在波形图内，滚动鼠标滚轮进行缩放</span></p>
-        <p><strong class="ql-size-large">激活分段</strong><span class="ql-size-large">：点击波形图非高亮区域，相应分段被激活</span></p>
-        <p><strong class="ql-size-large">取消激活</strong><span class="ql-size-large">：点击波形图的高亮区域，相应分段取消激活</span></p>
-        <p><strong class="ql-size-large">新增分段</strong><span class="ql-size-large">：在非激活(非高亮)区域，点击并拖动鼠标选择区域</span></p>
-        <p><strong class="ql-size-large">调整分段</strong><span class="ql-size-large">：在高亮区域的边界,鼠标指针变成 ↔ 时,点击拖动边界线</span>
+        <p><strong >缩放波形</strong><span >：鼠标指针在波形图内，滚动鼠标滚轮进行缩放</span></p>
+        <p><strong >激活分段</strong><span >：点击波形图非高亮区域，相应分段被激活(高亮)</span></p>
+        <!-- <p><strong >取消激活</strong><span >：点击波形图的高亮区域，相应分段取消激活</span></p> -->
+        <p><strong >新增分段</strong><span >：在非激活(非高亮)区域，点击并拖动鼠标选择区域</span></p>
+        <p><strong >调整分段</strong><span >：在高亮区域的边界,鼠标指针变成 ↔ 时,点击拖动边界线</span>
         </p>
-        <p><strong class="ql-size-large">合并分段</strong><span class="ql-size-large">：在新增/调整分段时,使高亮区域完全包含(覆盖)要合并的分段</span>
+        <p><strong >合并分段</strong><span >：在新增/调整分段时,拖动边界使高亮区域完全包含(覆盖)其它分段</span>
         </p>
         <p style="display: flex; justify-content: flex-start;">
-          <span><strong class="ql-size-large">切割分段</strong>：</span>
+          <span><strong >切割分段</strong>：</span>
           <span>方法① 在音频波形图区域内，双击鼠标进行切分<br/>
             方法② 在分段标注文本内容输入框内,按【回车】键进行切分
           </span>
         </p>
         <p>-------------快捷键-------------</p>
-        <p><strong class="ql-size-large">跳上一段</strong><span class="ql-size-large">：按方向</span><span
-            style="background-color: rgb(255, 255, 255); color: rgb(51, 51, 51);" class="ql-size-large">【↑】键</span></p>
-        <p><strong class="ql-size-large">跳下一段</strong><span class="ql-size-large">：按方向</span><span class="ql-size-large"
-            style="color: rgb(51, 51, 51); background-color: rgb(255, 255, 255);">【</span><span
-            class="ql-size-large">↓</span><span class="ql-size-large"
-            style="color: rgb(51, 51, 51); background-color: rgb(255, 255, 255);">】键</span></p>
-        <p><strong class="ql-size-large">播放/暂停</strong><span class="ql-size-large">：按【空格】键</span></p>
-        <p><strong class="ql-size-large">保存更改</strong><span class="ql-size-large">：按【Ctrl+S】键</span></p>
+        <p><strong >跳上一段</strong><span >：按方向【↑】键</span></p>
+        <p><strong >跳下一段</strong><span >：按方向【↓】键</span></p>
+        <p><strong >播放/暂停</strong><span >：按【空格】键</span></p>
+        <p><strong >保存更改</strong><span >：按【Ctrl+S】键</span></p>
       </div>
     </el-dialog>
     <!-- 标注规范 -->
     <el-dialog v-model="labelStandardDialogVisible" title="标注规则要求" width="800">
       <div data-v-2bde42cb="" style="font-size: 16px; line-height: 18px;">
-        <p><strong class="ql-size-large">1）文本</strong><span
-            class="ql-size-large">：有效语音段内字音一致，句首顶格书写，无多字、漏字、错字现象，规范使用空格，根据目标语种规范正确使用大小写。 </span></p>
-        <p><strong class="ql-size-large">2）分段</strong><span class="ql-size-large">： </span></p>
-        <p><span class="ql-size-large">①单个有效语音段不大于120个字符。 </span></p>
-        <p><span class="ql-size-large">②单个有效语音段控制在15s以内并注意保证句意的相对完整性。 </span></p>
-        <p><span class="ql-size-large">③无效时长的部分大于1s需要切分并给对应标签。 </span></p>
-        <p><strong class="ql-size-large">3）无效时长标签：</strong><span class="ql-size-large"> </span></p>
-        <p><span class="ql-size-large">&lt;NOISE&gt;表示非人声噪音。 </span></p>
-        <p><span class="ql-size-large">&lt;DEAF&gt;表示无法转写的人声。 </span></p>
-        <p><span class="ql-size-large">&lt;OVERLAP&gt;表示多人同时发音：混读、听不清、文本无法转写出来。 </span></p>
-        <p><span class="ql-size-large">备注：如多人同时说话且可听清主说话人，则标注主说话人数据。 </span></p>
-        <p><span class="ql-size-large">&lt;OOV&gt;表示整段非目标语种，包括：中文、英文等。 </span></p>
-        <p><strong class="ql-size-large">4）标点符号</strong><span
-            class="ql-size-large">：根据语义语法规则，采用“逗号、句号、问号、感叹号等进行标注，不可遗漏省文撇、重音符号、发音符号等目标语种语言规范所要求的符号。 </span></p>
-        <p><strong class="ql-size-large">5）用词规范</strong><span class="ql-size-large">： </span></p>
-        <p><span class="ql-size-large">①数字需标注为常用的阿拉伯数字形式（例：sixtyeight标注为68）。 </span></p>
-        <p><span class="ql-size-large">②常用发音符号（如@、、&amp;、%等需标注为符号形式（例：fivepercent标注为5%）。 </span></p>
-        <p><span class="ql-size-large">③常用单位（如℃C、kg、km、$等）需标注成符号形式（例：fiftykilograms标注为50kg）。 </span></p>
-        <p><span class="ql-size-large">④上述标注结果需符合语言规范、语境及母语者使用习惯。</span></p>
+        <p><strong >1）文本</strong><span
+            >：有效语音段内字音一致，句首顶格书写，无多字、漏字、错字现象，规范使用空格，根据目标语种规范正确使用大小写。 </span></p>
+        <p><strong >2）分段</strong><span >： </span></p>
+        <p><span >①单个有效语音段不大于120个字符。 </span></p>
+        <p><span >②单个有效语音段控制在15s以内并注意保证句意的相对完整性。 </span></p>
+        <p><span >③无效时长的部分大于1s需要切分并给对应标签。 </span></p>
+        <p><strong >3）无效时长标签：</strong><span > </span></p>
+        <p><span >&lt;NOISE&gt;表示非人声噪音。 </span></p>
+        <p><span >&lt;DEAF&gt;表示无法转写的人声。 </span></p>
+        <p><span >&lt;OVERLAP&gt;表示多人同时发音：混读、听不清、文本无法转写出来。 </span></p>
+        <p><span >备注：如多人同时说话且可听清主说话人，则标注主说话人数据。 </span></p>
+        <p><span >&lt;OOV&gt;表示整段非目标语种，包括：中文、英文等。 </span></p>
+        <p><strong >4）标点符号</strong><span
+            >：根据语义语法规则，采用“逗号、句号、问号、感叹号等进行标注，不可遗漏省文撇、重音符号、发音符号等目标语种语言规范所要求的符号。 </span></p>
+        <p><strong >5）用词规范</strong><span >： </span></p>
+        <p><span >①数字需标注为常用的阿拉伯数字形式（例：sixtyeight标注为68）。 </span></p>
+        <p><span >②常用发音符号（如@、、&amp;、%等需标注为符号形式（例：fivepercent标注为5%）。 </span></p>
+        <p><span >③常用单位（如℃C、kg、km、$等）需标注成符号形式（例：fiftykilograms标注为50kg）。 </span></p>
+        <p><span >④上述标注结果需符合语言规范、语境及母语者使用习惯。</span></p>
       </div>
     </el-dialog>
     <!-- 抽屉组件 -->
@@ -294,6 +298,8 @@ const handleSpace = (event) => {
   else if (event.ctrlKey && event.key === 's') { 
     console.log('按Ctrl+S键执行保存更改');
     saveTask();
+    event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
   }
   // 按上方向键
   else if (event.key === 'ArrowUp') {
@@ -302,7 +308,7 @@ const handleSpace = (event) => {
     // 上方向键 - 切换到上一行
     const currentIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end);
     if (currentIndex > 0) {
-      focusInput(times[currentIndex - 1]);
+      //focusInput(times[currentIndex - 1]);
       activateRegion(times[currentIndex - 1]);
     }
   // 按下方向键
@@ -312,7 +318,7 @@ const handleSpace = (event) => {
     // 下方向键 - 切换到下一行
     const currentIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end);
     if (currentIndex < times.length - 1) {
-      focusInput(times[currentIndex + 1]);
+      //focusInput(times[currentIndex + 1]);
       activateRegion(times[currentIndex + 1]);
     }
   }
@@ -408,11 +414,11 @@ function handleTextEnter(event, row) {
       const firstPart = text.substring(0, newlineIndex);
       const secondPart = text.substring(newlineIndex + 1);
       // 更新当前行的文本为第一部分
-      row.text = firstPart;
+      //row.text = firstPart;
       // 计算分割点（按时间比例）
-      const splitPoint = Number(((row.start+row.end) / 2).toFixed(3))
+      const splitPoint = ((Number(row.start)+Number(row.end))/2 ).toFixed(3)
       // 调用splitSegment函数处理分段
-      let res = splitSegment(times, row, splitPoint, secondPart);
+      let res = splitSegment(times, row, splitPoint, firstPart, secondPart);
       if(res){
         //提示切分成功，并注意调整分段边界
         proxy.$message.success(`切分成功，注意调整分段边界`)
@@ -1064,7 +1070,7 @@ function adjustSegment(times, oldSegment, newSegment) {
     }
 }
 
-function splitSegment(times, oldSegment, point, newText = "") {
+function splitSegment(times, oldSegment, point, firstPart, secondPart) {
   // 查找oldSegment在times数组中的索引
   const index = times.findIndex(segment => segment === oldSegment);
   
@@ -1072,17 +1078,17 @@ function splitSegment(times, oldSegment, point, newText = "") {
   //将从oldSegment分割为两个分段，其中一个分段的右边界为point
   let newSegment = {
     start: oldSegment.start,
-    end: point,
-    text: oldSegment.text
+      end: Number(point),
+      text: firstPart
   }
     
-    // 更新原分段
-  oldSegment.start = point;
-    oldSegment.text = newText; // 设置新分段的文本
+    // 更新原分段左边界
+    oldSegment.start = Number(point);
+    oldSegment.text = secondPart
     
     // 替换数组中的分段
   times[index] = newSegment;
-    // 在index之后插入新的分段
+    // 在index之后插入原分段
     times.splice(index + 1, 0, oldSegment);
 
     //清除零长区域
@@ -1471,7 +1477,7 @@ async function init(){
 
       //在双击位置切分区域
       let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
-      splitSegment(times, times[index], clickTime.toFixed(3), '')
+      splitSegment(times, times[index], clickTime.toFixed(3), '', times[index].text)
       //focusInput(times[index])
 
       e.stopPropagation()
@@ -1516,7 +1522,7 @@ async function init(){
     })
 
     ws.on('timeupdate', (ctime) => {
-      let ct = ctime.toFixed(3)
+      let ct = String(ctime.toFixed(3))
       currentTime.value = ct
       if (activeRegion && ctime > activeRegion.end) {//播放到达当前激活分段的末尾
         ws.pause()
@@ -1543,7 +1549,7 @@ async function init(){
       console.log(`双击的时间点：${clickTime}`)
 
       // let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
-      // splitSegment(times, times[index], clickTime, '')
+      // splitSegment(times, times[index], clickTime, '', times[index].text)
 
     })
 
@@ -1554,6 +1560,12 @@ async function init(){
     if (playButton) {
       playButton.onclick = () => {
         console.log('playButton.onclick--->', ws.isPlaying())
+        if(activeRegion.start==0 && activeRegion.end==0){//当前没有激活的分段
+          //激活第1段
+          activateRegion(times[0])
+          //滚动到标注行
+          scrollToRow(0)
+        }else{
         if(ws.isPlaying()){//在播放
           ws.pause()
         }else{//已暂停
@@ -1563,6 +1575,8 @@ async function init(){
           }
           ws.play()
         }
+        }
+        
       }
     }
 
@@ -1907,7 +1921,7 @@ let activeRegion = reactive({start: 0, end: 0})
 // 音频总时长
 let duration = ref(0)
 // 当前播放时间点
-let currentTime = ref(0)
+let currentTime = ref('0.000')
 // 音频标注分段列表
 let times = reactive([
   // {start: 0, end: 5, text: '111'},
