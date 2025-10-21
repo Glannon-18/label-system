@@ -11,12 +11,14 @@
         <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">标注规范</el-link>
         
         <!-- <div v-if="['unstart','underway','reject','pass'].includes(task.data.status)">
-          <el-button type="danger" plain @click="redo()">重做</el-button>
-          <el-button type="primary" plain @click="saveTask()">保存更改</el-button>
+          
+          
           <el-button type="success" plain @click="submitTask()">提交审核</el-button>
         </div> -->
 
         <div v-if="['pending_review'].includes(task.data.status)">
+          <el-button type="warning" plain @click="redo()">重置</el-button>
+          <el-button type="primary" plain @click="saveTask()">保存</el-button>
           <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">审核驳回</el-button>
           <el-button type="success" plain @click="auditTask('pass')" vhasPermi="['label:task:audit']">审核通过</el-button>
         </div>
@@ -36,7 +38,8 @@
     </div>
     
     <!-- 语音标注音波图 -->
-    <div id="waveform-demo" class="waveform-container" style="width: 100%; height: 100px; margin-top: 10px;"></div>
+    <LabelEditorLoading v-show="!audioLoadOver" :audioFileName="task.data.audioFileName?task.data.audioFileName:''" :audioLoadprogress="audioLoadprogress"/>
+    <div id="waveform-demo" v-show="audioLoadOver" class="waveform-container" style="width: 100%; height: 100px; margin-top: 10px;"></div>
     
     <!-- 操作按钮栏 -->
     <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
@@ -99,7 +102,7 @@
         <el-table-column label="标注文本内容">
             <template #default="scope"> 
             <el-input type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
-              style="width:100%;font-size:20px;" @keydown="handleTextEnter2($event, scope.row)"
+              style="width:100%;font-size:24px;" @keydown="handleTextArrow($event, scope.row)"
               @keyup="handleTextEnter($event, scope.row)" />
             </template>
           </el-table-column>
@@ -130,7 +133,11 @@
         </p>
         <p><strong class="ql-size-large">合并分段</strong><span class="ql-size-large">：在新增/调整分段时,使高亮区域完全包含(覆盖)要合并的分段</span>
         </p>
-        <p><strong class="ql-size-large">切割分段</strong><span class="ql-size-large">：在分段列表的标注文本内容输入框内,按【回车】键进行切分</span>
+        <p style="display: flex; justify-content: flex-start;">
+          <span><strong class="ql-size-large">切割分段</strong>：</span>
+          <span>方法① 在音频波形图区域内，双击鼠标进行切分<br/>
+            方法② 在分段标注文本内容输入框内,按【回车】键进行切分
+          </span>
         </p>
         <p>-------------快捷键-------------</p>
         <p><strong class="ql-size-large">跳上一段</strong><span class="ql-size-large">：按方向</span><span
@@ -144,7 +151,7 @@
       </div>
     </el-dialog>
     <!-- 标注规范 -->
-    <el-dialog v-model="labelStandardDialogVisible" title="文本标注规则要求" width="800">
+    <el-dialog v-model="labelStandardDialogVisible" title="标注规则要求" width="800">
       <div data-v-2bde42cb="" style="font-size: 16px; line-height: 18px;">
         <p><strong class="ql-size-large">1）文本</strong><span
             class="ql-size-large">：有效语音段内字音一致，句首顶格书写，无多字、漏字、错字现象，规范使用空格，根据目标语种规范正确使用大小写。 </span></p>
@@ -167,6 +174,17 @@
         <p><span class="ql-size-large">④上述标注结果需符合语言规范、语境及母语者使用习惯。</span></p>
       </div>
     </el-dialog>
+    <!-- 抽屉组件 -->
+    <el-drawer
+            title="历史记录"
+            :model-value="drawerHisoryOperVisible"
+            :direction="directionHisoryOper"
+            :before-close="handleDrawerCloseHisoryOper"
+            @update:model-value="handleCloseHisoryOper"
+    >
+      <LabelEditorHistoryOper :historyTimes="historyTimes"  :key="new Date().getTime().toString()" :handleCloseHisoryOper="handleCloseHisoryOper" :updateFormHistory="updateFormHistory"/>
+    </el-drawer>
+
 
   </div>
 </template>
@@ -183,7 +201,11 @@ import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js'
 import ZoomPlugin from 'wavesurfer.js/dist/plugins/zoom.esm.js'
 import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
 import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
+import LabelEditorLoading from './labelEditorLoading'
+import LabelEditorHistoryOper from './labelEditorHistoryOper'
 
+const audioLoadprogress = ref(0)
+const audioLoadOver = ref(false)
 
 const labels = reactive([
   { type: 'primary', label: '<NOISE>', 'tip': '表示非人声噪音' },
@@ -218,12 +240,21 @@ function showLabelStandard(){
 function insertText(text) {
   if (activeRegion && activeRegion.start !== activeRegion.end) {
     times.forEach(item => {
-      if (item.start === activeRegion.start && item.end===activeRegion.end) {
-        if(item.text.indexOf(text)>-1){
-          item.text = item.text.replace(text, '')
+      if (item.start === activeRegion.start && item.end===activeRegion.end) {//当前分段
+        //插入/移除标签
+        if(item.text.indexOf(text)>-1){//如果已包含指定标签
+          item.text = item.text.replace(new RegExp(text, 'g'), '')//则移除指定标签
         }else{
-          item.text += text
-        }        
+          item.text += text//否则插入指定标签
+        }      
+        //移除其它标签
+        labels.forEach(e => {
+          if(e.label != text){
+            item.text = item.text.replace(new RegExp(e.label, 'g'), '')//移除标签
+          }
+        })  
+        //去除首尾空格
+        item.text = item.text.replace(/^\s+|\s+$/g, '')
       }
     })
   }else{
@@ -243,16 +274,21 @@ const tableRowClassName = ({ row, rowIndex }) => {
 
 
 const handleSpace = (event) => {
-  if (event.key === ' ') { // 确保是空格键被按下
+  // 按下空格键
+  if (event.key === ' ') { 
+    event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
-    ws.playPause()
-  } else if (event.ctrlKey && event.key === 's') { // Ctrl+S 保存
-    event.preventDefault(); // 阻止浏览器默认保存行为
-    console.log('Ctrl+S 保存');
+    ws.playPause()//音频播放/暂停
+  } 
+  // 按Ctrl+S键
+  else if (event.ctrlKey && event.key === 's') { 
+    console.log('按Ctrl+S键执行保存更改');
     saveTask();
   }
-  // 处理方向键
-  else if (event.ctrlKey && event.key === 'ArrowUp') {
+  // 按上方向键
+  else if (event.key === 'ArrowUp') {
+    event.preventDefault(); // 阻止元素的默认行为
     console.log('上方向键被按下', activeRegion);
     // 上方向键 - 切换到上一行
     const currentIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end);
@@ -260,8 +296,9 @@ const handleSpace = (event) => {
       focusInput(times[currentIndex - 1]);
       activateRegion(times[currentIndex - 1]);
     }
-    return;
-  } else if (event.ctrlKey && event.key === 'ArrowDown') {
+  // 按下方向键
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault(); // 阻止元素的默认行为
     console.log('下方向键被按下', activeRegion);
     // 下方向键 - 切换到下一行
     const currentIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end);
@@ -269,22 +306,25 @@ const handleSpace = (event) => {
       focusInput(times[currentIndex + 1]);
       activateRegion(times[currentIndex + 1]);
     }
-    return;
   }
-};
+}
 
 
 /**
- * 处理文本输入框回车事件
+ * 处理文本输入框方向键事件
  * @param {Event} event - 键盘事件
  * @param {Object} row - 当前行数据
  */
-function handleTextEnter2(event, row) {
-  // 阻止默认的换行行为
-  // event.preventDefault();
-
-  // 处理方向键
+function handleTextArrow(event, row) {
+  // 按下空格键
+  if (event.key === ' ') { 
+    //event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
+    console.log('空格键被按下');
+  }
+  // 按上下方向键
   if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
     const textarea = event.target;
     const cursorPos = textarea.selectionStart;
     
@@ -315,8 +355,8 @@ function handleTextEnter2(event, row) {
     document.body.removeChild(hiddenDiv);
     
     // 判断光标是否在视觉上的第一行或最后一行
-    const isAtFirstLine = currentLine === 1;
-    const isAtLastLine = currentLine === totalLines;
+    const isAtFirstLine = currentLine === 1 || !textarea.value;
+    const isAtLastLine = currentLine === totalLines || !textarea.value;
     
     // 只有光标在视觉上的第一行(上键)或最后一行(下键)时才切换分段
     if ((event.key === 'ArrowUp' && (isAtFirstLine || cursorPos === 0)) || 
@@ -335,36 +375,46 @@ function handleTextEnter2(event, row) {
     }
     return;
   }
+  //按下Ctrl+Z键
+  else if(event.ctrlKey && event.key=='z'){
+    //event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
+    console.log('keydown--按了ctrl+z')
+  }
 }
 
 function handleTextEnter(event, row) {
-  // 阻止默认的换行行为
-  event.preventDefault();
 
+  //event.preventDefault(); // 阻止元素的默认行为
+  //event.stopPropagation();// 阻止事件继续在DOM树中传播
   // 处理回车键
   if(event.key === 'Enter') {
-    console.log('回车键被按下', row);
-  
+    console.log('回车键被按下', row.text);
     // 获取当前文本
     const text = row.text;
-    
     // 查找换行符位置
     const newlineIndex = text.indexOf('\n');
-    
     if (newlineIndex !== -1) {
       // 如果有换行符，则按换行符分割文本
       const firstPart = text.substring(0, newlineIndex);
       const secondPart = text.substring(newlineIndex + 1);
-      
       // 更新当前行的文本为第一部分
       row.text = firstPart;
-      
       // 计算分割点（按时间比例）
       const splitPoint = Number(((row.start+row.end) / 2).toFixed(3))
-      
       // 调用splitSegment函数处理分段
-      splitSegment(times, row, splitPoint, secondPart);
+      let res = splitSegment(times, row, splitPoint, secondPart);
+      if(res){
+        //提示切分成功，并注意调整分段边界
+        proxy.$message.success(`切分成功，注意调整分段边界`)
+      }
     }
+  }
+  //按下Ctrl+Z键
+  else if(event.ctrlKey && event.key=='z'){
+    //event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
+    console.log('keyup--按了ctrl+z')
   }
 }
 
@@ -1038,15 +1088,11 @@ function splitSegment(times, oldSegment, point, newText = "") {
     //激活index分段
     activateRegion(newSegment)
     
-    //提示切分成功，并注意调整分段边界
-    proxy.$message.success(`切分成功，注意调整分段边界`)
-    
-    // 返回更新后的times数组
-    return times;
+    return true;
     
   } else {
     console.error(`找不到要调整的分段`);
-    return times;
+    return false;
   }
 }
 // 渲染demo波形
@@ -1119,6 +1165,10 @@ async function init(){
   // 加载音频文件    
   ws.load( getAudioUrl(task.data.audioFilePath) )
 
+    ws.on('loading', (percent) => {
+      audioLoadprogress.value = percent;
+    })
+
   ws.on('play', () => {
     console.log('ws.currentTime-->', ws.getCurrentTime())
     currentTime.value = ws.getCurrentTime()
@@ -1133,6 +1183,7 @@ async function init(){
     //获得音频总时长
     duration = ws.decodedData.duration
     console.log(`音频总时长为 ${duration} 秒`)
+    audioLoadOver.value = true;
 
     //末尾分段的结束时间设为音频总时长
     times[times.length - 1].end = duration
@@ -1210,13 +1261,13 @@ async function init(){
     let start = Number(region.start.toFixed(3))
     let end = Number(region.end.toFixed(3))
 
-    //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则边界值等于已有分段边界值
+    //吸附边界：如果新边界值与已有分段边界值距离小于0.3秒，则边界值等于已有分段边界值
     times.forEach( ts => {
       if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
-        if( Math.abs( ts.start - start) < 0.2){//左边界
+        if( Math.abs( ts.start - start) < 0.3){//左边界
           start = ts.start
         }
-        if( Math.abs( ts.end - end) < 0.2){//右边界
+        if( Math.abs( ts.end - end) < 0.3){//右边界
           end = ts.end
         }
       }
@@ -1303,13 +1354,13 @@ async function init(){
       let start = Number(region.start.toFixed(3))
       let end = Number(region.end.toFixed(3))
 
-      //吸附边界：如果新边界值与已有分段边界值距离小于0.2秒，则新边界值等于已有分段边界值
+      //吸附边界：如果新边界值与已有分段边界值距离小于0.3秒，则新边界值等于已有分段边界值
       times.forEach( ts => {
         if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
-          if( Math.abs( ts.start - start) < 0.2){//左边界
+          if( Math.abs( ts.start - start) < 0.3){//左边界
             start = ts.start
           }
-          if( Math.abs( ts.end - end) < 0.2){//右边界
+          if( Math.abs( ts.end - end) < 0.3){//右边界
             end = ts.end
           }
         }
@@ -1394,17 +1445,16 @@ async function init(){
       console.log('region-double-clicked',  e);
       // region.play()
 
-      // //
-      // const rect = ws.getWrapper().getBoundingClientRect();
-      // const clickX = e.clientX - rect.left;
-      // const clickTime = (clickX / rect.width) * ws.getDuration();
-      // console.log(`点击位置: ${clickTime.toFixed(2)}s`);
+      // 获取双击位置的时间点
+      const rect = ws.getWrapper().getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      let clickTime = (clickX / rect.width) * ws.getDuration();
+      console.log(`双击区域位置: ${clickTime.toFixed(3)}s`);
 
-      //获取双击位置的时间
-      // const clickX = e.clientX - ws.getWrapper().getBoundingClientRect().left;
-
-      // 在双击位置切分区域
-      //splitRegionAtTime(region, clickTime)
+      //在双击位置切分区域
+      let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
+      splitSegment(times, times[index], clickTime.toFixed(3), '')
+      focusInput(times[index])
 
       e.stopPropagation()
     })
@@ -1419,24 +1469,47 @@ async function init(){
       const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
       console.log(`单击位置的时间点：${clickTime}`)
 
+      //如果与上次单击的时间差过小，则忽略本次单击
+      // let now = new Date().getTime()
+      // if(now - lastClickTime < 500) {
+      //   console.log('单击时间间隔过小，忽略本次单击');
+      //   lastClickTime = now
+      //   return
+      // }
+      // lastClickTime = now
+
       times.forEach((ts, index) => {
         if(clickTime>=ts.start && clickTime<=ts.end){//点击位置在此区间
+          //如果点击的时当前激活分段
+          if(activeRegion.start==ts.start && activeRegion.end==ts.end){
+            //忽略
+          }else{
           //激活分段
           activateRegion(ts)
           //滚动到标注行
           scrollToRow(index)
+            // focusInput(ts);
         }
-      });
+        }
+      })
 
     })
 
     ws.on('timeupdate', (ctime) => {
       let ct = ctime.toFixed(3)
       currentTime.value = ct
-      // When the end of the region is reached
-      if (activeRegion && ct >= activeRegion.end) {
-        // Stop playing
+      if (activeRegion && ctime > activeRegion.end) {//播放到达当前激活分段的末尾
         ws.pause()
+        // if(playMode=='single_cycle'){//单段循环
+        //   //重新激活当前分段
+          // activateRegion(activeRegion)
+        // }else if(playMode=='play_in_order'){//分段顺序播放
+        //   //激活下一分段
+          // let index = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end)
+          // activateRegion(index + 1)
+        // }else{//单段不循环
+        //   ws.pause()
+        // }  
       }
     })
 
@@ -1447,7 +1520,11 @@ async function init(){
       // relativeX 是点击位置相对于波形图宽度的比例（范围0到1）
       const duration = ws.getDuration(); // 获取音频总时长（秒）
       const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
-      console.log(`双击的时间点：${clickTime}---${times}`)
+      console.log(`双击的时间点：${clickTime}`)
+
+      // let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
+      // splitSegment(times, times[index], clickTime, '')
+
     })
 
     const playButton = document.querySelector('#play')
@@ -1485,6 +1562,7 @@ async function init(){
         activateRegion(times[regionIndex])
         //滚动到标注行
         scrollToRow(regionIndex)
+        // focusInput(times[regionIndex]);
         // //4.跳转下一段的开始位置
         // ws.skip(times[regionIndex].start)
         // //5.重新开始播放
@@ -1508,6 +1586,7 @@ async function init(){
         activateRegion(times[regionIndex])
         //滚动到标注行
         scrollToRow(regionIndex)
+        // focusInput(times[regionIndex]);
 
         // //跳转上一段的开始位置
         // ws.skip(times[regionIndex].start)
@@ -1554,9 +1633,9 @@ function activateRegion(ts){
     e.stopPropagation() // prevent triggering a click on the waveform
     
     //取消激活区域
-    region.remove()
-    activeRegion.start = 0
-    activeRegion.end = 0
+    // region.remove()
+    // activeRegion.start = 0
+    // activeRegion.end = 0
 
   })
 
@@ -1752,6 +1831,8 @@ const title = ref("")
 //播放状态控制(true为播放，false为暂停)
 let playStatus = ref(true)
 
+let playMode = 'single_cycle' //播放模式（）
+
 //播放音量
 let volume = ref(50)
 watch(volume,(newVal, oldVal)=>{//监听音量值改变
@@ -1820,6 +1901,93 @@ let times = reactive([
   // {start: 45, end: 50, text: '1010'},
   // {start: 50, end: 55, text: '1111'},
 ])
+
+// 上次单击音频波形图的时间
+let lastClickTime = 0
+
+const historyTimes = [] //存放标注历史记录的数组
+let historyIndex = -1 //当前回退的标注历史记录的下标值，-1代表不回退 
+watch(times, (newVal, oldVal) => {
+  if(historyIndex > -1){//正在回退历史记录
+    //回退时的更改不放到历史记录中
+    console.log('正在回退版本，更改不放入历史记录中')
+  }else{//不是退回历史的更改
+    //更改放到历史记录中
+    historyTimes.push({
+        timesData: newVal,
+        currentRegion: activeRegion,
+        time: formatDateTime(new Date(), 'yyyy-MM-dd HH:mm:ss')
+    })
+    console.log('新增历史记录', JSON.parse(JSON.stringify(historyTimes)))
+  }
+}, { immediate: true, deep: true })
+
+
+function deepEqual(obj1, obj2) {
+  // 严格相等检查（处理基本类型和相同引用）
+  if (obj1 === obj2) {
+    return true;
+  }
+  
+  // null 和 undefined 检查
+  if (obj1 == null || obj2 == null) {
+    return obj1 === obj2;
+  }
+  
+  // 类型检查
+  if (typeof obj1 !== typeof obj2) {
+    return false;
+  }
+  
+  // 处理基本类型
+  if (typeof obj1 !== 'object') {
+    return obj1 === obj2;
+  }
+  
+  // 处理数组
+  if (Array.isArray(obj1) !== Array.isArray(obj2)) {
+    return false;
+  }
+  
+  // 获取对象的键
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+  
+  // 键的数量比较
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+  
+  // 递归比较每个属性
+  for (let key of keys1) {
+    if (!keys2.includes(key)) {
+      return false;
+    }
+    if (!deepEqual(obj1[key], obj2[key])) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+//获取常用时间
+function formatDateTime(date, format) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return format
+    .replace('yyyy', year)
+    .replace('MM', month)
+    .replace('dd', day)
+    .replace('HH', hours)
+    .replace('mm', minutes)
+    .replace('ss', seconds);
+}
+
 //表格
 const tableRef = ref()
 
@@ -1977,5 +2145,12 @@ onUnmounted(() => {
 /* 覆盖 el-table 的行 hover 样式 */
 ::v-deep .el-table__body tr:hover > td {
   background-color: transparent !important;
+}
+
+::v-deep .el-drawer[aria-label="历史记录"] header {
+  display: none !important;
+}
+::v-deep .el-drawer[aria-label="历史记录"] .el-drawer__body {
+  padding: 0px !important;
 }
 </style>

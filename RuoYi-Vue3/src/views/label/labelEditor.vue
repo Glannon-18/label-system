@@ -18,7 +18,7 @@
         <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">标注规范</el-link>
 
         <div v-if="['underway','reject'].includes(task.data.status)">
-          <el-button type="primary" @click="openHisoryOperDrawer">历史记录</el-button>
+          <!-- <el-button type="primary" @click="openHisoryOperDrawer">历史记录</el-button> -->
           <el-button type="danger" plain @click="redo()">重做</el-button>
           <el-button type="primary" plain @click="saveTask()">保存</el-button>
           <el-button type="success" @click="submitTask()">提交</el-button>
@@ -149,7 +149,7 @@
         </p>
         <p style="display: flex; justify-content: flex-start;">
           <span><strong class="ql-size-large">切割分段</strong>：</span>
-          <span>方法① 在激活(高亮)的区域内，双击鼠标进行切分<br/>
+          <span>方法① 在音频波形图区域内，双击鼠标进行切分<br/>
             方法② 在分段标注文本内容输入框内,按【回车】键进行切分
           </span>
         </p>
@@ -319,16 +319,21 @@ const tableRowClassName = ({ row, rowIndex }) => {
 
 
 const handleSpace = (event) => {
-  if (event.key === ' ') { // 确保是空格键被按下
+  // 按下空格键
+  if (event.key === ' ') { 
+    event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
-    ws.playPause()
-  } else if (event.ctrlKey && event.key === 's') { // Ctrl+S 保存
-    event.preventDefault(); // 阻止浏览器默认保存行为
-    console.log('Ctrl+S 保存');
+    ws.playPause()//音频播放/暂停
+  } 
+  // 按Ctrl+S键
+  else if (event.ctrlKey && event.key === 's') { 
+    console.log('按Ctrl+S键执行保存更改');
     saveTask();
   }
-  // 处理方向键
-  else if (event.ctrlKey && event.key === 'ArrowUp') {
+  // 按上方向键
+  else if (event.key === 'ArrowUp') {
+    event.preventDefault(); // 阻止元素的默认行为
     console.log('上方向键被按下', activeRegion);
     // 上方向键 - 切换到上一行
     const currentIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end);
@@ -336,8 +341,9 @@ const handleSpace = (event) => {
       focusInput(times[currentIndex - 1]);
       activateRegion(times[currentIndex - 1]);
     }
-    return;
-  } else if (event.ctrlKey && event.key === 'ArrowDown') {
+  // 按下方向键
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault(); // 阻止元素的默认行为
     console.log('下方向键被按下', activeRegion);
     // 下方向键 - 切换到下一行
     const currentIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end);
@@ -345,9 +351,8 @@ const handleSpace = (event) => {
       focusInput(times[currentIndex + 1]);
       activateRegion(times[currentIndex + 1]);
     }
-    return;
   }
-};
+}
 
 
 /**
@@ -356,11 +361,15 @@ const handleSpace = (event) => {
  * @param {Object} row - 当前行数据
  */
 function handleTextArrow(event, row) {
-  // 阻止默认的换行行为
-  // event.preventDefault();
-
-  // 处理方向键
+  // 按下空格键
+  if (event.key === ' ') { 
+    //event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
+    console.log('空格键被按下');
+  }
+  // 按上下方向键
   if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
     const textarea = event.target;
     const cursorPos = textarea.selectionStart;
     
@@ -411,42 +420,46 @@ function handleTextArrow(event, row) {
     }
     return;
   }
+  //按下Ctrl+Z键
+  else if(event.ctrlKey && event.key=='z'){
+    //event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
+    console.log('keydown--按了ctrl+z')
+  }
 }
 
 function handleTextEnter(event, row) {
-  // 阻止默认的换行行为
-  event.preventDefault();
 
+  //event.preventDefault(); // 阻止元素的默认行为
+  //event.stopPropagation();// 阻止事件继续在DOM树中传播
   // 处理回车键
   if(event.key === 'Enter') {
-    console.log('回车键被按下', row);
-
+    console.log('回车键被按下', row.text);
     // 获取当前文本
     const text = row.text;
-    
     // 查找换行符位置
     const newlineIndex = text.indexOf('\n');
-    
     if (newlineIndex !== -1) {
       // 如果有换行符，则按换行符分割文本
       const firstPart = text.substring(0, newlineIndex);
       const secondPart = text.substring(newlineIndex + 1);
-      
       // 更新当前行的文本为第一部分
       row.text = firstPart;
-      
       // 计算分割点（按时间比例）
       const splitPoint = Number(((row.start+row.end) / 2).toFixed(3))
-      
       // 调用splitSegment函数处理分段
       let res = splitSegment(times, row, splitPoint, secondPart);
-
       if(res){
         //提示切分成功，并注意调整分段边界
         proxy.$message.success(`切分成功，注意调整分段边界`)
       }
-      
     }
+  }
+  //按下Ctrl+Z键
+  else if(event.ctrlKey && event.key=='z'){
+    //event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
+    console.log('keyup--按了ctrl+z')
   }
 }
 
@@ -1293,13 +1306,13 @@ async function init(){
     let start = Number(region.start.toFixed(3))
     let end = Number(region.end.toFixed(3))
 
-    //吸附边界：如果新边界值与已有分段边界值距离小于0.5秒，则边界值等于已有分段边界值
+    //吸附边界：如果新边界值与已有分段边界值距离小于0.3秒，则边界值等于已有分段边界值
     times.forEach( ts => {
       if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
-        if( Math.abs( ts.start - start) < 0.5){//左边界
+        if( Math.abs( ts.start - start) < 0.3){//左边界
           start = ts.start
         }
-        if( Math.abs( ts.end - end) < 0.5){//右边界
+        if( Math.abs( ts.end - end) < 0.3){//右边界
           end = ts.end
         }
       }
@@ -1386,13 +1399,13 @@ async function init(){
       let start = Number(region.start.toFixed(3))
       let end = Number(region.end.toFixed(3))
 
-      //吸附边界：如果新边界值与已有分段边界值距离小于0.5秒，则新边界值等于已有分段边界值
+      //吸附边界：如果新边界值与已有分段边界值距离小于0.3秒，则新边界值等于已有分段边界值
       times.forEach( ts => {
         if(ts.start!=activeRegion.start && ts.end!=activeRegion.end){//排除当前分段
-          if( Math.abs( ts.start - start) < 0.5){//左边界
+          if( Math.abs( ts.start - start) < 0.3){//左边界
             start = ts.start
           }
-          if( Math.abs( ts.end - end) < 0.5){//右边界
+          if( Math.abs( ts.end - end) < 0.3){//右边界
             end = ts.end
           }
         }
@@ -1477,17 +1490,16 @@ async function init(){
       console.log('region-double-clicked',  e);
       // region.play()
 
-      // //
-      // const rect = ws.getWrapper().getBoundingClientRect();
-      // const clickX = e.clientX - rect.left;
-      // const clickTime = (clickX / rect.width) * ws.getDuration();
-      // console.log(`点击位置: ${clickTime.toFixed(2)}s`);
+      // 获取双击位置的时间点
+      const rect = ws.getWrapper().getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      let clickTime = (clickX / rect.width) * ws.getDuration();
+      console.log(`双击区域位置: ${clickTime.toFixed(3)}s`);
 
-      //获取双击位置的时间
-      // const clickX = e.clientX - ws.getWrapper().getBoundingClientRect().left;
-
-      // 在双击位置切分区域
-      //splitRegionAtTime(region, clickTime)
+      //在双击位置切分区域
+      let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
+      splitSegment(times, times[index], clickTime.toFixed(3), '')
+      focusInput(times[index])
 
       e.stopPropagation()
     })
@@ -1502,15 +1514,29 @@ async function init(){
       const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
       console.log(`单击位置的时间点：${clickTime}`)
 
+      //如果与上次单击的时间差过小，则忽略本次单击
+      // let now = new Date().getTime()
+      // if(now - lastClickTime < 500) {
+      //   console.log('单击时间间隔过小，忽略本次单击');
+      //   lastClickTime = now
+      //   return
+      // }
+      // lastClickTime = now
+
       times.forEach((ts, index) => {
         if(clickTime>=ts.start && clickTime<=ts.end){//点击位置在此区间
-          //激活分段
-          activateRegion(ts)
-          //滚动到标注行
-          scrollToRow(index)
-          // focusInput(ts);
+          //如果点击的时当前激活分段
+          if(activeRegion.start==ts.start && activeRegion.end==ts.end){
+            //忽略
+          }else{
+            //激活分段
+            activateRegion(ts)
+            //滚动到标注行
+            scrollToRow(index)
+            // focusInput(ts);
+          }
         }
-      });
+      })
 
     })
 
@@ -1541,8 +1567,8 @@ async function init(){
       const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
       console.log(`双击的时间点：${clickTime}`)
 
-      let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
-      splitSegment(times, times[index], clickTime, '')
+      // let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
+      // splitSegment(times, times[index], clickTime, '')
 
     })
 
@@ -1652,9 +1678,9 @@ function activateRegion(ts){
     e.stopPropagation() // prevent triggering a click on the waveform
     
     //取消激活区域
-    region.remove()
-    activeRegion.start = 0
-    activeRegion.end = 0
+    // region.remove()
+    // activeRegion.start = 0
+    // activeRegion.end = 0
 
   })
 
@@ -1921,24 +1947,24 @@ let times = reactive([
   // {start: 50, end: 55, text: '1111'},
 ])
 
-const historyTimes = []
-watch(times, (newVal, oldVal) => {
-  console.log(`Count changed from ${oldVal} to ${newVal}`)
-  let same = false
-  historyTimes.forEach(e=>{
-    if(deepEqual(e, newVal)){
-      same = true
-    }
-  })
+// 上次单击音频波形图的时间
+let lastClickTime = 0
 
-  if(!same){
+const historyTimes = [] //存放标注历史记录的数组
+let historyIndex = -1 //当前回退的标注历史记录的下标值，-1代表不回退 
+watch(times, (newVal, oldVal) => {
+  if(historyIndex > -1){//正在回退历史记录
+    //回退时的更改不放到历史记录中
+    console.log('正在回退版本，更改不放入历史记录中')
+  }else{//不是退回历史的更改
+    //更改放到历史记录中
     historyTimes.push({
         timesData: newVal,
         currentRegion: activeRegion,
         time: formatDateTime(new Date(), 'yyyy-MM-dd HH:mm:ss')
     })
+    console.log('新增历史记录', JSON.parse(JSON.stringify(historyTimes)))
   }
-  
 }, { immediate: true, deep: true })
 
 
@@ -2166,10 +2192,10 @@ onUnmounted(() => {
   background-color: transparent !important;
 }
 
->>> .el-drawer[aria-label="历史记录"] header {
+::v-deep .el-drawer[aria-label="历史记录"] header {
   display: none !important;
 }
->>> .el-drawer[aria-label="历史记录"]  .el-drawer__body {
+::v-deep .el-drawer[aria-label="历史记录"] .el-drawer__body {
   padding: 0px !important;
 }
 </style>
