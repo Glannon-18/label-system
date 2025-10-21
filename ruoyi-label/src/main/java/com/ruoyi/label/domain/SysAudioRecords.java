@@ -38,6 +38,9 @@ public class SysAudioRecords extends BaseEntity
     @Excel(name = "修改后的文本")
     private String modifiedText;
 
+    @Excel(name = "修改后的文本")
+    private String keywords;
+
     /** 录音文件路径 */
     @Excel(name = "录音文件路径")
     private String audioFilePath;
@@ -150,6 +153,14 @@ public class SysAudioRecords extends BaseEntity
     public String getAuditor()
     {
         return auditor;
+    }
+
+    public String getKeywords() {
+        return keywords;
+    }
+
+    public void setKeywords(String keywords) {
+        this.keywords = keywords;
     }
 
     @Override

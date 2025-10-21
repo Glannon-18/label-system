@@ -3,6 +3,7 @@ package com.ruoyi.web.controller.label;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import javax.servlet.http.HttpServletResponse;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -118,18 +119,20 @@ public class SysTaskController extends BaseController
             // 设置任务属性
             sysTask.setAudioFileName(file.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
-            
-            // 获取音频时长并格式化TextGrid
-            try {
-                String absolutePath = RuoYiConfig.getProfile() + filePath.substring(filePath.indexOf("/upload"));
-                double duration = AudioUtils.getWavDuration(absolutePath);
-                String formattedDuration = String.format("%.3f", duration);
-                String textGridContent = String.format(INIT_TEXTGRID, formattedDuration, formattedDuration, formattedDuration);
-                sysTask.setTextGrid(textGridContent);
-                sysTask.setOriginalTextGrid(textGridContent);
-            } catch (UnsupportedAudioFileException e) {
-                logger.error("不支持的音频文件格式: {}", file.getOriginalFilename(), e);
-                return AjaxResult.error("不支持的音频文件格式");
+
+            if(Objects.requireNonNull(file.getOriginalFilename()).endsWith(".wav")){
+                // 获取音频时长并格式化TextGrid
+                try {
+                    String absolutePath = RuoYiConfig.getProfile() + filePath.substring(filePath.indexOf("/upload"));
+                    double duration = AudioUtils.getWavDuration(absolutePath);
+                    String formattedDuration = String.format("%.3f", duration);
+                    String textGridContent = String.format(INIT_TEXTGRID, formattedDuration, formattedDuration, formattedDuration);
+                    sysTask.setTextGrid(textGridContent);
+                    sysTask.setOriginalTextGrid(textGridContent);
+                } catch (UnsupportedAudioFileException e) {
+                    logger.error("不支持的音频文件格式: {}", file.getOriginalFilename(), e);
+                    return AjaxResult.error("不支持的音频文件格式");
+                }
             }
         }
         sysTask.setCreateBy(getUsername());
