@@ -111,13 +111,23 @@
               <div>标注文本内容</div>
               <div>
                 <!-- <el-input v-model="search" size="small" placeholder="查找与替换" /> -->
-              </div>              
+              </div>
             </div>
           </template>
           <template #default="scope">
-            <el-input type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
-              style="width:100%;font-size:24px;" @keydown="handleTextArrow($event, scope.row)"
-              @keyup="handleTextEnter($event, scope.row)" />
+            <el-tooltip effect="light" placement="bottom-start">
+              <template #content>
+                <KeyboardKm v-if="activeKeyBoard === scope.$index" />
+              </template>
+              <el-input :id="activeKeyBoard === scope.$index ? 'editor' : null"
+                        :name="activeKeyBoard === scope.$index ? 'editor' : null" type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
+                        style="width:100%;font-size:24px;" @keydown="handleTextArrow($event, scope.row)"
+                        @keyup="handleTextEnter($event, scope.row)" >
+
+              </el-input>
+            </el-tooltip>
+            <svg @click="activeKeyBoardPanel(-1)" v-if="activeKeyBoard === scope.$index"  style="position: absolute;right: 18px;top: 9px;cursor: pointer;" t="1761017120572" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8790" width="30" height="30"><path d="M928 192H96c-17.6 0-32 14.4-32 32v576c0 17.6 14.4 32 32 32h832c17.6 0 32-14.4 32-32V224c0-17.6-14.4-32-32-32z m-32 576H128V256h768v512zM320 384H192v-64h128v64z m448 192V448h64v192H640v-64h128z m-192 64H192v-64h384v64zM448 384h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64zM256 512h-64v-64h64v64z m64-64h64v64h-64v-64z m128 0h64v64h-64v-64z m128 0h64v64h-64v-64z" p-id="8791" fill="#1296db"></path></svg>
+            <svg @click="activeKeyBoardPanel(scope.$index)" v-else style="position: absolute;right: 18px;top: 9px;cursor: pointer;" t="1761017120572" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8790" width="30" height="30"><path d="M928 192H96c-17.6 0-32 14.4-32 32v576c0 17.6 14.4 32 32 32h832c17.6 0 32-14.4 32-32V224c0-17.6-14.4-32-32-32z m-32 576H128V256h768v512zM320 384H192v-64h128v64z m448 192V448h64v192H640v-64h128z m-192 64H192v-64h384v64zM448 384h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64zM256 512h-64v-64h64v64z m64-64h64v64h-64v-64z m128 0h64v64h-64v-64z m128 0h64v64h-64v-64z" p-id="8791" fill="#bfbfbf"></path></svg>
           </template>
         </el-table-column>
         <el-table-column label="字符数" width="100">
@@ -209,17 +219,80 @@
 import { getPackage } from "@/api/label/package"
 import { listTask, getTask, updateTask } from "@/api/label/task"
 
-import WaveSurfer from "wavesurfer.js"
-import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
-import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js'
-import ZoomPlugin from 'wavesurfer.js/dist/plugins/zoom.esm.js'
-import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
-import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
-import LabelEditorLoading from './labelEditorLoading'
-import LabelEditorHistoryOper from './labelEditorHistoryOper'
+  import WaveSurfer from "wavesurfer.js"
+  import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
+  import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js'
+  import ZoomPlugin from 'wavesurfer.js/dist/plugins/zoom.esm.js'
+  import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
+  import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
+  import LabelEditorLoading from './labelEditorLoading'
+  import LabelEditorHistoryOper from './labelEditorHistoryOper'
+  import KeyboardKm from './keyboard/keyboard_km'
 
-const audioLoadprogress = ref(0)
-const audioLoadOver = ref(false)
+  const audioLoadprogress = ref(0)
+  const audioLoadOver = ref(false)
+  const activeKeyBoard = ref(null)
+  let injectedScript = null;
+  /*
+  function activeKeyBoardPanel(scope_index) {
+    activeKeyBoard.value = scope_index;
+    setTimeout(()=>{
+      const jqLink = document.createElement('script');
+      jqLink.src = '/html/keyboard_km.js';
+      document.head.appendChild(jqLink);
+      jqLink.onload = function() {
+        console.log('loaded keyboard km success!')
+      };
+    }, 1000)
+  }*/
+
+
+  function activeKeyBoardPanel(scope_index) {
+    activeKeyBoard.value = scope_index;
+    if (injectedScript) {
+      document.head.removeChild(injectedScript);
+      injectedScript = null;
+    }
+    if (scope_index !== -1) {
+      setTimeout(() => {
+        injectedScript = document.createElement('script');
+        injectedScript.src = '/html/keyboard_km.js';
+        injectedScript.onload = function() {
+          console.log('键盘脚本加载成功!');
+        };
+        injectedScript.onerror = function() {
+          console.error('键盘脚本加载失败!');
+          if (injectedScript && injectedScript.parentNode) {
+            document.head.removeChild(injectedScript);
+            injectedScript = null;
+          }
+        };
+
+        document.head.appendChild(injectedScript);
+      }, 1000);
+    } else {
+      if (injectedScript && injectedScript.parentNode) {
+        document.head.removeChild(injectedScript);
+        injectedScript = null;
+      }
+      console.log('键盘脚本已销毁');
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const labels = reactive([
   { type: 'primary', label: '<NOISE>', 'tip': '表示非人声噪音' },
@@ -291,13 +364,13 @@ function insertText(text) {
           item.text = item.text.replace(new RegExp(text, 'g'), '')//则移除指定标签
         }else{
           item.text += text//否则插入指定标签
-        }      
+        }
         //移除其它标签
         labels.forEach(e => {
           if(e.label != text){
             item.text = item.text.replace(new RegExp(e.label, 'g'), '')//移除标签
           }
-        })  
+        })
         //去除首尾空格
         item.text = item.text.replace(/^\s+|\s+$/g, '')
       }
@@ -320,7 +393,7 @@ const tableRowClassName = ({ row, rowIndex }) => {
 
 const handleSpace = (event) => {
   // 按下空格键
-  if (event.key === ' ') { 
+  if (event.key === ' ') {
     if(ws.getCurrentTime() >= activeRegion.end){
       regions.getRegions().forEach(reg=>{
         if(reg.start== activeRegion.start && reg.end==activeRegion.end){
@@ -334,9 +407,9 @@ const handleSpace = (event) => {
     event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
-  } 
+  }
   // 按Ctrl+S键
-  else if (event.ctrlKey && event.key === 's') { 
+  else if (event.ctrlKey && event.key === 's') {
     console.log('按Ctrl+S键执行保存更改');
     saveTask();
   }
@@ -371,7 +444,7 @@ const handleSpace = (event) => {
  */
 function handleTextArrow(event, row) {
   // 按下空格键
-  if (event.key === ' ') { 
+  if (event.key === ' ') {
     //event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
@@ -381,7 +454,7 @@ function handleTextArrow(event, row) {
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     const textarea = event.target;
     const cursorPos = textarea.selectionStart;
-    
+
     // 创建一个隐藏的div来模拟textarea的布局
     const hiddenDiv = document.createElement('div');
     hiddenDiv.style.position = 'absolute';
@@ -392,28 +465,28 @@ function handleTextArrow(event, row) {
     hiddenDiv.style.padding = window.getComputedStyle(textarea).padding;
     hiddenDiv.style.border = window.getComputedStyle(textarea).border;
     hiddenDiv.style.lineHeight = window.getComputedStyle(textarea).lineHeight;
-    
+
     // 设置div内容为textarea的文本
     hiddenDiv.textContent = textarea.value.substring(0, cursorPos);
-    
+
     // 将div添加到DOM中
     document.body.appendChild(hiddenDiv);
-    
+
     // 获取div的高度
     const divHeight = hiddenDiv.clientHeight;
     const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight, 10);
     const currentLine = Math.floor(divHeight / lineHeight);
     const totalLines = Math.floor(textarea.scrollHeight / lineHeight);
-    
+
     // 移除隐藏的div
     document.body.removeChild(hiddenDiv);
-    
+
     // 判断光标是否在视觉上的第一行或最后一行
     const isAtFirstLine = currentLine === 1 || !textarea.value;
     const isAtLastLine = currentLine === totalLines || !textarea.value;
-    
+
     // 只有光标在视觉上的第一行(上键)或最后一行(下键)时才切换分段
-    if ((event.key === 'ArrowUp' && (isAtFirstLine || cursorPos === 0)) || 
+    if ((event.key === 'ArrowUp' && (isAtFirstLine || cursorPos === 0)) ||
         (event.key === 'ArrowDown' && isAtLastLine)) {
       const currentIndex = times.findIndex(seg => seg.start === row.start && seg.end === row.end);
       if (event.key === 'ArrowUp' && currentIndex > 0) {
@@ -511,7 +584,7 @@ function handleWaveSurferError(taskId, error) {
 function getReturnPath() {
   // 根据当前路由名称确定返回路径
   const route = useRoute();
-  
+
   // 判断当前是从哪个页面进入的
   if (route.name === 'audit-label') {
     // 从"我的审核"进入的，返回到审核任务列表页
@@ -535,18 +608,18 @@ function renderWaveforms() {
     instance.destroy()
   })
   wavesurferInstances.value = {}
-  
+
   // 为每个任务创建波形实例
   taskList.value.forEach(task => {
     const waveformId = 'waveform-' + task.taskId
     const container = document.getElementById(waveformId)
-    
+
     if (container && task.audioFileName) {
       // 销毁已存在的实例
       if (wavesurferInstances.value[task.taskId]) {
         wavesurferInstances.value[task.taskId].destroy()
       }
-      
+
       // 创建新的wavesurfer实例
       const wavesurfer = WaveSurfer.create({
         container: '#' + waveformId,
@@ -558,16 +631,16 @@ function renderWaveforms() {
         hideScrollbar: true,
         interact: false // 禁用交互，仅用于显示
       })
-      
+
       // 加载音频文件
       const audioUrl = getAudioUrl(task.audioFilePath)
       wavesurfer.load(audioUrl)
-      
+
       // 添加错误处理
       wavesurfer.on('error', (error) => {
         handleWaveSurferError(task.taskId, error)
       })
-      
+
       // 存储实例引用
       wavesurferInstances.value[task.taskId] = wavesurfer
     }
@@ -582,7 +655,7 @@ function renderDetailWaveform(audioFileName) {
     if (wavesurferInstances.value['detail']) {
       wavesurferInstances.value['detail'].destroy()
     }
-    
+
     // 创建新的wavesurfer实例
     const wavesurfer = WaveSurfer.create({
       container: '#waveform-detail',
@@ -593,16 +666,16 @@ function renderDetailWaveform(audioFileName) {
       responsive: true,
       hideScrollbar: true
     })
-    
+
     // 加载音频文件
     const audioUrl = getAudioUrl(audioFileName)
     wavesurfer.load(audioUrl)
-    
+
     // 添加错误处理
     wavesurfer.on('error', (error) => {
       handleWaveSurferError('detail', error)
     })
-    
+
     // 存储实例引用
     wavesurferInstances.value['detail'] = wavesurfer
   }
@@ -617,7 +690,7 @@ function handleUpdate(row) {
     form.value = response.data
     open.value = true
     title.value = "修改任务"
-    
+
     // 等待DOM更新后渲染波形
     nextTick(() => {
       if (response.data.audioFileName) {
@@ -750,7 +823,7 @@ function submitTask() {
         //跳转回“我的任务明细”页
         proxy.$router.push(`/label/my-task/index/${task.data.packageId}/${encodeURIComponent(route.params.taskPackageName)}`);
       }, 1000)
-      
+
     })
   })
 }
@@ -811,7 +884,7 @@ function rejectTask(){
       //跳转回“我的审核”页
       proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
     }, 1000)
-    
+
   })
 
 }
@@ -871,7 +944,7 @@ function auditTask(status) {
         //跳转回“我的审核”页
         proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
       }, 1000)
-      
+
     })
   })
 }
@@ -902,11 +975,11 @@ function addSegment(times, newSegment) {
     // console.log("addSegment3:", newSegment);
     if (newSegment.start >= newSegment.end) return times;
     // console.log("addSegment4:", newSegment);
-    
+
     // 深拷贝原数组避免修改原数据
     let result = JSON.parse(JSON.stringify(times));
     const { start, end, text = "" } = newSegment;
-    
+
     const segmentsToAdd = [];
     let mergedText = text;
 
@@ -935,7 +1008,7 @@ function addSegment(times, newSegment) {
       }else{
         segmentsToAdd.push(current)
       }
-      
+
     })
 
     //过滤掉完全包含在新分段内的分段
@@ -943,7 +1016,7 @@ function addSegment(times, newSegment) {
 
     // 插入新分段
     result.push({ start, end, text: mergedText });
-    
+
     // 按start排序确保顺序正确
     return result.sort((a, b) => a.start - b.start);
 }
@@ -991,13 +1064,13 @@ function adjustSegment(times, oldSegment, newSegment) {
       // 2. 更新当前分段的边界
       result[index].start = newSegment.start;
       result[index].end = newSegment.end;
-      
+
       // 3. 同步调整相邻分段边界（关键）
 
       // // 如果当前分段的右边界减小，则同步调整下一个分段的左边界
       // if (index + 1 < result.length) {
       //     result[index + 1].start = newSegment.end; // 确保下一个分段起点紧接当前分段终点
-      // }      
+      // }
       // // 如果当前分段的左边界减小，则同步调整上一个分段的右边界
       // if (index > 0) {
       //     result[index - 1].end = newSegment.start;
@@ -1038,7 +1111,7 @@ function adjustSegment(times, oldSegment, newSegment) {
           }
 
         }else{
-          console.log(`👉往右边调整`);          
+          console.log(`👉往右边调整`);
           //检查右边的所有分段是否被覆盖。
           //被覆盖的分段的文本需要合并到新分段文本后面；
           //不被覆盖但有重叠的分段只需要调整分段的左边界，以保持时间轴的连续性
@@ -1061,7 +1134,7 @@ function adjustSegment(times, oldSegment, newSegment) {
       result = result.filter(seg => {
         if(seg.start==newSegment.start && seg.end==newSegment.end){//新分段本身，保留
           return true
-        } 
+        }
         if(seg.start==0 && seg.start==newSegment.start && seg.end < newSegment.end){//第一个分段被覆盖，不保留
           return false
         }
@@ -1090,7 +1163,7 @@ function adjustSegment(times, oldSegment, newSegment) {
 
 
 
-      
+
       // //特殊情况1：如果调整的是第一个分段的左边界增大，即调整后第一份分段的左边界大于0，则需要在该分段之前插入一个空的分段，用于保持时间轴的连续性
       // if (index === 0 && newSegment.start > 0) {
       //     result.unshift({ start: 0, end: newSegment.start, text: "" });
@@ -1100,7 +1173,7 @@ function adjustSegment(times, oldSegment, newSegment) {
       // if (index === result.length - 1 && newSegment.end < duration) {
       //     result.push({ start: newSegment.end, end: duration, text: "" });
       // }
-      
+
       // 4. 移除任何可能产生的无效分段（如长度为0或负值的分段）
       return result.filter(seg => seg.start < seg.end);
 
@@ -1112,7 +1185,7 @@ function adjustSegment(times, oldSegment, newSegment) {
 function splitSegment(times, oldSegment, point, newText = "") {
   // 查找oldSegment在times数组中的索引
   const index = times.findIndex(segment => segment === oldSegment);
-  
+
   if (index !== -1) {
     //将从oldSegment分割为两个分段，其中一个分段的右边界为point
     let newSegment = {
@@ -1120,11 +1193,11 @@ function splitSegment(times, oldSegment, point, newText = "") {
       end: point,
       text: oldSegment.text
     }
-    
+
     // 更新原分段
     oldSegment.start = point;
     oldSegment.text = newText; // 设置新分段的文本
-    
+
     // 替换数组中的分段
     times[index] = newSegment;
     // 在index之后插入新的分段
@@ -1147,12 +1220,12 @@ function splitSegment(times, oldSegment, point, newText = "") {
         resize: false
       })
     })
-    
+
     //激活index分段
     activateRegion(newSegment)
-    
+
     return true;
-    
+
   } else {
     console.error(`找不到要调整的分段`);
     return false;
@@ -1163,7 +1236,7 @@ async function init(){
   console.log('init()--->')
   const container = document.getElementById('waveform-demo')
   if (container) {  // 判断waveform容器是否存在
-    
+
   // 获取任务详情信息
   let res = await getTask(taskId);
   console.log('任务详情：', res)
@@ -1177,7 +1250,7 @@ async function init(){
   if(!task.data.textGrid){
     proxy.$message.error('缺少预标注文本TextGrid')
   }
-  
+
   // ----将预标注文本转为json---
   // 解析TextGrid
   task.textGridJson = parseTextGridToJson(task.data.textGrid)
@@ -1225,7 +1298,7 @@ async function init(){
     ],
   })
 
-  // 加载音频文件    
+  // 加载音频文件
   ws.load( getAudioUrl(task.data.audioFilePath) )
 
     ws.on('loading', (percent) => {
@@ -1241,7 +1314,7 @@ async function init(){
     console.log('zoom---->minPxPerSec', minPxPerSec)
   })
 
-  ws.on('decode', () => { 
+  ws.on('decode', () => {
 
     //获得音频总时长
     duration = ws.decodedData.duration
@@ -1263,7 +1336,7 @@ async function init(){
         resize: false
       })
     })
-    
+
   })
 
 
@@ -1284,7 +1357,7 @@ async function init(){
 
     if(!(region.start && region.end && region.start!==region.end)) return //无效区域
 
-    
+
 
     //判断如果是框选区域新增则处理，点击激活区域则忽略
     console.log('region.content-->',region.content)
@@ -1377,8 +1450,8 @@ async function init(){
     scrollToRow(index)
     console.log('++++当前激活的分段：', JSON.stringify(times[index]));
 
-    
-    
+
+
 
     // //删除当前区域
     // region.remove()
@@ -1397,14 +1470,14 @@ async function init(){
     // region2.on('click', (e) => {
     //   console.log('region.click:',  e)
     //   e.stopPropagation() // prevent triggering a click on the waveform
-      
+
     //   //取消激活区域
     //   region2.remove()
     //   activeRegion.start = 0
     //   activeRegion.end = 0
     // })
 
-        
+
 
 
     })
@@ -1432,23 +1505,23 @@ async function init(){
       if( Math.abs(end - start) < 0.1 ) {
         console.log("新分段时长小于0.1秒，调整失败");
         activateRegion(activeRegion)
-        return 
+        return
       }
       if(start >= end) {
         console.log("新分段起始时间大于等于结束时间，调整失败");
         activateRegion(activeRegion)
-        return 
+        return
       }
       if(start == activeRegion.start && end == activeRegion.end) {
         console.log("新旧分段的起止和结束时间相同，无需调整");
         activateRegion(activeRegion)
-        return 
+        return
       }
 
-      
+
 
       console.log(`识别到调整区域：(${activeRegion.start},${activeRegion.end})-->(${start},${end})`)
-      
+
       console.log('调整前：', JSON.stringify(times))
       let oldReg = {start:activeRegion.start, end:activeRegion.end}
       let newReg = {start:start, end:end}
@@ -1456,7 +1529,7 @@ async function init(){
       if(newtimes && newtimes.length > 0){
         times.splice(0, times.length)
         times.push(...newtimes)
-      }      
+      }
       console.log(`调整后：`, JSON.stringify(times))
 
       //清除零长区域
@@ -1481,7 +1554,7 @@ async function init(){
       activeRegion.start = start
       activeRegion.end = end
 
-      
+
       const index = times.findIndex(seg => seg.start === start && seg.end === end);
       console.log('>>>>当前激活的分段：', JSON.stringify(times[index]));
       //移除此分段
@@ -1496,7 +1569,7 @@ async function init(){
     //单击区域事件
     regions.on('region-clicked', (region, e) => {
       console.log('regions.region-clicked:',  e);
-      //e.stopPropagation() 
+      //e.stopPropagation()
       // prevent triggering a click on the waveform
       // activeRegion = region
       //region.play(true)
@@ -1525,7 +1598,7 @@ async function init(){
     //单击波形图事件
     ws.on('click', (x,y) => {
       console.log('ws.click')
-      
+
       // 获取点击位置的时间点
       // relativeX 是点击位置相对于波形图宽度的比例（范围0到1）
       const duration = ws.getDuration(); // 获取音频总时长（秒）
@@ -1574,7 +1647,7 @@ async function init(){
           // activateRegion(index + 1)
         // }else{//单段不循环
         //   ws.pause()
-        // }  
+        // }
       }
     })
 
@@ -1614,14 +1687,14 @@ async function init(){
     if (forwardButton) {
       forwardButton.onclick = () => {
         let regionIndex = 0
-        //1.定位当前段    
+        //1.定位当前段
         // 查找当前激活的分段
         if(activeRegion.end - activeRegion.start >0){
           regionIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end)
         }
         // 或者根据当前播放所在位置查找当前分段
         //2.查找下一段
-        // 索引加一，但必须小于times.length        
+        // 索引加一，但必须小于times.length
         regionIndex = (regionIndex+1) > times.length ? times.length : (regionIndex+1)
         //3.激活下一段
         activateRegion(times[regionIndex])
@@ -1638,7 +1711,7 @@ async function init(){
     if (backButton) {
       backButton.onclick = () => {
         let regionIndex = 0
-        //1.定位当前段    
+        //1.定位当前段
         // 查找当前激活的分段
         if(activeRegion.end - activeRegion.start >0){
           regionIndex = times.findIndex(seg => seg.start==activeRegion.start && seg.end==activeRegion.end)
@@ -1697,7 +1770,7 @@ function activateRegion(ts){
     console.log('region.click:',  e)
     e.stopPropagation() // prevent triggering a click on the waveform
     blurAllInputs()
-    
+
     //取消激活区域
     // region.remove()
     // activeRegion.start = 0
@@ -1764,7 +1837,7 @@ function parseTextGridToJson(textGridText) {
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
-        
+
         if (line.startsWith('File type =')) {
             result.fileType = line.split('=')[1].trim().replace(/"/g, '');
         } else if (line.startsWith('Object class =')) {
@@ -1843,7 +1916,7 @@ function parseTextGridToJson(textGridText) {
  */
 function convertJsonToTextGrid(jsonData) {
     let textGridText = '';
-    
+
     // 头部信息
     textGridText += `File type = "ooTextFile"\n`;
     textGridText += `Object class = "TextGrid"\n\n`;
@@ -1852,7 +1925,7 @@ function convertJsonToTextGrid(jsonData) {
     textGridText += `tiers? <exists>\n`;
     textGridText += `size = ${jsonData.tiers.length}\n`;
     textGridText += `item []:\n`;
-    
+
     // 处理每个tier
     jsonData.tiers.forEach((tier, tierIndex) => {
         textGridText += `    item[${tierIndex + 1}]:\n`;
@@ -1861,7 +1934,7 @@ function convertJsonToTextGrid(jsonData) {
         textGridText += `        xmin = ${tier.xmin}\n`;
         textGridText += `        xmax = ${tier.xmax}\n`;
         textGridText += `        intervals: size = ${tier.intervals.length}\n`;
-        
+
         // 处理每个interval
         tier.intervals.forEach((interval, intervalIndex) => {
             textGridText += `        intervals [${intervalIndex + 1}]\n`;
@@ -1870,7 +1943,7 @@ function convertJsonToTextGrid(jsonData) {
             textGridText += `            text = "${interval.text}"\n`;
         });
     });
-    
+
     return textGridText;
 }
 
@@ -1915,7 +1988,7 @@ let playbackRateList = ref([
   { label: '0.75x', value: 0.75 },
   { label: '0.5x', value: 0.5 },
   { label: '0.25x', value: 0.25 },
-  
+
 ])
 let playbackRate = ref({ label: '1.0x', value: 1.0 })
 watch(playbackRate,(newVal, oldVal)=>{//监听播放倍速值变化
@@ -1938,7 +2011,7 @@ let task = reactive({
     audioFileName: '',
     packageId: taskPackageId,
     textGrid: '',//TG文本
-  },  
+  },
   textGridJson: {},//TG文本转的JSON（用于显示、重置、提交等）
 })
 
@@ -1972,7 +2045,7 @@ let times = reactive([
 let lastClickTime = 0
 
 const historyTimes = [] //存放标注历史记录的数组
-let historyIndex = -1 //当前回退的标注历史记录的下标值，-1代表不回退 
+let historyIndex = -1 //当前回退的标注历史记录的下标值，-1代表不回退
 watch(times, (newVal, oldVal) => {
   if(historyIndex > -1){//正在回退历史记录
     //回退时的更改不放到历史记录中
@@ -1994,36 +2067,36 @@ function deepEqual(obj1, obj2) {
   if (obj1 === obj2) {
     return true;
   }
-  
+
   // null 和 undefined 检查
   if (obj1 == null || obj2 == null) {
     return obj1 === obj2;
   }
-  
+
   // 类型检查
   if (typeof obj1 !== typeof obj2) {
     return false;
   }
-  
+
   // 处理基本类型
   if (typeof obj1 !== 'object') {
     return obj1 === obj2;
   }
-  
+
   // 处理数组
   if (Array.isArray(obj1) !== Array.isArray(obj2)) {
     return false;
   }
-  
+
   // 获取对象的键
   const keys1 = Object.keys(obj1);
   const keys2 = Object.keys(obj2);
-  
+
   // 键的数量比较
   if (keys1.length !== keys2.length) {
     return false;
   }
-  
+
   // 递归比较每个属性
   for (let key of keys1) {
     if (!keys2.includes(key)) {
@@ -2033,7 +2106,7 @@ function deepEqual(obj1, obj2) {
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -2079,18 +2152,18 @@ const scrollToRow = (rowIndex) => {
   }
   // 滚动到指定行
   tableRef.value.setScrollTop(totalHeight);
-  
+
   // 设置高亮
   // tableRef.value.setCurrentRow(times[rowIndex])
-  
+
   // 滚动到指定行
   // nextTick(() => {
   //   setTimeout(()=>{
-  //     tableRef.value.scrollTo({ 
-  //       row: rowIndex, 
-  //       position: 'top' 
+  //     tableRef.value.scrollTo({
+  //       row: rowIndex,
+  //       position: 'top'
   //     })
-  //   }, 100)    
+  //   }, 100)
   // })
 }
 
@@ -2218,5 +2291,8 @@ onUnmounted(() => {
 }
 ::v-deep .el-drawer[aria-label="历史记录"] .el-drawer__body {
   padding: 0px !important;
+}
+::v-deep .el-textarea__inner[placeholder="请输入标注内容"] {
+  padding-right: 40px;
 }
 </style>
