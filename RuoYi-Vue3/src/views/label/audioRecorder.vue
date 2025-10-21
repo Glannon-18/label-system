@@ -66,7 +66,28 @@
                 </template>
             </el-table-column>
 
+            <el-table-column label="关键词" width="200"  >
+                <template #default="{ row, $index }">
+                    
+                    <el-input
+                        v-if="$index==editingKeywordsIndex"
+                        ref="editKeywordsInput"
+                        class="item-keywords__edit"
+                        style="color: #333 !important;"
+                        v-model="row.keywords"                                
+                        autosize
+                        type="textarea"
+                        @keydown.enter.prevent="keyEnterConfirmEditKeywords(row, $index)"
+                        @keydown.esc="keyEscCancelEditKeywords()"
+                        @blur="blurKeyword(row, $index)"
+                    />
 
+                    <div v-else @click="clickStartEditKeywords($index)" class="item-keywords" style="text-align: left;">
+                        {{ row.keywords }}
+                    </div>
+
+                </template>
+            </el-table-column>
 
             <!-- <el-table-column label="" align="center" prop="text" /> -->
             <el-table-column label="文本内容" align="left">
@@ -509,11 +530,65 @@ function handleDelete(row) {
     }).catch(() => { })
 }
 
+const editingKeywordsIndex = ref(-1)
+const editKeywordsInput = ref(null)
+var modifiedKeywords = false
+var editingKeywords = ""
+
+function clickStartEditKeywords(index) {
+
+    if(!modifiedKeywords && editingKeywordsIndex.value != -1){
+        if(recordsList.value[editingKeywordsIndex.value].keywords != editingKeywords){
+            recordsList.value[editingKeywordsIndex.value].keywords = editingKeywords
+        }
+    }
+
+    modifiedKeywords = false
+    editingKeywordsIndex.value = index
+    editingKeywords = recordsList.value[editingKeywordsIndex.value].keywords
+    nextTick(() => {
+        editKeywordsInput.value?.focus()
+    })
+}
+
+function keyEscCancelEditKeywords() {
+    recordsList.value[editingKeywordsIndex.value].keywords = editingKeywords
+    editingKeywordsIndex.value = -1
+}
+
+
+function keyEnterConfirmEditKeywords(row, index) {
+    editingKeywordsIndex.value = -1
+    if(editingKeywords != row.keywords){
+        updateRecords(row).then((response) => {
+            proxy.$modal.msgSuccess("修改成功")
+            modifiedKeywords = true
+        })
+    }
+}
+
+
+function blurKeyword(row, index) {
+    if(editingKeywordsIndex.value != -1){
+        recordsList.value[editingKeywordsIndex.value].keywords = editingKeywords
+        editingKeywordsIndex.value = -1
+    }
+}
+
 const editingIndex = ref(-1)
 const editInput = ref(null)
+var modified = false
 var editingText = ""
 
 function clickStartEdit(index) {
+
+    if(!modified && editingIndex.value != -1){
+        if(recordsList.value[editingIndex.value].text != editingText){
+            recordsList.value[editingIndex.value].text = editingText
+        }
+    }
+
+    modified = false
     editingIndex.value = index
     editingText = recordsList.value[index].text
     nextTick(() => {
@@ -522,6 +597,7 @@ function clickStartEdit(index) {
 }
 
 function keyEscCancelEdit(){
+    recordsList.value[editingIndex.value].text = editingText    
     editingIndex.value = -1
 }
 
@@ -531,9 +607,17 @@ function keyEnterConfirmEdit(row, index) {
     if(editingText != row.text){
         updateRecords(row).then((response) => {
             proxy.$modal.msgSuccess("修改成功")
+            modified = true
         })
     }
   
+}
+
+function blurText(row, index) {
+    if(editingIndex.value != -1){
+        recordsList.value[editingIndex.value].text = editingText
+        editingIndex.value = -1
+    }
 }
 
 
@@ -861,7 +945,7 @@ onMounted(async () => {
 
         if (responseRecords.total == 0) {
             try {
-                _responseRecords = null
+
                 // 通过 fetch 获取文件二进制
                 const response = await fetch(url)
                 if (!response.ok) throw new Error("下载失败")
@@ -875,24 +959,30 @@ onMounted(async () => {
                 const sheetName = workbook.SheetNames[0]
                 const sheet = workbook.Sheets[sheetName]
 
-                // 以二维数组方式解析（每行一个数组）
+                // 转成二维数组
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 })
+
+                // 第一列（A列）
+                const keyWords = rows.map(row => row[0])
+
+                // 从第二列开始
+                const texts = rows.map(row => row.slice(1))
+
                 const newRecords = []
 
                 // 按行处理
-                rows.forEach((row, index) => {
+                texts.forEach((row, index) => {
                     const rowStr = row.join(", ")
 
-                    // console.log(`第 ${index + 1} 行:`, row)
                     const record = {
                         taskId: task.value.taskId,
                         packageId: task.value.packageId,
                         itemOrder: index + 1,
-                        text: rowStr
+                        text: rowStr,
+                        keywords: keyWords[index]
                     }
 
-                    newRecords.push(record)
-
+                    newRecords.push(record)                
                 })
                 addRecords(newRecords).then(response => {
                     // this.$modal.msgSuccess("新增成功")
@@ -1036,6 +1126,22 @@ const floatTo16BitPCM = (output, offset, input) => {
     line-height: 1.6;
     word-wrap: break-word;
     margin-bottom: 0px;
+}
+
+.item-keywords {
+    width: 100%;
+    font-size: 16px;
+    color: #333;
+    
+    word-wrap: break-word;
+    margin-bottom: 0px;
+}
+
+
+.item-keywords__edit{
+    font-size: 16px;
+    color: #333 !important;
+    word-wrap: break-word;
 }
 
 .item-actions {

@@ -25,10 +25,7 @@
                 <el-button type="primary" plain icon="Plus" @click="handleAdd"
                     v-hasPermi="['label:records:add']">新增</el-button>
             </el-col>
-            <el-col :span="1.5">
-                <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
-                    v-hasPermi="['label:records:edit']">修改</el-button>
-            </el-col>
+ 
             <el-col :span="1.5">
                 <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
                     v-hasPermi="['label:records:remove']">删除</el-button>
@@ -39,7 +36,7 @@
                 
                 <template v-if="['unstart','underway','reject','pass'].includes(task.status)">                
                     <el-col :span="1.5">
-                        <el-button type="success" plain icon=""  @click="summitTask()"
+                        <el-button type="success" plain icon=""  @click="clickSummitTask()"
                             >提交审核</el-button>
                     </el-col>
                 </template>
@@ -69,7 +66,28 @@
                 </template>
             </el-table-column>
 
+            <el-table-column label="关键词" width="200"  >
+                <template #default="{ row, $index }">
+                    
+                    <el-input
+                        v-if="$index==editingKeywordsIndex"
+                        ref="editKeywordsInput"
+                        class="item-keywords__edit"
+                        style="color: #333 !important;"
+                        v-model="row.keywords"                                
+                        autosize
+                        type="textarea"
+                        @keydown.enter.prevent="keyEnterConfirmEditKeywords(row, $index)"
+                        @keydown.esc="keyEscCancelEditKeywords()"
+                        @blur="blurKeyword(row, $index)"
+                    />
 
+                    <div v-else @click="clickStartEditKeywords($index)" class="item-keywords" style="text-align: left;">
+                        {{ row.keywords }}
+                    </div>
+
+                </template>
+            </el-table-column>
 
             <!-- <el-table-column label="" align="center" prop="text" /> -->
             <el-table-column label="文本内容" align="left">
@@ -83,9 +101,23 @@
                     <div class="item-container">
                         <!-- 上部文本 -->
                         <div style="display: flex;flex-direction: row;gap:15px;align-items: center;">
-                            <div class="item-text" style="text-align: left !important;">
+
+                            <el-input
+                                v-if="$index==editingIndex"
+                                ref="editInput"
+                                class="item-text__edit"
+                                style="color: #333 !important;"
+                                v-model="row.text"                                
+                                autosize
+                                type="textarea"
+                                @keydown.enter.prevent="keyEnterConfirmEdit(row, $index)"
+                                @keydown.esc="keyEscCancelEdit()"
+                            />
+
+                            <div v-else @click="clickStartEdit($index)" class="item-text" style="text-align: left !important;">
                                 {{ row.modifiedText != null ? row.modifiedText : row.text }}
                             </div>
+
                         </div>
 
 
@@ -115,7 +147,7 @@
                             </span>
 
 
-                            <span class="action-btn" @click="toggleRecording($index)">
+                            <span class="action-btn" @click="toggleRecordingWithConfirmation($index)">
 
                                 <el-tooltip
                                     class="box-item"
@@ -171,7 +203,7 @@
                             </span>
 
 
-                            <span class="action-btn" @click="handleUpdate(row)">
+                            <span class="action-btn" @click="handleUpdate(row)" style="display:none">
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
@@ -181,10 +213,9 @@
                                     <el-icon size="22" color="orange">
                                         <Edit />
                                     </el-icon>
-
-                                </el-tooltip>
-                                
+                                </el-tooltip>                                
                             </span>
+
                             <span class="action-btn" @click="openDeleteDialog($index)">
                                 <el-icon size="22" color="#575757">
                                     <Delete />
@@ -238,6 +269,20 @@
                 <div class="dialog-footer">
                     <el-button @click="cancelDelete">取消</el-button>
                     <el-button type="danger" @click="confirmDelete">删除</el-button>
+                </div>
+            </template>
+        </el-dialog>
+
+        <!-- 覆盖录音对话框 -->
+        <el-dialog v-model="overwriteRecordDialogVisible" title="确认覆盖" width="400px">
+            <div class="delete-dialog-content">
+                <p>已存在录音，确定要覆盖这条录音吗？</p>
+            </div>
+
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="cancelOverwriteRecord">取消</el-button>
+                    <el-button type="danger" @click="confirmOverwriteRecord">覆盖</el-button>
                 </div>
             </template>
         </el-dialog>
@@ -485,8 +530,98 @@ function handleDelete(row) {
     }).catch(() => { })
 }
 
+const editingKeywordsIndex = ref(-1)
+const editKeywordsInput = ref(null)
+var modifiedKeywords = false
+var editingKeywords = ""
 
-function summitTask() {
+function clickStartEditKeywords(index) {
+
+    if(!modifiedKeywords && editingKeywordsIndex.value != -1){
+        if(recordsList.value[editingKeywordsIndex.value].keywords != editingKeywords){
+            recordsList.value[editingKeywordsIndex.value].keywords = editingKeywords
+        }
+    }
+
+    modifiedKeywords = false
+    editingKeywordsIndex.value = index
+    editingKeywords = recordsList.value[editingKeywordsIndex.value].keywords
+    nextTick(() => {
+        editKeywordsInput.value?.focus()
+    })
+}
+
+function keyEscCancelEditKeywords() {
+    recordsList.value[editingKeywordsIndex.value].keywords = editingKeywords
+    editingKeywordsIndex.value = -1
+}
+
+
+function keyEnterConfirmEditKeywords(row, index) {
+    editingKeywordsIndex.value = -1
+    if(editingKeywords != row.keywords){
+        updateRecords(row).then((response) => {
+            proxy.$modal.msgSuccess("修改成功")
+            modifiedKeywords = true
+        })
+    }
+}
+
+
+function blurKeyword(row, index) {
+    if(editingKeywordsIndex.value != -1){
+        recordsList.value[editingKeywordsIndex.value].keywords = editingKeywords
+        editingKeywordsIndex.value = -1
+    }
+}
+
+const editingIndex = ref(-1)
+const editInput = ref(null)
+var modified = false
+var editingText = ""
+
+function clickStartEdit(index) {
+
+    if(!modified && editingIndex.value != -1){
+        if(recordsList.value[editingIndex.value].text != editingText){
+            recordsList.value[editingIndex.value].text = editingText
+        }
+    }
+
+    modified = false
+    editingIndex.value = index
+    editingText = recordsList.value[index].text
+    nextTick(() => {
+        editInput.value?.focus()
+    })
+}
+
+function keyEscCancelEdit(){
+    recordsList.value[editingIndex.value].text = editingText    
+    editingIndex.value = -1
+}
+
+function keyEnterConfirmEdit(row, index) {
+
+    editingIndex.value = -1
+    if(editingText != row.text){
+        updateRecords(row).then((response) => {
+            proxy.$modal.msgSuccess("修改成功")
+            modified = true
+        })
+    }
+  
+}
+
+function blurText(row, index) {
+    if(editingIndex.value != -1){
+        recordsList.value[editingIndex.value].text = editingText
+        editingIndex.value = -1
+    }
+}
+
+
+function clickSummitTask() {
     proxy.$modal.confirm('确定提交审核吗？').then(function () {
         const formData = new FormData();
         let sysTask = {
@@ -505,6 +640,18 @@ function summitTask() {
     })
 }
 
+const overwriteRecordDialogVisible = ref(false)
+const overwriteRecordIndex = ref(-1)
+
+function cancelOverwriteRecord() {
+    overwriteRecordDialogVisible.value = false
+    overwriteRecordIndex.value = -1
+}
+
+function confirmOverwriteRecord() { 
+    overwriteRecordDialogVisible.value = false
+    toggleRecording(overwriteRecordIndex.value)
+}
 
 function openDeleteDialog(index) {
     deletingIndex.value = index
@@ -541,18 +688,30 @@ const playingStates = ref(Array(recordsList.value.length).fill(false))
 var _responseRecords = {}
 var hasRecording = false
 
-function toggleRecording(index) {
-    if (index != recordingRecordIndex) {
-        if (hasRecording) {
-            proxy.$modal.msgError("请停止录音后再开始其他录音。")
-            return
-        }
+function toggleRecordingWithConfirmation(index) {
+    if (index != recordingRecordIndex && hasRecording) {
+        proxy.$modal.msgError("请停止录音后再开始其他录音。")
+        return
     }
+
     if(playingIndex != -1){
         playingStates.value[playingIndex] = false
         playingIndex = -1
         hasPalying = false
     }
+
+    if(!hasRecording){
+        if(recordsList.value[index].audioFilePath != null){
+            overwriteRecordDialogVisible.value = true
+            overwriteRecordIndex.value = index
+        }else{        
+            toggleRecording(index)
+        }
+    }else{
+        toggleRecording(index)
+    }
+}
+function toggleRecording(index) {
 
     recordingStates.value[index] = !recordingStates.value[index]    
     if (recordingStates.value[index]) {
@@ -786,7 +945,7 @@ onMounted(async () => {
 
         if (responseRecords.total == 0) {
             try {
-                _responseRecords = null
+
                 // 通过 fetch 获取文件二进制
                 const response = await fetch(url)
                 if (!response.ok) throw new Error("下载失败")
@@ -800,24 +959,30 @@ onMounted(async () => {
                 const sheetName = workbook.SheetNames[0]
                 const sheet = workbook.Sheets[sheetName]
 
-                // 以二维数组方式解析（每行一个数组）
+                // 转成二维数组
                 const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 })
+
+                // 第一列（A列）
+                const keyWords = rows.map(row => row[0])
+
+                // 从第二列开始
+                const texts = rows.map(row => row.slice(1))
+
                 const newRecords = []
 
                 // 按行处理
-                rows.forEach((row, index) => {
+                texts.forEach((row, index) => {
                     const rowStr = row.join(", ")
 
-                    // console.log(`第 ${index + 1} 行:`, row)
                     const record = {
                         taskId: task.value.taskId,
                         packageId: task.value.packageId,
                         itemOrder: index + 1,
-                        text: rowStr
+                        text: rowStr,
+                        keywords: keyWords[index]
                     }
 
-                    newRecords.push(record)
-
+                    newRecords.push(record)                
                 })
                 addRecords(newRecords).then(response => {
                     // this.$modal.msgSuccess("新增成功")
@@ -947,13 +1112,36 @@ const floatTo16BitPCM = (output, offset, input) => {
     transition: box-shadow 0.3s;
 }
 
+.item-text__edit{
+    font-size: 20px;
+    color: #333 !important;
+    word-wrap: break-word;
+}
+
 
 .item-text {
+    width: 100%;
     font-size: 20px;
     color: #333;
     line-height: 1.6;
     word-wrap: break-word;
     margin-bottom: 0px;
+}
+
+.item-keywords {
+    width: 100%;
+    font-size: 16px;
+    color: #333;
+    
+    word-wrap: break-word;
+    margin-bottom: 0px;
+}
+
+
+.item-keywords__edit{
+    font-size: 16px;
+    color: #333 !important;
+    word-wrap: break-word;
 }
 
 .item-actions {
