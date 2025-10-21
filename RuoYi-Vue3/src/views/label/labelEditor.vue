@@ -1214,7 +1214,7 @@ async function init(){
     plugins: [
       regions,
       timeline,
-      // hover,
+      hover,
       ZoomPlugin.create({
         // 每个轮步的变焦量, 例如0.5表示每次变焦量放大0.5倍
         scale: 0.2,

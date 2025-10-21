@@ -289,7 +289,6 @@ const handleSpace = (event) => {
     event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
-    ws.playPause()//音频播放/暂停
   } 
   // 按Ctrl+S键
   else if (event.ctrlKey && event.key === 's') { 
@@ -1170,7 +1169,7 @@ async function init(){
     plugins: [
       regions,
       timeline,
-      // hover,
+      hover,
       ZoomPlugin.create({
         // 每个轮步的变焦量, 例如0.5表示每次变焦量放大0.5倍
         scale: 0.2,
