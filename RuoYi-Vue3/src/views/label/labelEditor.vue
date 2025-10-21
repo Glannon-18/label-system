@@ -321,10 +321,19 @@ const tableRowClassName = ({ row, rowIndex }) => {
 const handleSpace = (event) => {
   // 按下空格键
   if (event.key === ' ') { 
+    if(ws.getCurrentTime() >= activeRegion.end){
+      regions.getRegions().forEach(reg=>{
+        if(reg.start== activeRegion.start && reg.end==activeRegion.end){
+          reg.play()
+        }
+      })
+    }else{
+      ws.playPause()//音频播放/暂停
+    }
+
     event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
-    ws.playPause()//音频播放/暂停
   } 
   // 按Ctrl+S键
   else if (event.ctrlKey && event.key === 's') { 
@@ -471,6 +480,15 @@ function focusInput(row) {
     if (inputs[index]) {
       inputs[index].focus();
     }
+  });
+}
+//所有输入框失去焦点
+function  blurAllInputs(){
+  nextTick(() => {
+    const inputs = document.querySelectorAll('.el-textarea__inner');
+    inputs.forEach(inputRef =>{
+      inputRef.blur()
+    })
   });
 }
 
@@ -1499,7 +1517,7 @@ async function init(){
       //在双击位置切分区域
       let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
       splitSegment(times, times[index], clickTime.toFixed(3), '')
-      focusInput(times[index])
+      //focusInput(times[index])
 
       e.stopPropagation()
     })
@@ -1513,6 +1531,8 @@ async function init(){
       const duration = ws.getDuration(); // 获取音频总时长（秒）
       const clickTime = Number((x * duration).toFixed(3)); // 计算点击处的时间点
       console.log(`单击位置的时间点：${clickTime}`)
+
+      blurAllInputs()
 
       //如果与上次单击的时间差过小，则忽略本次单击
       // let now = new Date().getTime()
@@ -1676,6 +1696,7 @@ function activateRegion(ts){
   region.on('click', (e) => {
     console.log('region.click:',  e)
     e.stopPropagation() // prevent triggering a click on the waveform
+    blurAllInputs()
     
     //取消激活区域
     // region.remove()
