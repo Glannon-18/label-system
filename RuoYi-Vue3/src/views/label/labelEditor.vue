@@ -166,9 +166,9 @@
       <div data-v-2bde42cb="" style="font-size: 16px;color: rgb(51, 51, 51);">
         <p>-------------操作方法-------------</p>
         <p><strong >缩放波形</strong><span >：鼠标指针在波形图内，滚动鼠标滚轮进行缩放</span></p>
-        <p><strong >激活分段</strong><span >：点击波形图非高亮区域，相应分段被激活(高亮)</span></p>
+        <!-- <p><strong >激活分段</strong><span >：点击波形图非高亮区域，相应分段被激活(高亮)</span></p> -->
         <!-- <p><strong >取消激活</strong><span >：点击波形图的高亮区域，相应分段取消激活</span></p> -->
-        <p><strong >新增分段</strong><span >：在非激活(非高亮)区域，点击并拖动鼠标选择区域</span></p>
+        <!-- <p><strong >新增分段</strong><span >：在非激活(非高亮)区域，点击并拖动鼠标选择区域</span></p> -->
         <p><strong >调整分段</strong><span >：在高亮区域的边界,鼠标指针变成 ↔ 时,点击拖动边界线</span>
         </p>
         <p><strong >合并分段</strong><span >：在新增/调整分段时,拖动边界使高亮区域完全包含(覆盖)其它分段</span>
@@ -608,6 +608,7 @@ function mergeUp(event, row){
     regions.clearRegions()
     //重新创建分段线
     times.forEach((e, index) => {
+      regionCreationSource = 'code'
       regions.addRegion({
         start: e.start,
         content: `${index+1}`,
@@ -640,6 +641,7 @@ function mergeDown(event, row){
     regions.clearRegions()
     //重新创建分段线
     times.forEach((e, index) => {
+      regionCreationSource = 'code'
       regions.addRegion({
         start: e.start,
         content: `${index+1}`,
@@ -829,6 +831,7 @@ function redo(){
     regions.clearRegions()
     //重建分段线
     times.forEach((e, index) => {
+      regionCreationSource = 'code'
       regions.addRegion({
         start: e.start,
         content: `${index+1}`,
@@ -1311,6 +1314,7 @@ function splitSegment(times, oldSegment, point, firstPart, secondPart) {
 
     //重建分段线
     times.forEach((e, index) => {
+      regionCreationSource = 'code'
       regions.addRegion({
         start: e.start,
         content: `${index+1}`,
@@ -1427,6 +1431,7 @@ async function init(){
     console.log(`当前点：`,times);
     console.log('添加初始分段标记-->')
     times.forEach( (ts,index) => {
+      regionCreationSource = 'code'
       regions.addRegion({
         start: ts.start,
         content: `${index+1}`,
@@ -1451,11 +1456,19 @@ async function init(){
   })
   //创建新区域事件
   regions.on('region-created', (region) => {
-    // console.log('新增区域：', region)
+    console.log('新增区域：', region.start, region.end)
     region.drag = false;//禁止拖拽新区域
 
-    if(!(region.start && region.end && region.start!==region.end)) return //无效区域
+    //判断是否为代码创建区域（非手动拖拽创建）
+    if(regionCreationSource != 'code'){
+      console.log("不可手动创建新区域");
+      region.remove()
+      return
+    }
+    //重置区域创建来源标记
+    regionCreationSource = null;
 
+    if(!(region.start && region.end && region.start!==region.end)) return //无效区域
 
 
     //判断如果是框选区域新增则处理，点击激活区域则忽略
@@ -1519,6 +1532,7 @@ async function init(){
 
     //重建分段线
     times.forEach((e, index) => {
+      regionCreationSource = 'code'
       regions.addRegion({
         start: e.start,
         content: `${index+1}`,
@@ -1549,6 +1563,7 @@ async function init(){
     // region.remove()
 
     // //新创建当前区域
+    // regionCreationSource = 'code'
     // const region2 = regions.addRegion({
     //   start: activeRegion.start,
     //   end: activeRegion.end, // 现在设置了有效的结束时间
@@ -1577,6 +1592,13 @@ async function init(){
     //修改区域事件
     regions.on('region-updated', (region) => {
       console.log('regions.region-updated');
+
+      //不是可标注状态的不可操作
+      if(!['underway','reject'].includes(task.data.status)) {
+        console.log("当前任务状态下不可修改标注");
+        activateRegion(activeRegion)
+        return
+      }
 
       //调整region的start和end精度保留3位小数
       let start = Number(region.start.toFixed(3))
@@ -1629,6 +1651,7 @@ async function init(){
 
       //重建分段线
       times.forEach((e, index) => {
+        regionCreationSource = 'code'
         regions.addRegion({
           start: e.start,
           content: `${index+1}`,
@@ -1691,11 +1714,23 @@ async function init(){
       const rect = ws.getWrapper().getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       let clickTime = (clickX / rect.width) * ws.getDuration();
-      console.log(`双击区域位置: ${clickTime.toFixed(3)}s`);
+      clickTime = Number(clickTime.toFixed(3))
+      console.log(`双击区域位置: ${clickTime}s`);
+
+      //不是可标注状态的不可操作
+      if(!['underway','reject'].includes(task.data.status)) {
+        console.log("当前任务状态下不可修改标注");
+        return
+      }
 
       //在双击位置切分区域
       let index = times.findIndex(seg => seg.start<clickTime && seg.end>clickTime)
-      splitSegment(times, times[index], clickTime.toFixed(3), '', times[index].text)
+      //双击的位置太靠近区域边界则不切分
+      if( Math.abs(times[index].start-clickTime)<0.3 || Math.abs(times[index].end-clickTime)<0.3 ){
+        console.log("双击的位置距离区域边界太近了（小于0.3秒）");
+        return
+      }
+      splitSegment(times, times[index], clickTime, '', times[index].text)
       //focusInput(times[index])
 
       e.stopPropagation()
@@ -1861,6 +1896,7 @@ function activateRegion(ts){
   });
 
   //2.创建当前点击区域
+  regionCreationSource = 'code'
   let region = regions.addRegion({
     start: ts.start,
     end: ts.end, // 现在设置了有效的结束时间
@@ -2277,6 +2313,9 @@ const scrollToRow = (rowIndex) => {
 
 // 初始化区域插件
 let regions = RegionsPlugin.create()
+// 区域创建来源标记（code：程序创建，其它为手动鼠标拖拽创建）
+let regionCreationSource = null; // 可能的取值: null, 'code', 未来可扩展 'user-drag'
+
 // 初始化时间轴插件
 const timeline = TimelinePlugin.create({
   formatTimeCallback: (time) => {
@@ -2337,6 +2376,7 @@ watch(textGridText, (newValue, oldValue) => {
 
   //添加分段线
   times.forEach(e => {
+    regionCreationSource = 'code'
     ws.addRegion({
       start: e.start,
       end: e.end,
