@@ -14,14 +14,14 @@
       </el-popover>
       <div> 音频文件：{{ task.data.audioFileName }}</div>
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
-        <el-link underline style="margin-right: 12px;" @click="showOperationTip()">快捷键</el-link>
+        <el-link v-if="['underway','reject'].includes(task.data.status)" underline style="margin-right: 12px;" @click="showOperationTip()">快捷键</el-link>
         <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">标注规范</el-link>
 
         <div v-if="['underway','reject'].includes(task.data.status)">
           <!-- <el-button type="primary" @click="openHisoryOperDrawer">历史记录</el-button> -->
-          <el-button type="danger" plain @click="redo()">重做</el-button>
+          <!-- <el-button type="danger" plain @click="redo()">重做</el-button> -->
           <el-button type="primary" plain @click="saveTask()">保存</el-button>
-          <el-button type="success" @click="submitTask()">提交</el-button>
+          <el-button type="success" @click="submitTask()">提交审核</el-button>
         </div>
 
         <!-- <div v-if="['pending_review'].includes(task.data.status)">
@@ -66,7 +66,7 @@
           循环播放<el-switch v-model="loopPlay" />
         </view> -->
       </div>
-      <div style="display: flex; gap: 0.5rem; font-size: 12px; align-items: center; justify-content: center;">
+      <div v-if="['underway','reject'].includes(task.data.status)" style="display: flex; gap: 0.5rem; font-size: 12px; align-items: center; justify-content: center;">
         <span style="color: gray;">无效时长标签:</span>
         <div v-for="item in labels" :key="item.label">
           <el-tooltip class="box-item" :content="item.tip" placement="top-start"><el-tag style="cursor:pointer;" checked
@@ -88,17 +88,17 @@
             {{ scope.$index + 1 }}
           </template>
         </el-table-column>
-        <el-table-column label="开始位置" width="100">
+        <el-table-column label="开始位置" width="90">
           <template #default="scope">
             {{ scope.row.start }}
           </template>
         </el-table-column>
-        <el-table-column label="结束位置" width="100">
+        <el-table-column label="结束位置" width="90">
           <template #default="scope">
             {{ scope.row.end }}
           </template>
         </el-table-column>
-        <el-table-column label="时长(秒)" width="100">
+        <el-table-column label="时长(秒)" width="90">
           <template #default="scope">
             <span :style="Number((scope.row.end - scope.row.start).toFixed(3))>15?'color:red':''">
               {{ Number((scope.row.end - scope.row.start).toFixed(3)) }}
@@ -115,22 +115,38 @@
             </div>
           </template>
           <template #default="scope">
-            <el-tooltip effect="light" placement="bottom-start">
-              <template #content>
-                <KeyboardKm v-if="activeKeyBoard === scope.$index" />
-              </template>
-              <el-input :id="activeKeyBoard === scope.$index ? 'editor' : null"
-                        :name="activeKeyBoard === scope.$index ? 'editor' : null" type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
-                        style="width:100%;font-size:24px;" @keydown="handleTextArrow($event, scope.row)"
-                        @keyup="handleTextEnter($event, scope.row)" >
-
-              </el-input>
-            </el-tooltip>
-            <svg @click="activeKeyBoardPanel(-1)" v-if="activeKeyBoard === scope.$index"  style="position: absolute;right: 18px;top: 9px;cursor: pointer;" t="1761017120572" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8790" width="30" height="30"><path d="M928 192H96c-17.6 0-32 14.4-32 32v576c0 17.6 14.4 32 32 32h832c17.6 0 32-14.4 32-32V224c0-17.6-14.4-32-32-32z m-32 576H128V256h768v512zM320 384H192v-64h128v64z m448 192V448h64v192H640v-64h128z m-192 64H192v-64h384v64zM448 384h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64zM256 512h-64v-64h64v64z m64-64h64v64h-64v-64z m128 0h64v64h-64v-64z m128 0h64v64h-64v-64z" p-id="8791" fill="#1296db"></path></svg>
-            <svg @click="activeKeyBoardPanel(scope.$index)" v-else style="position: absolute;right: 18px;top: 9px;cursor: pointer;" t="1761017120572" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8790" width="30" height="30"><path d="M928 192H96c-17.6 0-32 14.4-32 32v576c0 17.6 14.4 32 32 32h832c17.6 0 32-14.4 32-32V224c0-17.6-14.4-32-32-32z m-32 576H128V256h768v512zM320 384H192v-64h128v64z m448 192V448h64v192H640v-64h128z m-192 64H192v-64h384v64zM448 384h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64zM256 512h-64v-64h64v64z m64-64h64v64h-64v-64z m128 0h64v64h-64v-64z m128 0h64v64h-64v-64z" p-id="8791" fill="#bfbfbf"></path></svg>
+            <div v-if="['underway','reject'].includes(task.data.status)" style="display: flex;align-items:center;">
+              <!-- <el-tooltip effect="light" placement="bottom-start"> -->
+                <!-- <template #content>
+                  <KeyboardKm v-if="activeKeyBoard === scope.$index" />
+                </template> -->
+                <div style="flex: 1;">
+                  <el-input :id="activeKeyBoard === scope.$index ? 'editor' : null"
+                            :name="activeKeyBoard === scope.$index ? 'editor' : null" type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
+                            style="width:100%;font-size:24px;" @keydown="handleTextArrow($event, scope.row)"
+                            @keyup="handleTextEnter($event, scope.row)" >
+                  </el-input>
+                </div>
+                <div style="width:40px;margin-left:5px;" v-if="scope.row.start==activeRegion.start && scope.row.end==activeRegion.end">
+                  <div><el-tooltip v-if="scope.$index>0" content="合并上一段" placement="top">
+                    <el-button size="small" type="primary" icon="Upload" round  plain @click="mergeUp($event, scope.row)"></el-button>
+                  </el-tooltip></div>
+                  <!-- <br/> -->
+                  <div><el-tooltip v-if="scope.$index<(times.length-1)" content="合并下一段" placement="bottom">
+                    <el-button size="small" type="primary" icon="Download" round plain @click="mergeDown($event, scope.row)"></el-button>
+                  </el-tooltip></div>
+                </div>
+              <!-- </el-tooltip> -->
+              <!-- <svg @click="activeKeyBoardPanel(-1)" v-if="activeKeyBoard === scope.$index"  style="position: absolute;right: 18px;top: 9px;cursor: pointer;" t="1761017120572" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8790" width="30" height="30"><path d="M928 192H96c-17.6 0-32 14.4-32 32v576c0 17.6 14.4 32 32 32h832c17.6 0 32-14.4 32-32V224c0-17.6-14.4-32-32-32z m-32 576H128V256h768v512zM320 384H192v-64h128v64z m448 192V448h64v192H640v-64h128z m-192 64H192v-64h384v64zM448 384h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64zM256 512h-64v-64h64v64z m64-64h64v64h-64v-64z m128 0h64v64h-64v-64z m128 0h64v64h-64v-64z" p-id="8791" fill="#1296db"></path></svg> -->
+              <!-- <svg @click="activeKeyBoardPanel(scope.$index)" v-else style="position: absolute;right: 18px;top: 9px;cursor: pointer;" t="1761017120572" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8790" width="30" height="30"><path d="M928 192H96c-17.6 0-32 14.4-32 32v576c0 17.6 14.4 32 32 32h832c17.6 0 32-14.4 32-32V224c0-17.6-14.4-32-32-32z m-32 576H128V256h768v512zM320 384H192v-64h128v64z m448 192V448h64v192H640v-64h128z m-192 64H192v-64h384v64zM448 384h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64zM256 512h-64v-64h64v64z m64-64h64v64h-64v-64z m128 0h64v64h-64v-64z m128 0h64v64h-64v-64z" p-id="8791" fill="#bfbfbf"></path></svg> -->
+            </div>
+            <div v-else style="font-size:24px;">
+              <!-- <el-input type="textarea" autosize v-model="scope.row.text" disabled style="width:100%;font-size:24px;"></el-input> -->
+              {{ scope.row.text }}
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="字符数" width="100">
+        <el-table-column label="字符数" width="80">
           <template #default="scope">
             <span :style="scope.row.text.length>120?'color:red':''">{{ scope.row.text.length }}</span>
           </template>
@@ -164,8 +180,10 @@
           </span>
         </p>
         <p>-------------快捷键-------------</p>
-        <p><strong >跳上一段</strong><span >：按方向【↑】键</span></p>
-        <p><strong >跳下一段</strong><span >：按方向【↓】键</span></p>
+        <p><strong >跳至上一段</strong><span >：按方向【↑】键</span></p>
+        <p><strong >跳至下一段</strong><span >：按方向【↓】键</span></p>
+        <p><strong >合并上一段</strong><span >：按【Alt+↑】方向键</span></p>
+        <p><strong >合并下一段</strong><span >：按【Alt+↓】方向键</span></p>
         <p><strong >播放/暂停</strong><span >：按【空格】键</span></p>
         <p><strong >保存更改</strong><span >：按【Ctrl+S】键</span></p>
       </div>
@@ -223,7 +241,7 @@ import { listTask, getTask, updateTask } from "@/api/label/task"
   import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
   import LabelEditorLoading from './labelEditorLoading'
   import LabelEditorHistoryOper from './labelEditorHistoryOper'
-  import KeyboardKm from './keyboard/keyboard_km'
+  // import KeyboardKm from './keyboard/keyboard_km'
 
   const audioLoadprogress = ref(0)
   const audioLoadOver = ref(false)
@@ -329,6 +347,8 @@ function updateFormHistory(history) {
   console.log(history)
   proxy.$message.success(`恢复成功`)
 }
+
+
 //=========================定义函数=========================
 //操作方法
 const operationTipDialogVisible = ref(false)
@@ -404,6 +424,18 @@ const handleSpace = (event) => {
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
   }
+  // 按Alt+↑上方向键
+  /*else if(event.altKey && event.key === 'ArrowUp') {
+    console.log('Alt+↑ 键被按下');
+    event.preventDefault(); // 阻止元素的默认行为
+    mergeUp(event,activeRegion)
+  }
+  // 按Alt+↓下方向键
+  else if(event.altKey && event.key === 'ArrowDown') {
+    console.log('Alt+↓ 键被按下');
+    event.preventDefault(); // 阻止元素的默认行为
+    mergeDown(event, activeRegion)
+  }*/
   // 按Ctrl+S键
   else if (event.ctrlKey && event.key === 's') {
     console.log('按Ctrl+S键执行保存更改');
@@ -451,8 +483,21 @@ function handleTextArrow(event, row) {
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
   }
+  // 按Alt+↑上方向键
+  if(event.altKey && event.key === 'ArrowUp') {
+    console.log('Alt+↑ 键被按下');
+    event.preventDefault(); // 阻止元素的默认行为
+    mergeUp(event,row)
+  }
+  // 按Alt+↓下方向键
+  else if(event.altKey && event.key === 'ArrowDown') {
+    console.log('Alt+↓ 键被按下');
+    event.preventDefault(); // 阻止元素的默认行为
+    mergeDown(event,row)
+  }
   // 按上下方向键
-  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+  else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    console.log('方向键被按下--', event.key);
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     const textarea = event.target;
     const cursorPos = textarea.selectionStart;
@@ -546,6 +591,70 @@ function handleTextEnter(event, row) {
     console.log('keyup--按了ctrl+z')
   }
 }
+
+//与上一分段合并
+function mergeUp(event, row){
+  event.stopPropagation();// 阻止事件继续在DOM树中传播
+  //将当前行与上一行合并
+  const prevRow = times[times.indexOf(row) - 1]
+  if (prevRow && prevRow.start !== prevRow.end) {//如果上一行不为空
+    prevRow.text += row.text //合并文本
+    //将上一行的结束时间设置为当前行的结束时间
+    prevRow.end = row.end
+    times.splice(times.indexOf(row), 1)//删除当前行
+    proxy.$message.success(`合并成功`)
+
+    //清除所有区域
+    regions.clearRegions()
+    //重新创建分段线
+    times.forEach((e, index) => {
+      regions.addRegion({
+        start: e.start,
+        content: `${index+1}`,
+        color: '#666',
+        drag: false,
+        resize: false
+      })
+    })
+
+    //激活合并后的行
+    activateRegion(prevRow)
+    focusInput(prevRow)
+
+  }
+}
+
+//与下一分段合并
+function mergeDown(event, row){
+  event.stopPropagation();// 阻止事件继续在DOM树中传播
+  //将当前行与下一行合并
+  const nextRow = times[times.indexOf(row) + 1]
+  if (nextRow && nextRow.start !== nextRow.end) {//如果下一行不空
+    row.text += nextRow.text //合并文本
+    //将当前行的结束时间设置为下一行的结束时间
+    row.end = nextRow.end
+    times.splice(times.indexOf(nextRow), 1)//删除下一行
+    proxy.$message.success(`合并成功`)
+
+    //清除所有区域
+    regions.clearRegions()
+    //重新创建分段线
+    times.forEach((e, index) => {
+      regions.addRegion({
+        start: e.start,
+        content: `${index+1}`,
+        color: '#666',
+        drag: false,
+        resize: false
+      })
+    })
+
+    //激活合并后的行
+    activateRegion(row)
+    focusInput(row)
+  }
+}
+
 
 // 聚焦到指定行的输入框
 function focusInput(row) {
@@ -716,31 +825,23 @@ function redo(){
     })
     times.splice(0,times.length,...newtimes)
 
-    //清除零长区域
-    regions.getRegions().forEach((reg) => {
-        if (reg.start == reg.end) {//清除零长区域
-          reg.remove()
-        }
-        if(reg.start==activeRegion.start && reg.end==activeRegion.end){//清除（取消）前个激活区域
-          reg.remove()
-        }
+    //清除所有区域
+    regions.clearRegions()
+    //重建分段线
+    times.forEach((e, index) => {
+      regions.addRegion({
+        start: e.start,
+        content: `${index+1}`,
+        color: '#666',
+        drag: false,
+        resize: false
       })
+    })
 
-      //重建零长区域
-      times.forEach((e, index) => {
-        regions.addRegion({
-          start: e.start,
-          content: `${index+1}`,
-          color: '#666',
-          drag: false,
-          resize: false
-        })
-      })
+    activeRegion.start = 0
+    activeRegion.end = 0
 
-      activeRegion.start = 0
-      activeRegion.end = 0
-
-      proxy.$modal.msgSuccess("重新载入数据成功")
+    proxy.$modal.msgSuccess("重新载入数据成功")
 
   })
 }
@@ -1205,14 +1306,10 @@ function splitSegment(times, oldSegment, point, firstPart, secondPart) {
     // 在index之后插入原分段
     times.splice(index + 1, 0, oldSegment);
 
-    //清除零长区域
-    regions.getRegions().forEach((reg) => {
-      if (reg.start == reg.end) {//清除零长区域
-        reg.remove()
-      }
-    })
+    //清除分段线
+    regions.clearRegions()
 
-    //重建零长区域
+    //重建分段线
     times.forEach((e, index) => {
       regions.addRegion({
         start: e.start,
@@ -1285,7 +1382,7 @@ async function init(){
     hideScrollbar: false,
     interact: true, // 可交互
     minPxPerSec: 45,
-    autoCenter: true, // 自动居中播放位置
+    autoCenter: false, // 自动居中播放位置
     plugins: [
       regions,
       timeline,
@@ -1308,7 +1405,7 @@ async function init(){
     })
 
   ws.on('play', () => {
-    console.log('ws.currentTime-->', ws.getCurrentTime())
+    console.log('ws.pay-->currentTime:', ws.getCurrentTime())
     currentTime.value = ws.getCurrentTime()
   })
 
@@ -1417,17 +1514,10 @@ async function init(){
     times.push(...newtimes);
     console.log(`添加后：`,times);
 
-    //清除零长区域
-    regions.getRegions().forEach((reg) => {
-      if (reg.start == reg.end) {//清除零长区域
-        reg.remove()
-      }
-      if(reg.start==activeRegion.start && reg.end==activeRegion.end){//清除（取消）前个激活区域
-        reg.remove()
-      }
-    })
+    //清除分段线
+    regions.clearRegions()
 
-    //重建零长区域
+    //重建分段线
     times.forEach((e, index) => {
       regions.addRegion({
         start: e.start,
@@ -1534,14 +1624,10 @@ async function init(){
       }
       console.log(`调整后：`, JSON.stringify(times))
 
-      //清除零长区域
-      regions.getRegions().forEach((reg) => {
-        if (reg.start == reg.end) {//清除零长区域
-          reg.remove()
-        }
-      })
+      //清除分段线
+      regions.clearRegions()
 
-      //重建零长区域
+      //重建分段线
       times.forEach((e, index) => {
         regions.addRegion({
           start: e.start,
@@ -1576,6 +1662,24 @@ async function init(){
       // activeRegion = region
       //region.play(true)
       //region.setOptions({ color: randomColor() })
+
+      //让所有输入框失去焦点
+      blurAllInputs()
+
+      // 获取点击位置的时间点
+      const rect = ws.getWrapper().getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      let clickTime = (clickX / rect.width) * ws.getDuration();
+      console.log(`单击区域，位置: ${clickTime.toFixed(3)}s`);
+
+      //播放音频（从点击的位置开始）
+      //ws.play()
+
+      //取消激活区域
+      // region.remove()
+      // activeRegion.start = 0
+      // activeRegion.end = 0
+
     })
 
     // 双击区域事件
@@ -1749,7 +1853,7 @@ async function init(){
 function activateRegion(ts){
   console.log('>>>激活目标分段>>>', JSON.stringify(ts))
 
-  // 1.清除非零长区域（取消激活区域）
+  // 1.清除非分段线（取消激活区域）
   regions.getRegions().forEach((region) => {
     if (region.start != region.end) {
       region.remove();
@@ -1778,14 +1882,6 @@ function activateRegion(ts){
   //监听点击区域事件，当再次点击此区域时，则清除此区域（取消激活）
   region.on('click', (e) => {
     console.log('region.click:',  e)
-    e.stopPropagation() // prevent triggering a click on the waveform
-    blurAllInputs()
-
-    //取消激活区域
-    // region.remove()
-    // activeRegion.start = 0
-    // activeRegion.end = 0
-
   })
 
   return region
@@ -2239,7 +2335,7 @@ watch(textGridText, (newValue, oldValue) => {
     region.remove()
   });
 
-  //添加零长区域
+  //添加分段线
   times.forEach(e => {
     ws.addRegion({
       start: e.start,
