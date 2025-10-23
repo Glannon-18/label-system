@@ -124,7 +124,8 @@
                   <el-input :id="activeKeyBoard === scope.$index ? 'editor' : null"
                             :name="activeKeyBoard === scope.$index ? 'editor' : null" type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
                             style="width:100%;font-size:24px;" @keydown="handleTextArrow($event, scope.row)"
-                            @keyup="handleTextEnter($event, scope.row)" >
+                            @keyup="handleTextEnter($event, scope.row)"
+                            @blur="handleTextBlur($event, scope.row)" >
                   </el-input>
                 </div>
                 <div style="width:40px;margin-left:5px;" v-if="scope.row.start==activeRegion.start && scope.row.end==activeRegion.end">
@@ -148,7 +149,7 @@
         </el-table-column>
         <el-table-column label="字符数" width="80">
           <template #default="scope">
-            <span :style="scope.row.text.length>120?'color:red':''">{{ scope.row.text.length }}</span>
+            <span :style="scope.row.text.replace(/\s+/g,'').length>120?'color:red':''">{{ scope.row.text.replace(/\s+/g,'').length }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -224,6 +225,29 @@
     </el-drawer>
 
 
+    <!-- 在原有模板基础上添加校验结果对话框 -->
+    <el-dialog v-model="validationDialogVisible" title="校验结果" width="600">
+      <div style="max-height: 400px; overflow-y: auto;">
+        <p style="color: red; font-weight: bold;">以下分段不符合标注规则：</p>
+        <ul>
+          <li v-for="(item, index) in validationErrors" :key="index" style="margin-bottom: 10px;">
+            <span style="font-weight: bold;">第{{ item.index }}分段：</span>
+            <span>{{ item.reason }}</span>
+            <div style="margin-left: 20px; font-size: 12px; color: #666;">
+              <span>时长: {{ item.duration }}s</span>
+              <span style="margin-left: 10px;">文本: "{{ item.text }}"</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="validationDialogVisible = false">取消提交</el-button>
+          <el-button type="primary" @click="forceSubmitTask">确认提交</el-button>
+        </div>
+      </template>
+    </el-dialog>
+    
   </div>
 </template>
 
@@ -592,6 +616,18 @@ function handleTextEnter(event, row) {
   }
 }
 
+/**
+ * 处理文本输入框失去焦点事件
+ * @param {Event} event - 键盘事件
+ * @param {Object} row - 当前行数据
+ */
+function handleTextBlur(event, row){
+  event.stopPropagation();// 阻止事件继续在DOM树中传播
+  console.log('textarea失去焦点--->', row.text)
+  //去掉row.text中的首尾空格
+  row.text = row.text.trim()
+}
+
 //与上一分段合并
 function mergeUp(event, row){
   event.stopPropagation();// 阻止事件继续在DOM树中传播
@@ -818,7 +854,7 @@ function redo(){
   //刷新页面
   // proxy.$router.go(0)
   proxy.$modal.confirm('是否放弃更改并载入上一次保存的标注数据？').then(function () {
-    let newtimes = task.textGridJson.intervals.map(ts=>{
+    let newtimes = task.textGridJson.item[0].intervals.map(ts=>{
       return {
         start: ts.xmin,
         end: ts.xmax,
@@ -860,11 +896,10 @@ function saveTask() {
       text: ts.text,
     }
   })
-  // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
-  task.textGridJson.intervals = intervals
-  task.textGridJson.tiers[0].intervals = intervals
+  // 将intervals替换到 task.textGridJson.item[0].intervals
+  task.textGridJson.item[0].intervals = intervals
   //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
-  let textGrid = convertJsonToTextGrid(task.textGridJson)
+  let textGrid = stringifyTextGrid(task.textGridJson)
   task.data.textGrid = textGrid
   //准备保存的参数
   let sysTask = {
@@ -879,8 +914,83 @@ function saveTask() {
   })
 }
 
+
+// 校验结果对话框相关变量
+const validationDialogVisible = ref(false)
+const validationErrors = ref([])
+
 /** 提交任务 */
 function submitTask() {
+  // 先进行校验
+  const errors = validateSegments()
+  
+  // 如果有错误，显示校验结果对话框
+  if (errors.length > 0) {
+    validationErrors.value = errors
+    validationDialogVisible.value = true
+    return
+  }
+  
+  // 如果没有错误，直接提交
+  performSubmitTask()
+}
+
+// 校验分段是否符合规则
+function validateSegments() {
+  const errors = []
+  
+  times.forEach((segment, index) => {
+    const segmentNum = index + 1
+    const duration = Number((segment.end - segment.start).toFixed(3))
+    const text = segment.text
+    
+    // 1. 检查分段文本字符数不超过120个字符
+    if (text.length > 120) {
+      errors.push({
+        index: segmentNum,
+        reason: '文本字符数超过120个',
+        duration: duration,
+        text: text.substring(0, 30) + (text.length > 30 ? '...' : '')
+      })
+    }
+    
+    // 2. 检查分段时长不超过15s（打了无效时长标签的除外）
+    if (duration > 15) {
+      // 检查是否包含无效时长标签
+      const hasInvalidTag = labels.some(label => text.includes(label.label))
+      
+      if (!hasInvalidTag) {
+        errors.push({
+          index: segmentNum,
+          reason: '分段时长超过15秒且未标记无效时长标签',
+          duration: duration,
+          text: text.substring(0, 30) + (text.length > 30 ? '...' : '')
+        })
+      }
+    }
+    
+    // 3. 检查文本不能为空白
+    if (!text || text.trim() === '') {
+      errors.push({
+        index: segmentNum,
+        reason: '标注文本为空白',
+        duration: duration,
+        text: '(空文本)'
+      })
+    }
+  })
+  
+  return errors
+}
+
+// 强制提交任务（忽略校验错误）
+function forceSubmitTask() {
+  validationDialogVisible.value = false
+  performSubmitTask()
+}
+
+// 实际执行提交任务的函数
+function performSubmitTask() {
   proxy.$modal.confirm('确定提交审核吗？').then(function () {
     //将最新的times转为intervals
     let intervals = times.map((ts,i)=>{
@@ -891,11 +1001,10 @@ function submitTask() {
         text: ts.text,
       }
     })
-    // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
-    task.textGridJson.intervals = intervals
-    task.textGridJson.tiers[0].intervals = intervals
+    // 将intervals替换到 task.textGridJson.item[0].intervals
+    task.textGridJson.item[0].intervals = intervals
     //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
-    let textGrid = convertJsonToTextGrid(task.textGridJson)
+    let textGrid = stringifyTextGrid(task.textGridJson)
     task.data.textGrid = textGrid
     //准备提交的参数
     let sysTask = {
@@ -909,24 +1018,7 @@ function submitTask() {
     updateTask(formData).then(response => {
       proxy.$modal.msgSuccess("提交成功")
       setTimeout(() => {
-        // proxy.$tab.closePage()  // 关闭当前页
-        // // 根据来源页面跳转回相应的列表页
-        // const returnPath = getReturnPath();
-        // if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
-        //   // 对于需要参数的路由，我们需要传递参数
-        //   const route = useRoute();
-        //   if (route.params.taskPackageId && route.params.taskPackageName) {
-        //     proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
-        //   } else {
-        //     proxy.$router.push(returnPath);
-        //   }
-        // } else if (returnPath === '/label/auditTask') {
-        //   // 为auditTask页面添加时间戳参数以触发刷新
-        //   proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
-        // } else {
-        //   proxy.$router.push(returnPath);
-        // }
-        //跳转回“我的任务明细”页
+        //跳转回"我的任务明细"页
         proxy.$router.push(`/label/my-task/index/${task.data.packageId}/${encodeURIComponent(route.params.taskPackageName)}`);
       }, 1000)
 
@@ -952,11 +1044,10 @@ function rejectTask(){
       text: ts.text,
     }
   })
-  // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
-  task.textGridJson.intervals = intervals
-  task.textGridJson.tiers[0].intervals = intervals
+  // 将intervals替换到 task.textGridJson.item[0].intervals
+  task.textGridJson.item[0].intervals = intervals
   //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
-  let textGrid = convertJsonToTextGrid(task.textGridJson)
+  let textGrid = stringifyTextGrid(task.textGridJson)
   task.data.textGrid = textGrid
   //准备提交的参数
   let sysTask = {
@@ -1013,11 +1104,10 @@ function auditTask(status) {
         text: ts.text,
       }
     })
-    // 将intervals替换到 task.textGridJson.intervals 和 task.textGridJson.tiers[0].intervals
-    task.textGridJson.intervals = intervals
-    task.textGridJson.tiers[0].intervals = intervals
+    // 将intervals替换到 task.textGridJson.item[0].intervals
+    task.textGridJson.item[0].intervals = intervals
     //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
-    let textGrid = convertJsonToTextGrid(task.textGridJson)
+    let textGrid = stringifyTextGrid(task.textGridJson)
     task.data.textGrid = textGrid
     //准备提交的参数
     let sysTask = {
@@ -1355,12 +1445,20 @@ async function init(){
   }
 
   // ----将预标注文本转为json---
-  // 解析TextGrid
-  task.textGridJson = parseTextGridToJson(task.data.textGrid)
-  // console.log('task.textGridJson-->',JSON.stringify(task.textGridJson))
+  console.log('task.textGrid-->\n',task.data.textGrid)
+  task.textGridJson = parseTextGrid(task.data.textGrid)
+  console.log('解析TextGrid-->\n',task.textGridJson)
+
+  //检查并修复时间序列数据
+  task.textGridJson = fixIntervals(task.textGridJson)
+  console.log('检查并修复时间序列数据-->\n',task.textGridJson)
+
+  //JSON转TextGrid
+  task.textGrid = stringifyTextGrid(task.textGridJson)
+  console.log('JSON转TextGrid-->\n',task.textGrid)
 
   // 生成时间序列数据
-  let realtimes = task.textGridJson.intervals.map(e => {
+  let realtimes = task.textGridJson.item[0].intervals.map(e => {//默认取第一个层的数据
     return {
       start: e.xmin,
       end: e.xmax,
@@ -1956,137 +2054,170 @@ function rowClick(row, column, event){
 }
 
 
-/**
- * 将TextGrid文本转换为JSON对象
- * @param {string} textGridText - TextGrid格式的文本
- * @returns {Object} JSON对象
- */
-function parseTextGridToJson(textGridText) {
-    const lines = textGridText.split('\n').filter(line => line.trim() !== '');
+//=========================预处理TextGrid的3个函数=========================
+
+// 第一个函数：将TextGrid格式文本转为JSON对象
+function parseTextGrid(text) {
+    const lines = text.split('\n');
     const result = {
-        fileType: '',
-        objectClass: '',
-        xmin: 0,
-        xmax: 0,
-        tiers: [],
-        intervals: []
+        "File type": "",
+        "Object class": "",
+        "xmin": 0,
+        "xmax": 0,
+        "item": []
     };
-
-    let currentTier = null;
+    
+    let currentItem = null;
     let currentInterval = null;
-    let inIntervals = false;
-    let intervalIndex = 0;
-
+    
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
-
+        if (line === '') continue;
+        
+        // 解析文件类型
         if (line.startsWith('File type =')) {
-            result.fileType = line.split('=')[1].trim().replace(/"/g, '');
-        } else if (line.startsWith('Object class =')) {
-            result.objectClass = line.split('=')[1].trim().replace(/"/g, '');
-        } else if (line.startsWith('xmin =')) {
-            const value = parseFloat(line.split('=')[1].trim());
-            if (!inIntervals) {
-                result.xmin = value;
-            } else if (currentInterval) {
-                currentInterval.xmin = value;
-            } else if (currentTier) {
-                currentTier.xmin = value;
-            }
-        } else if (line.startsWith('xmax =')) {
-            const value = parseFloat(line.split('=')[1].trim());
-            if (!inIntervals) {
-                result.xmax = value;
-            } else if (currentInterval) {
-                currentInterval.xmax = value;
-            } else if (currentTier) {
-                currentTier.xmax = value;
-            }
-        } else if (line.startsWith('size =')) {
-            // 处理tier数量
-        } else if (line.startsWith('item [')) {
-            // 开始新的tier
-            currentTier = {
-                class: '',
-                name: '',
+            result["File type"] = line.split('=')[1].trim().replace(/"/g, '');
+        }
+        // 解析对象类
+        else if (line.startsWith('Object class =')) {
+            result["Object class"] = line.split('=')[1].trim().replace(/"/g, '');
+        }
+        // 解析根级别的xmin和xmax
+        else if (line.startsWith('xmin =') && !currentItem) {
+            result.xmin = parseFloat(line.split('=')[1].trim());
+        }
+        else if (line.startsWith('xmax =') && !currentItem) {
+            result.xmax = parseFloat(line.split('=')[1].trim());
+        }
+        // 开始新的item（只匹配带数字索引的item行）
+        else if (line.match(/^\s*item\s*\[\d+\]\s*:/)) {
+            currentItem = {
+                class: "",
+                name: "",
                 xmin: 0,
                 xmax: 0,
                 intervals: []
             };
-            result.tiers.push(currentTier);
-        } else if (line.startsWith('class =')) {
-            if (currentTier) {
-                currentTier.class = line.split('=')[1].trim().replace(/"/g, '');
-            }
-        } else if (line.startsWith('name =')) {
-            if (currentTier) {
-                currentTier.name = line.split('=')[1].trim().replace(/"/g, '');
-            }
-        } else if (line.startsWith('intervals: size =')) {
-            inIntervals = true;
-            intervalIndex = 0;
-        } else if (line.startsWith('intervals [')) {
-            // 开始新的interval
-            currentInterval = {
-                index: ++intervalIndex,
-                xmin: 0,
-                xmax: 0,
-                text: ''
-            };
-            if (currentTier) {
-                currentTier.intervals.push(currentInterval);
-            }
-            result.intervals.push(currentInterval);
-        } else if (line.startsWith('text =')) {
-            if (currentInterval) {
-                // 提取引号内的文本内容
-                const match = line.match(/text = "([^"]*)"/);
-                if (match) {
-                    currentInterval.text = match[1];
-                }
+            result.item.push(currentItem);
+        }
+        // 解析item的属性
+        else if (line.startsWith('class =') && currentItem) {
+            currentItem.class = line.split('=')[1].trim().replace(/"/g, '');
+        }
+        else if (line.startsWith('name =') && currentItem) {
+            currentItem.name = line.split('=')[1].trim().replace(/"/g, '');
+        }
+        else if (line.startsWith('xmin =') && currentItem && currentItem.intervals.length === 0) {
+            // 只有在没有intervals时才解析item级别的xmin
+            currentItem.xmin = parseFloat(line.split('=')[1].trim());
+        }
+        else if (line.startsWith('xmax =') && currentItem && currentItem.intervals.length === 0) {
+            // 只有在没有intervals时才解析item级别的xmax
+            currentItem.xmax = parseFloat(line.split('=')[1].trim());
+        }
+        // 开始新的interval
+        else if (line.match(/^\s*intervals\s*\[\d+\]\s*:/)) {
+            if (currentItem) {
+                currentInterval = {
+                    xmin: 0,
+                    xmax: 0,
+                    text: ""
+                };
+                currentItem.intervals.push(currentInterval);
             }
         }
+        // 解析interval的属性
+        else if (line.startsWith('xmin =') && currentInterval) {
+            currentInterval.xmin = parseFloat(line.split('=')[1].trim());
+        }
+        else if (line.startsWith('xmax =') && currentInterval) {
+            currentInterval.xmax = parseFloat(line.split('=')[1].trim());
+        }
+        else if (line.startsWith('text =') && currentInterval) {
+            currentInterval.text = line.split('=')[1].trim().replace(/"/g, '');
+        }
     }
-
+    
     return result;
 }
 
-/**
- * 将JSON对象转换回TextGrid文本格式
- * @param {Object} jsonData - 包含TextGrid数据的JSON对象
- * @returns {string} TextGrid格式的文本
- */
-function convertJsonToTextGrid(jsonData) {
-    let textGridText = '';
+// 第二个函数：检查并修复intervals的连续性
+function fixIntervals(jsonObj) {
+    jsonObj.item.forEach(item => {
+        if (item.intervals && item.intervals.length > 0) {
+            const fixedIntervals = [];
+            let lastXmax = item.xmin;
+            
+            // 按xmin排序，确保顺序正确
+            const sortedIntervals = [...item.intervals].sort((a, b) => a.xmin - b.xmin);
+            
+            for (let i = 0; i < sortedIntervals.length; i++) {
+                const current = sortedIntervals[i];
+                
+                // 检查是否有间隙（使用小误差容忍度）
+                if (current.xmin > lastXmax + 0.001) {
+                    // 插入空白interval填补间隙
+                    fixedIntervals.push({
+                        xmin: lastXmax,
+                        xmax: current.xmin,
+                        text: ""
+                    });
+                }
+                
+                // 添加当前interval
+                fixedIntervals.push(current);
+                lastXmax = current.xmax;
+            }
+            
+            // 检查最后是否还有间隙到xmax
+            if (lastXmax < item.xmax - 0.001) {
+                fixedIntervals.push({
+                    xmin: lastXmax,
+                    xmax: item.xmax,
+                    text: ""
+                });
+            }
+            
+            item.intervals = fixedIntervals;
+        }
+    });
+    
+    return jsonObj;
+}
 
+// 第三个函数：将JSON对象转回TextGrid格式文本
+function stringifyTextGrid(jsonObj) {
+    let result = [];
+    
     // 头部信息
-    textGridText += `File type = "ooTextFile"\n`;
-    textGridText += `Object class = "TextGrid"\n\n`;
-    textGridText += `xmin = ${jsonData.xmin}\n`;
-    textGridText += `xmax = ${jsonData.xmax}\n`;
-    textGridText += `tiers? <exists>\n`;
-    textGridText += `size = ${jsonData.tiers.length}\n`;
-    textGridText += `item []:\n`;
-
-    // 处理每个tier
-    jsonData.tiers.forEach((tier, tierIndex) => {
-        textGridText += `    item[${tierIndex + 1}]:\n`;
-        textGridText += `        class = "${tier.class}"\n`;
-        textGridText += `        name = "${tier.name}"\n`;
-        textGridText += `        xmin = ${tier.xmin}\n`;
-        textGridText += `        xmax = ${tier.xmax}\n`;
-        textGridText += `        intervals: size = ${tier.intervals.length}\n`;
-
+    result.push(`File type = "${jsonObj["File type"]}"`);
+    result.push(`Object class = "${jsonObj["Object class"]}"`);
+    result.push('');
+    result.push(`xmin = ${jsonObj.xmin.toFixed(3)}`);
+    result.push(`xmax = ${jsonObj.xmax.toFixed(3)}`);
+    result.push('tiers? <exists>');
+    result.push(`size = ${jsonObj.item.length}`);
+    result.push('item []:');
+    
+    // 处理每个item
+    jsonObj.item.forEach((item, itemIndex) => {
+        result.push(`    item [${itemIndex + 1}]:`);
+        result.push(`        class = "${item.class}"`);
+        result.push(`        name = "${item.name}"`);
+        result.push(`        xmin = ${item.xmin.toFixed(3)}`);
+        result.push(`        xmax = ${item.xmax.toFixed(3)}`);
+        result.push(`        intervals: size = ${item.intervals.length}`);
+        
         // 处理每个interval
-        tier.intervals.forEach((interval, intervalIndex) => {
-            textGridText += `        intervals [${intervalIndex + 1}]\n`;
-            textGridText += `            xmin = ${interval.xmin}\n`;
-            textGridText += `            xmax = ${interval.xmax}\n`;
-            textGridText += `            text = "${interval.text}"\n`;
+        item.intervals.forEach((interval, intervalIndex) => {
+            result.push(`        intervals [${intervalIndex + 1}]:`);
+            result.push(`            xmin = ${interval.xmin.toFixed(3)}`);
+            result.push(`            xmax = ${interval.xmax.toFixed(3)}`);
+            result.push(`            text = "${interval.text}"`);
         });
     });
-
-    return textGridText;
+    
+    return result.join('\n');
 }
 
 
