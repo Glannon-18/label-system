@@ -44,6 +44,9 @@ import ImagePreview from "@/components/ImagePreview"
 // 字典标签组件
 import DictTag from '@/components/DictTag'
 
+// 引入 v-code-diff
+import CodeDiff from 'v-code-diff'
+
 const app = createApp(App)
 
 // 全局方法挂载
@@ -70,6 +73,7 @@ app.use(router)
 app.use(store)
 app.use(plugins)
 app.use(elementIcons)
+app.use(CodeDiff)
 app.component('svg-icon', SvgIcon)
 
 directive(app)
