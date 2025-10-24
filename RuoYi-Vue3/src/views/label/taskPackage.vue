@@ -247,16 +247,17 @@
         <el-form-item label="ZIP文件" prop="file">
           <el-upload
             ref="uploadRef"
-            :limit="1"
+            :limit="5"
             :auto-upload="false"
             :on-change="handleFileChange"
             :on-exceed="handleFileExceed"
             accept=".zip"
+            multiple
           >
             <el-button type="primary">选择文件</el-button>
             <template #tip>
               <div class="el-upload__tip">
-                请上传.zip格式文件，且文件中wav和TextGrid文件必须成对出现
+                请上传.zip格式文件，最多可上传5个，且每个文件中wav和TextGrid文件必须成对出现
               </div>
             </template>
           </el-upload>
@@ -310,7 +311,7 @@ const auditorList = ref([])  // 审核人员列表
 const currentRow = ref({})
 const uploadOpen = ref(false)
 const uploadLoading = ref(false)
-const uploadFile = ref(null)
+const uploadFile = ref([])
 
 const projectId = route.params.projectId
 const projectName = route.params.projectName
@@ -619,7 +620,7 @@ function submitAssignUser() {
 function handleUpload() {
   uploadOpen.value = true
   uploadForm.value.file = null
-  uploadFile.value = null
+  uploadFile.value = []
 }
 
 // 取消上传
@@ -629,20 +630,20 @@ function cancelUpload() {
 }
 
 // 文件选择处理
-function handleFileChange(file) {
-  uploadFile.value = file.raw
+function handleFileChange(file, fileList) {
+  uploadFile.value = fileList.map(f => f.raw)
 }
 
 // 文件超出限制处理
 function handleFileExceed() {
-  proxy.$modal.msgWarning("只能上传一个文件")
+  proxy.$modal.msgWarning("最多只能上传5个文件")
 }
 
 // 提交上传
 function submitUpload() {
   proxy.$refs["uploadRef"].validate(valid => {
     if (valid) {
-      if (!uploadFile.value) {
+      if (!uploadFile.value || uploadFile.value.length === 0) {
         proxy.$modal.msgWarning("请选择文件")
         return
       }
@@ -650,7 +651,10 @@ function submitUpload() {
       uploadLoading.value = true
       
       const formData = new FormData()
-      formData.append("file", uploadFile.value)
+      // 添加所有选择的文件
+      uploadFile.value.forEach((file, index) => {
+        formData.append("files", file)
+      })
       formData.append("projectId", projectId)
       if (data.uploadForm.language) {
         formData.append("language", data.uploadForm.language)
