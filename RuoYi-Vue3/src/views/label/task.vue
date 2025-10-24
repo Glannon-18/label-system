@@ -98,18 +98,36 @@
       <el-form ref="taskRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="音频文件名" prop="audioFileName">
           <el-upload
-            ref="uploadRef"
+            ref="wavUploadRef"
             :limit="1"
             :auto-upload="false"
-            :on-change="handleFileChange"
+            :on-change="(file, fileList) => handleFileChange(file, fileList, 'wav')"
             :on-exceed="handleFileExceed"
-            :file-list="fileList"
-            :accept="fileSuffix"
+            :file-list="wavFileList"
+            accept=".wav,.WAV"
           >
-            <el-button type="primary">选择文件</el-button>
+            <el-button type="primary">选择WAV文件</el-button>
             <template #tip>
               <div class="el-upload__tip">
-                请选择 {{fileSuffix}} 格式的音频文件
+                请选择 .wav 格式的音频文件
+              </div>
+            </template>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label="TextGrid文件" prop="textGridFileName">
+          <el-upload
+            ref="textGridUploadRef"
+            :limit="1"
+            :auto-upload="false"
+            :on-change="(file, fileList) => handleFileChange(file, fileList, 'textGrid')"
+            :on-exceed="handleFileExceed"
+            :file-list="textGridFileList"
+            accept=".TextGrid,.textgrid"
+          >
+            <el-button type="primary">选择TextGrid文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">
+                请选择 .TextGrid 或 .textgrid 格式的文件
               </div>
             </template>
           </el-upload>
@@ -155,7 +173,6 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
-
     taskPackageId: taskPackageId  // 添加任务包ID作为查询条件
   },
   rules: {
@@ -164,19 +181,42 @@ const data = reactive({
 })
 
 const { queryParams, form, rules } = toRefs(data)
-const uploadFile = ref(null)
-const fileList = ref([]) // 用于存储el-upload的文件列表
+const wavFile = ref(null)
+const textGridFile = ref(null)
+const wavFileList = ref([]) // 用于存储WAV文件列表
+const textGridFileList = ref([]) // 用于存储TextGrid文件列表
 const taskPackage = ref(null)
 const fileSuffix = computed(() => {
   return taskPackage.value && taskPackage.value.type === 'audio' ? '.xlsx' : '.wav'
 })
 
 // 文件选择处理
-function handleFileChange(file, fileList) {
-  uploadFile.value = file.raw
-  form.value.audioFileName = file.raw.name
-  // 更新文件列表
-  fileList.value = fileList
+function handleFileChange(file, fileList, type) {
+  if (type === 'wav') {
+    wavFile.value = file.raw
+    // 确保WAV文件后缀名兼容大小写
+    let fileName = file.raw.name
+    if (fileName.toLowerCase().endsWith('.wav')) {
+      // 如果是WAV文件，保持原文件名不变
+      form.value.audioFileName = fileName
+    } else {
+      // 不是WAV文件的情况已经在文件选择器中被过滤，这里只是额外的安全检查
+      form.value.audioFileName = fileName
+    }
+    wavFileList.value = fileList
+  } else if (type === 'textGrid') {
+    textGridFile.value = file.raw
+    // 确保TextGrid文件后缀名兼容大小写
+    let fileName = file.raw.name
+    if (fileName.toLowerCase().endsWith('.textgrid')) {
+      // 如果是TextGrid文件，保持原文件名不变
+      form.value.textGridFileName = fileName
+    } else {
+      // 不是TextGrid文件的情况已经在文件选择器中被过滤，这里只是额外的安全检查
+      form.value.textGridFileName = fileName
+    }
+    textGridFileList.value = fileList
+  }
 }
 
 // 文件超出限制处理
@@ -211,6 +251,7 @@ function reset() {
     packageId: null,
     audioFileName: null,
     audioFilePath: null,
+    textGridFileName: null,
     status: null,
     annotator: null,
     auditor: null,
@@ -221,8 +262,10 @@ function reset() {
     remark: null
   }
   proxy.resetForm("taskRef")
-  uploadFile.value = null
-  fileList.value = []
+  wavFile.value = null
+  textGridFile.value = null
+  wavFileList.value = []
+  textGridFileList.value = []
 }
 
 /** 搜索按钮操作 */
@@ -260,7 +303,7 @@ function handleUpdate(row) {
     form.value = response.data
     // 如果已有文件，则设置文件列表显示原文件
     if (response.data.audioFileName) {
-      fileList.value = [{
+      wavFileList.value = [{
         name: response.data.audioFileName,
         url: response.data.audioFilePath
       }]
@@ -277,8 +320,8 @@ function submitForm() {
       if (form.value.taskId != null) {
         // 更新操作
         // 如果没有新文件但有原文件，则允许更新
-        if (!uploadFile.value && fileList.value.length === 0) {
-          proxy.$modal.msgWarning("请选择音频文件");
+        if (!wavFile.value && wavFileList.value.length === 0) {
+          proxy.$modal.msgWarning("请选择WAV文件");
           return;
         }
         
@@ -288,8 +331,12 @@ function submitForm() {
         formData.append("sysTask", new Blob([JSON.stringify(form.value)], { type: "application/json" }));
         
         // 如果有新文件则添加文件部分
-        if (uploadFile.value) {
-          formData.append("file", uploadFile.value);
+        if (wavFile.value) {
+          formData.append("wavFile", wavFile.value);
+        }
+        
+        if (textGridFile.value) {
+          formData.append("textGridFile", textGridFile.value);
         }
         
         // 使用修改后的API接口上传任务和文件
@@ -303,14 +350,20 @@ function submitForm() {
         });
       } else {
         // 新增操作
-        if (!uploadFile.value) {
-          proxy.$modal.msgWarning("请选择音频文件");
+        if (!wavFile.value) {
+          proxy.$modal.msgWarning("请选择WAV文件");
+          return;
+        }
+        
+        if (!textGridFile.value) {
+          proxy.$modal.msgWarning("请选择TextGrid文件");
           return;
         }
         
         // 创建FormData对象用于文件上传
         const formData = new FormData();
-        formData.append("file", uploadFile.value);
+        formData.append("wavFile", wavFile.value);
+        formData.append("textGridFile", textGridFile.value);
         // 添加sysTask部分（JSON字符串）
         formData.append("sysTask", new Blob([JSON.stringify({...form.value, packageId: taskPackageId})], { type: "application/json" }));
         
