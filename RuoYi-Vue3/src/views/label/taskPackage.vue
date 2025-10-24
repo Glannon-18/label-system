@@ -94,7 +94,7 @@
 
     <el-table v-loading="loading" :data="packageList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="任务包名" align="center" prop="name" >
+      <el-table-column label="任务包名" align="center" prop="name" width="350">
         <template #default="scope">
           <el-link type="primary" @click="goToTask(scope.row)">
             {{ scope.row.name }}
