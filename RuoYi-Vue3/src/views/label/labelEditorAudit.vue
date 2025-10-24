@@ -886,10 +886,10 @@ function saveTask() {
   task.textGridJson.item[0].intervals = intervals
   //转换textGridJson为TG文本格式
   let textGrid = stringifyTextGrid(task.textGridJson)
-  if(task.data.textGrid === textGrid) {
-    proxy.$modal.msgError("标注内容未发生改变，无需保存")
-    return 
-  }
+  // if(task.data.textGrid === textGrid) {
+  //   proxy.$modal.msgWarning("标注内容未发生改变")
+  //   return 
+  // }
   //替换task.data的TextGrid字段
   task.data.textGrid = textGrid
   //准备保存的参数
@@ -2609,5 +2609,12 @@ onUnmounted(() => {
 }
 ::v-deep .el-textarea__inner[placeholder="请输入标注内容"] {
   padding-right: 40px;
+}
+
+.code-diff {
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 24px;
+  border: 1px solid #e6e6e6;
+  border-radius: 4px;
 }
 </style>
