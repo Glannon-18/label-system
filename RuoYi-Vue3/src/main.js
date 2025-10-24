@@ -43,6 +43,9 @@ import ImageUpload from "@/components/ImageUpload"
 import ImagePreview from "@/components/ImagePreview"
 // 字典标签组件
 import DictTag from '@/components/DictTag'
+import {i18n} from '@/language'
+
+
 
 // 引入 v-code-diff
 import CodeDiff from 'v-code-diff'
@@ -74,6 +77,7 @@ app.use(store)
 app.use(plugins)
 app.use(elementIcons)
 app.use(CodeDiff)
+app.use(i18n)
 app.component('svg-icon', SvgIcon)
 
 directive(app)
