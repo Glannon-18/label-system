@@ -19,9 +19,14 @@
 
         <div v-if="['underway','reject'].includes(task.data.status)">
           <!-- <el-button type="primary" @click="openHisoryOperDrawer">历史记录</el-button> -->
-          <!-- <el-button type="danger" plain @click="redo()">重做</el-button> -->
-          <el-button type="primary" plain @click="saveTask()">保存</el-button>
-          <el-button type="success" @click="submitTask()">提交审核</el-button>
+          <el-tooltip class="box-item" content="撤回到上一次操作（Ctrl+Z）" placement="top">
+            <el-button type="danger" plain :disabled="historyTimes.length<=1" @click="undo()">撤销</el-button>
+          </el-tooltip>
+          <el-tooltip class="box-item" content="保存更改（Ctrl+S）" placement="top">
+            <el-button type="primary" plain @click="saveTask()">保存</el-button>
+          </el-tooltip>
+          <el-tooltip class="box-item" content="提交审核" placement="top">
+          <el-button type="success" @click="submitTask()">提交</el-button></el-tooltip>
         </div>
 
         <!-- <div v-if="['pending_review'].includes(task.data.status)">
@@ -31,7 +36,7 @@
 
         <!-- 审核驳回对话框 -->
         <el-dialog v-model="dialogFormVisible" title="审核驳回" width="500">
-          <el-input v-model="dialogFormRemark" type="textarea" :rows="3" placeholder="请输入驳回原因" style="width: 100%;" />
+          <el-input v-model="dialogFormRemark" type="textarea" :autosize="{ minRows: 3, maxRows: 20 }" placeholder="请输入驳回原因" style="width: 100%;" />
           <template #footer>
             <div class="dialog-footer">
               <el-button @click="dialogFormVisible = false">取消</el-button>
@@ -123,17 +128,19 @@
                 <div style="flex: 1;">
                   <el-input :id="activeKeyBoard === scope.$index ? 'editor' : null"
                             :name="activeKeyBoard === scope.$index ? 'editor' : null" type="textarea" clearable autosize v-model="scope.row.text" placeholder="请输入标注内容"
-                            style="width:100%;font-size:24px;" @keydown="handleTextArrow($event, scope.row)"
+                            style="width:100%;font-size:24px;" 
+                            @keydown="handleTextArrow($event, scope.row)"
                             @keyup="handleTextEnter($event, scope.row)"
-                            @blur="handleTextBlur($event, scope.row)" >
+                            @blur="handleTextBlur($event, scope.row)"
+                            @change="handleTextChange($event, scope.row, scope.$index)" >
                   </el-input>
                 </div>
                 <div style="width:40px;margin-left:5px;" v-if="scope.row.start==activeRegion.start && scope.row.end==activeRegion.end">
-                  <div><el-tooltip v-if="scope.$index>0" content="合并上一段" placement="top">
+                  <div><el-tooltip v-if="scope.$index>0" content="合并上一段（Alt+↑）" placement="top">
                     <el-button size="small" type="primary" icon="Upload" round  plain @click="mergeUp($event, scope.row)"></el-button>
                   </el-tooltip></div>
                   <!-- <br/> -->
-                  <div><el-tooltip v-if="scope.$index<(times.length-1)" content="合并下一段" placement="bottom">
+                  <div><el-tooltip v-if="scope.$index<(times.length-1)" content="合并下一段（Alt+↓）" placement="bottom">
                     <el-button size="small" type="primary" icon="Download" round plain @click="mergeDown($event, scope.row)"></el-button>
                   </el-tooltip></div>
                 </div>
@@ -142,14 +149,13 @@
               <!-- <svg @click="activeKeyBoardPanel(scope.$index)" v-else style="position: absolute;right: 18px;top: 9px;cursor: pointer;" t="1761017120572" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8790" width="30" height="30"><path d="M928 192H96c-17.6 0-32 14.4-32 32v576c0 17.6 14.4 32 32 32h832c17.6 0 32-14.4 32-32V224c0-17.6-14.4-32-32-32z m-32 576H128V256h768v512zM320 384H192v-64h128v64z m448 192V448h64v192H640v-64h128z m-192 64H192v-64h384v64zM448 384h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64z m128 0h-64v-64h64v64zM256 512h-64v-64h64v64z m64-64h64v64h-64v-64z m128 0h64v64h-64v-64z m128 0h64v64h-64v-64z" p-id="8791" fill="#bfbfbf"></path></svg> -->
             </div>
             <div v-else style="font-size:24px;">
-              <!-- <el-input type="textarea" autosize v-model="scope.row.text" disabled style="width:100%;font-size:24px;"></el-input> -->
               {{ scope.row.text }}
             </div>
           </template>
         </el-table-column>
         <el-table-column label="字符数" width="80">
           <template #default="scope">
-            <span :style="scope.row.text.replace(/\s+/g,'').length>120?'color:red':''">{{ scope.row.text.replace(/\s+/g,'').length }}</span>
+            <span :style="(scope.row.text&&scope.row.text.replace(/\s+/g,'').length>120)?'color:red':''">{{ scope.row.text&&scope.row.text.replace(/\s+/g,'').length }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -163,21 +169,26 @@
 
 
     <!-- 操作方法 -->
-    <el-dialog v-model="operationTipDialogVisible" title="" width="600">
+    <el-dialog v-model="operationTipDialogVisible" title="" width="700">
       <div data-v-2bde42cb="" style="font-size: 16px;color: rgb(51, 51, 51);">
         <p>-------------操作方法-------------</p>
         <p><strong >缩放波形</strong><span >：鼠标指针在波形图内，滚动鼠标滚轮进行缩放</span></p>
         <!-- <p><strong >激活分段</strong><span >：点击波形图非高亮区域，相应分段被激活(高亮)</span></p> -->
         <!-- <p><strong >取消激活</strong><span >：点击波形图的高亮区域，相应分段取消激活</span></p> -->
         <!-- <p><strong >新增分段</strong><span >：在非激活(非高亮)区域，点击并拖动鼠标选择区域</span></p> -->
-        <p><strong >调整分段</strong><span >：在高亮区域的边界,鼠标指针变成 ↔ 时,点击拖动边界线</span>
-        </p>
-        <p><strong >合并分段</strong><span >：在新增/调整分段时,拖动边界使高亮区域完全包含(覆盖)其它分段</span>
-        </p>
-        <p style="display: flex; justify-content: flex-start;">
+         <p style="display: flex; justify-content: flex-start;line-height: 30px;">
           <span><strong >切割分段</strong>：</span>
           <span>方法① 在音频波形图区域内，双击鼠标进行切分<br/>
             方法② 在分段标注文本内容输入框内,按【回车】键进行切分
+          </span>
+        </p>
+        <p><strong >调整分段</strong><span >：在高亮区域的边界,鼠标指针变成 ↔ 时,点击拖动边界线</span></p>
+        <p style="display: flex; justify-content: flex-start;line-height: 30px;">
+          <span><strong >合并分段</strong>：</span>
+          <span>方法① 在调整分段边界时,拖动边界使区域完全包含(覆盖)要合并的分段<br/>
+            方法② 点击高亮分段的标注文本输入框后的按钮
+            <el-tooltip content="合并上一段" placement="top"><el-button size="small" type="primary" icon="Upload" round  plain/></el-tooltip>
+            /<el-tooltip content="合并下一段" placement="bottom"><el-button style="margin-left: 2px;" size="small" type="primary" icon="Download" round  plain/></el-tooltip>合并上/下分段
           </span>
         </p>
         <p>-------------快捷键-------------</p>
@@ -187,6 +198,7 @@
         <p><strong >合并下一段</strong><span >：按【Alt+↓】方向键</span></p>
         <p><strong >播放/暂停</strong><span >：按【空格】键</span></p>
         <p><strong >保存更改</strong><span >：按【Ctrl+S】键</span></p>
+        <p><strong >撤销操作</strong><span >：按【Ctrl+Z】键</span></p>
       </div>
     </el-dialog>
     <!-- 标注规范 -->
@@ -243,7 +255,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="validationDialogVisible = false">取消提交</el-button>
-          <el-button type="primary" @click="forceSubmitTask">确认提交</el-button>
+          <el-button type="primary" @click="submitTask(false)">确认提交</el-button>
         </div>
       </template>
     </el-dialog>
@@ -492,6 +504,14 @@ const handleSpace = (event) => {
       scrollToRow(currentIndex + 1)
     }
   }
+  //按下Ctrl+Z键
+  else if(event.ctrlKey && event.key=='z'){
+    event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
+    console.log('keyup--按了ctrl+z')
+    //撤销操作
+    undo()
+  }
 }
 
 
@@ -628,6 +648,15 @@ function handleTextBlur(event, row){
   row.text = row.text.trim()
 }
 
+function handleTextChange(event, row, rowIndex){
+  //event.stopPropagation();// 阻止事件继续在DOM树中传播
+  console.log( `第${rowIndex+1}分段的textarea值改变了--->`, row.text)
+  //去掉row.text中的首尾空格
+  row.text = row.text.trim()
+  //添加历史记录
+  addHistoryTimes('修改分段文本')
+}
+
 //与上一分段合并
 function mergeUp(event, row){
   event.stopPropagation();// 阻止事件继续在DOM树中传播
@@ -656,8 +685,8 @@ function mergeUp(event, row){
 
     //激活合并后的行
     activateRegion(prevRow)
+    addHistoryTimes('向上合并一个分段')
     focusInput(prevRow)
-
   }
 }
 
@@ -689,6 +718,7 @@ function mergeDown(event, row){
 
     //激活合并后的行
     activateRegion(row)
+    addHistoryTimes('向下合并一个分段')
     focusInput(row)
   }
 }
@@ -898,8 +928,13 @@ function saveTask() {
   })
   // 将intervals替换到 task.textGridJson.item[0].intervals
   task.textGridJson.item[0].intervals = intervals
-  //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
+  //转换textGridJson为TG文本格式
   let textGrid = stringifyTextGrid(task.textGridJson)
+  if(task.data.textGrid === textGrid) {
+    proxy.$modal.msgError("标注内容未发生改变，无需保存")
+    return 
+  }
+  //替换task.data的TextGrid字段
   task.data.textGrid = textGrid
   //准备保存的参数
   let sysTask = {
@@ -919,22 +954,6 @@ function saveTask() {
 const validationDialogVisible = ref(false)
 const validationErrors = ref([])
 
-/** 提交任务 */
-function submitTask() {
-  // 先进行校验
-  const errors = validateSegments()
-  
-  // 如果有错误，显示校验结果对话框
-  if (errors.length > 0) {
-    validationErrors.value = errors
-    validationDialogVisible.value = true
-    return
-  }
-  
-  // 如果没有错误，直接提交
-  performSubmitTask()
-}
-
 // 校验分段是否符合规则
 function validateSegments() {
   const errors = []
@@ -945,7 +964,7 @@ function validateSegments() {
     const text = segment.text
     
     // 1. 检查分段文本字符数不超过120个字符
-    if (text.length > 120) {
+    if (text.replace(/\s+/g,'').length > 120) {
       errors.push({
         index: segmentNum,
         reason: '文本字符数超过120个',
@@ -983,14 +1002,18 @@ function validateSegments() {
   return errors
 }
 
-// 强制提交任务（忽略校验错误）
-function forceSubmitTask() {
-  validationDialogVisible.value = false
-  performSubmitTask()
-}
-
-// 实际执行提交任务的函数
-function performSubmitTask() {
+/** 提交任务 */
+function submitTask(isValidate=true) {
+  if (isValidate) {//校验数据
+    // 先进行校验
+    const errors = validateSegments()
+    // 如果有错误，显示校验结果对话框
+    if (errors.length > 0) {
+      validationErrors.value = errors
+      validationDialogVisible.value = true
+      return
+    }
+  }
   proxy.$modal.confirm('确定提交审核吗？').then(function () {
     //将最新的times转为intervals
     let intervals = times.map((ts,i)=>{
@@ -1061,23 +1084,6 @@ function rejectTask(){
   updateTask(formData).then(response => {
     proxy.$modal.msgSuccess("驳回成功")
     setTimeout(() => {
-      // proxy.$tab.closePage()  // 关闭当前页
-      // // 根据来源页面跳转回相应的列表页
-      // const returnPath = getReturnPath();
-      // if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
-      //   // 对于需要参数的路由，我们需要传递参数
-      //   const route = useRoute();
-      //   if (route.params.taskPackageId && route.params.taskPackageName) {
-      //     proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
-      //   } else {
-      //     proxy.$router.push(returnPath);
-      //   }
-      // } else if (returnPath === '/label/auditTask') {
-      //   // 为auditTask页面添加时间戳参数以触发刷新
-      //   proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
-      // } else {
-      //   proxy.$router.push(returnPath);
-      // }
       //跳转回“我的审核”页
       proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
     }, 1000)
@@ -1089,12 +1095,19 @@ function rejectTask(){
 
 
 /** 审核任务 */
-function auditTask(status) {
-  let confirmTxt = '确定审核通过吗？'
-  if(status == 'reject'){
-    confirmTxt = '确定驳回任务吗？'
+function auditTask(isValidate=true) {
+  
+  // 是否先进行校验
+  if(isValidate){
+    const errors = validateSegments()
+    // 如果有错误，显示校验结果对话框
+    if (errors.length > 0) {
+      validationErrors.value = errors
+      validationDialogVisible.value = true
+      return
+    }
   }
-  proxy.$modal.confirm(confirmTxt).then(function () {
+  proxy.$modal.confirm('确定审核通过吗？').then(function () {
     //将最新的times转为intervals
     let intervals = times.map((ts,i)=>{
       return {
@@ -1113,30 +1126,13 @@ function auditTask(status) {
     let sysTask = {
         taskId: taskId,
         textGrid: textGrid,
-        status: status,
+        status: 'pass',
       }
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
     updateTask(formData).then(response => {
       proxy.$modal.msgSuccess("审核成功")
       setTimeout(() => {
-        // proxy.$tab.closePage()  // 关闭当前页
-        // // 根据来源页面跳转回相应的列表页
-        // const returnPath = getReturnPath();
-        // if (returnPath === '/label/my-task' || returnPath === '/label/project-task') {
-        //   // 对于需要参数的路由，我们需要传递参数
-        //   const route = useRoute();
-        //   if (route.params.taskPackageId && route.params.taskPackageName) {
-        //     proxy.$router.push(`${returnPath}/index/${route.params.taskPackageId}/${encodeURIComponent(route.params.taskPackageName)}`);
-        //   } else {
-        //     proxy.$router.push(returnPath);
-        //   }
-        // } else if (returnPath === '/label/auditTask') {
-        //   // 为auditTask页面添加时间戳参数以触发刷新
-        //   proxy.$router.push({ path: returnPath, query: { t: new Date().getTime() } });
-        // } else {
-        //   proxy.$router.push(returnPath);
-        // }
         //跳转回“我的审核”页
         proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
       }, 1000)
@@ -1356,20 +1352,6 @@ function adjustSegment(times, oldSegment, newSegment) {
         result.push({ start: result[result.length - 1].end, end: duration, text: "" });
       }
 
-
-
-
-
-      // //特殊情况1：如果调整的是第一个分段的左边界增大，即调整后第一份分段的左边界大于0，则需要在该分段之前插入一个空的分段，用于保持时间轴的连续性
-      // if (index === 0 && newSegment.start > 0) {
-      //     result.unshift({ start: 0, end: newSegment.start, text: "" });
-      // }
-
-      // //特殊情况2：如果调整的是最后一个分段的右边界减小，即调整后最后一个分段的右边界小于总时长，则需要在该分段之后插入一个空的分段，用于保持时间轴的连续性
-      // if (index === result.length - 1 && newSegment.end < duration) {
-      //     result.push({ start: newSegment.end, end: duration, text: "" });
-      // }
-
       // 4. 移除任何可能产生的无效分段（如长度为0或负值的分段）
       return result.filter(seg => seg.start < seg.end);
 
@@ -1416,6 +1398,8 @@ function splitSegment(times, oldSegment, point, firstPart, secondPart) {
 
     //激活index分段
     activateRegion(newSegment)
+    //保存历史操作
+    addHistoryTimes('切割分段')
 
     return true;
 
@@ -1424,26 +1408,12 @@ function splitSegment(times, oldSegment, point, firstPart, secondPart) {
     return false;
   }
 }
-// 渲染demo波形
-async function init(){
-  console.log('init()--->')
-  const container = document.getElementById('waveform-demo')
-  if (container) {  // 判断waveform容器是否存在
 
-  // 获取任务详情信息
-  let res = await getTask(taskId);
-  console.log('任务详情：', res)
-  task.data = res.data;
-
-  getPackage(task.data.packageId).then(res=>{
-    task.package = res.data;
-    console.log('任务包详情：', task.package)
-  })
-
+function loadTextGrid(){
   if(!task.data.textGrid){
     proxy.$message.error('缺少预标注文本TextGrid')
+    return
   }
-
   // ----将预标注文本转为json---
   console.log('task.textGrid-->\n',task.data.textGrid)
   task.textGridJson = parseTextGrid(task.data.textGrid)
@@ -1469,6 +1439,25 @@ async function init(){
   //赋值区域
   times.splice(0, times.length);
   times.push(...realtimes);
+  //保存历史数据
+  addHistoryTimes('初始载入分段数据')
+}
+
+// 渲染demo波形
+async function init(){
+  console.log('init()--->')
+  const container = document.getElementById('waveform-demo')
+  if (container) {  // 判断waveform容器是否存在
+
+  // 获取任务详情信息
+  let res = await getTask(taskId);
+  console.log('任务详情：', res)
+  task.data = res.data;
+
+  getPackage(task.data.packageId).then(res=>{
+    task.package = res.data;
+    console.log('任务包详情：', task.package)
+  })
 
   // 等待DOM更新
   // await nextTick()
@@ -1522,6 +1511,11 @@ async function init(){
     console.log(`音频总时长为 ${duration} 秒`)
     audioLoadOver.value = true;
 
+
+    //加载预标注文本
+    loadTextGrid()
+    console.log('times-->', JSON.stringify(times))
+
     //末尾分段的结束时间设为音频总时长
     times[times.length - 1].end = duration
 
@@ -1554,7 +1548,7 @@ async function init(){
   })
   //创建新区域事件
   regions.on('region-created', (region) => {
-    console.log('新增区域：', region.start, region.end)
+    // console.log('新增区域：', region.start, region.end)
     region.drag = false;//禁止拖拽新区域
 
     //判断是否为代码创建区域（非手动拖拽创建）
@@ -1738,10 +1732,11 @@ async function init(){
       let oldReg = {start:activeRegion.start, end:activeRegion.end}
       let newReg = {start:start, end:end}
       let newtimes  = adjustSegment(times, oldReg, newReg)
-      if(newtimes && newtimes.length > 0){
-        times.splice(0, times.length)
-        times.push(...newtimes)
+      if(!(newtimes && newtimes.length > 0)){
+        return
       }
+      times.splice(0, times.length)
+      times.push(...newtimes)
       console.log(`调整后：`, JSON.stringify(times))
 
       //清除分段线
@@ -1772,7 +1767,8 @@ async function init(){
       activateRegion(newReg)
       //滚动到标注行
       scrollToRow(index)
-
+      //保存历史操作
+      addHistoryTimes('调整分段')
     })
 
     //单击区域事件
@@ -2071,8 +2067,8 @@ function parseTextGrid(text) {
     let currentInterval = null;
     
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line === '') continue;
+        const line = lines[i];
+        if (line.trim() === '') continue;
         
         // 解析文件类型
         if (line.startsWith('File type =')) {
@@ -2087,7 +2083,11 @@ function parseTextGrid(text) {
             result.xmin = parseFloat(line.split('=')[1].trim());
         }
         else if (line.startsWith('xmax =') && !currentItem) {
-            result.xmax = parseFloat(line.split('=')[1].trim());
+          result.xmax = parseFloat(line.split('=')[1].trim());
+          if(result.xmax != duration) {
+            console.warn(`TextGrid文件的xmax值与音频时长不匹配，已自动调整为音频总长度（${result.xmax} → ${duration}）`)
+            result.xmax = duration
+          }
         }
         // 开始新的item（只匹配带数字索引的item行）
         else if (line.match(/^\s*item\s*\[\d+\]\s*:/)) {
@@ -2101,22 +2101,26 @@ function parseTextGrid(text) {
             result.item.push(currentItem);
         }
         // 解析item的属性
-        else if (line.startsWith('class =') && currentItem) {
+        else if (line.startsWith('        class =') && currentItem) {
             currentItem.class = line.split('=')[1].trim().replace(/"/g, '');
         }
-        else if (line.startsWith('name =') && currentItem) {
+        else if (line.startsWith('        name =') && currentItem) {
             currentItem.name = line.split('=')[1].trim().replace(/"/g, '');
         }
-        else if (line.startsWith('xmin =') && currentItem && currentItem.intervals.length === 0) {
+        else if (line.startsWith('        xmin =') && currentItem && currentItem.intervals.length === 0) {
             // 只有在没有intervals时才解析item级别的xmin
             currentItem.xmin = parseFloat(line.split('=')[1].trim());
         }
-        else if (line.startsWith('xmax =') && currentItem && currentItem.intervals.length === 0) {
+        else if (line.startsWith('        xmax =') && currentItem && currentItem.intervals.length === 0) {
             // 只有在没有intervals时才解析item级别的xmax
             currentItem.xmax = parseFloat(line.split('=')[1].trim());
+            if(currentItem.xmax != duration) {
+              // proxy.$message.error('警告：TextGrid文件的item级别的xmax值与音频时长不匹配，已自动调整为音频总长度。')
+              currentItem.xmax = duration
+            }
         }
         // 开始新的interval
-        else if (line.match(/^\s*intervals\s*\[\d+\]\s*:/)) {
+        else if (line.match(/^\s*intervals\s*\[\d+\]\s*/)) {
             if (currentItem) {
                 currentInterval = {
                     xmin: 0,
@@ -2127,17 +2131,38 @@ function parseTextGrid(text) {
             }
         }
         // 解析interval的属性
-        else if (line.startsWith('xmin =') && currentInterval) {
+        else if (line.startsWith('            xmin =') && currentInterval) {
             currentInterval.xmin = parseFloat(line.split('=')[1].trim());
         }
-        else if (line.startsWith('xmax =') && currentInterval) {
+        else if (line.startsWith('            xmax =') && currentInterval) {
             currentInterval.xmax = parseFloat(line.split('=')[1].trim());
         }
-        else if (line.startsWith('text =') && currentInterval) {
+        else if (line.startsWith('            text =') && currentInterval) {
             currentInterval.text = line.split('=')[1].trim().replace(/"/g, '');
         }
     }
-    
+    //确保intervals的最后一个interval的xmax要和item.xmax对齐，如果不是则添加一个新的空白interval填补这个间隙
+    for (let i = 0; i < result.item.length; i++) {
+        const item = result.item[i];
+        if (item.intervals.length > 0) {
+            const lastInterval = item.intervals[item.intervals.length - 1];
+            if (lastInterval.xmax < item.xmax) {
+                // 填补间隙的空白interval
+                item.intervals.push({
+                    xmin: lastInterval.xmax,
+                    xmax: item.xmax,
+                    text: ""
+                });
+            }
+        } else {
+            // 没有intervals时，直接设置xmin和xmax为item级别的值
+            item.intervals.push({
+                xmin: item.xmin,
+                xmax: item.xmax,
+                text: ""
+            });
+        }
+    }
     return result;
 }
 
@@ -2317,23 +2342,80 @@ let times = reactive([
 // 上次单击音频波形图的时间
 let lastClickTime = 0
 
-const historyTimes = [] //存放标注历史记录的数组
+const historyTimes = ref([]) //存放标注历史记录的数组
 let historyIndex = -1 //当前回退的标注历史记录的下标值，-1代表不回退
-watch(times, (newVal, oldVal) => {
-  if(historyIndex > -1){//正在回退历史记录
-    //回退时的更改不放到历史记录中
-    console.log('正在回退版本，更改不放入历史记录中')
-  }else{//不是退回历史的更改
-    //更改放到历史记录中
-    historyTimes.push({
-        timesData: newVal,
-        currentRegion: activeRegion,
-        time: formatDateTime(new Date(), 'yyyy-MM-dd HH:mm:ss')
-    })
-    console.log('新增历史记录', JSON.parse(JSON.stringify(historyTimes)))
-  }
-}, { immediate: true, deep: true })
+// watch(times, (newVal, oldVal) => {
+//   if(historyIndex > -1){//正在回退历史记录
+//     //回退时的更改不放到历史记录中
+//     console.log('正在回退版本，更改不放入历史记录中')
+//   }else{//不是退回历史的更改
+//     //更改放到历史记录中
+//     historyTimes.value.push({
+//         timesData: newVal,
+//         currentRegion: activeRegion,
+//         time: formatDateTime(new Date(), 'yyyy-MM-dd HH:mm:ss')
+//     })
+//     console.log('新增历史记录', JSON.parse(JSON.stringify(historyTimes)))
+//   }
+// }, { immediate: true, deep: true })
 
+//新增操作历史记录
+function addHistoryTimes(actionName) {
+  //判断当前times历史最后一次数据timesData是否相同，如果相同则不新增历史记录
+  if(historyTimes.value.length>0 && JSON.stringify(times) === historyTimes.value[historyTimes.value.length-1].timesData){
+    console.log('当前操作与上一次相同，不新增历史记录')
+    return
+  }
+  historyTimes.value.push({
+    actionName: actionName,
+    timesData: JSON.stringify(times),
+    activeRegion: JSON.stringify(activeRegion),
+    actionTime: formatDateTime(new Date(), 'yyyy-MM-dd HH:mm:ss')
+  })
+  console.log('新增历史记录', JSON.parse(JSON.stringify(historyTimes.value)))
+}
+
+//退回上一次操作
+function undo(){
+  if(historyTimes.value.length<=1){
+    proxy.$message.error('没有历史操作可以撤销了')
+    return
+  };
+
+  // proxy.$modal.confirm('是否放弃更改并回退到上一次操作？').then(function () {
+    
+    //将historyTimes里倒数第二次操作的数据取出
+    let ht = historyTimes.value[historyTimes.value.length-2]
+    if(!ht)return;
+    // console.log('退回历史操作', JSON.stringify(ht))
+    //替换历史分段数据
+    times.splice(0, times.length)
+    times.push(...JSON.parse(ht.timesData))
+    //清除所有区域
+    regions.clearRegions()
+    setTimeout(()=>{
+      //重新创建分段线
+      times.forEach((e, index) => {
+        regionCreationSource = 'code'
+        regions.addRegion({
+          start: e.start,
+          content: `${index+1}`,
+          color: '#666',
+          drag: false,
+          resize: false
+        })
+      })
+    },100)
+    setTimeout(()=>{
+      activateRegion(JSON.parse(ht.activeRegion))
+    },200)
+    //丢弃下一步操作的历史记录
+    historyTimes.value.splice(historyTimes.value.length-1, 1)
+    console.log('退回历史记录后', JSON.parse(JSON.stringify(historyTimes.value)))
+
+  // });
+  
+}
 
 function deepEqual(obj1, obj2) {
   // 严格相等检查（处理基本类型和相同引用）
