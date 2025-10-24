@@ -18,7 +18,10 @@
         <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">标注规范</el-link>
 
         <div v-if="['underway','reject'].includes(task.data.status)">
-          <!-- <el-button type="primary" @click="openHisoryOperDrawer">历史记录</el-button> -->
+          <!-- <el-button type="primary" @click="openHisoryOperDrawer">历史记录</el-button>
+          <el-tooltip class="box-item" content="对比标注前的文本差异" placement="top">
+            <el-button type="default" plain @click="showTextDiff()">对比</el-button>
+          </el-tooltip> -->
           <el-tooltip class="box-item" content="撤回到上一次操作（Ctrl+Z）" placement="top">
             <el-button type="danger" plain :disabled="historyTimes.length<=1" @click="undo()">撤销</el-button>
           </el-tooltip>
@@ -259,6 +262,27 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 标注前后的TextGrid对比 -->
+    <el-dialog  v-model="diffDialogVisible" :fullscreen="false" width="90%">
+      <div style="display: flex; justify-content: space-around; ">
+        <el-text class="mx-1" size="large">预标注文本内容（标注前）</el-text>
+        <el-text class="mx-1" size="large">当前标注文本内容</el-text>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; height: calc(100vh - 200px);">
+        <div style="flex: 1; overflow-y: auto;">
+          <!-- :old-string="task.data.originalTextGrid" -->
+            <!-- :new-string="task.data.textGrid" -->
+          <code-diff
+            :old-string="oldText"
+            :new-string="newText"
+            output-format="side-by-side"
+            xlanguage="javascript"
+            theme="light"
+          />
+        </div>
+      </div>
+    </el-dialog>
     
   </div>
 </template>
@@ -386,6 +410,40 @@ function updateFormHistory(history) {
 
 
 //=========================定义函数=========================
+//显示TG对比
+const diffDialogVisible = ref(false)
+const oldText = ref('')
+const newText = ref('')
+//将标注文本textGridJson转换为文本
+function convertText(textGridJson){
+  let textArray = textGridJson.item[0].intervals.map( (row, index)=>{
+    return `${row.text||''}`
+  })
+  return textArray.join('\n')
+}
+//显示标注前后文本对比
+function showTextDiff(){
+  //获取原始的分段数据
+  let oldTextGridJson = parseTextGrid(task.data.originalTextGrid)
+  //将转换为分段号+文本
+  oldText.value = convertText(oldTextGridJson)
+  //-------------------------
+  //获取最新的分段数据intervals
+  let intervals = times.map((ts,i)=>{
+    return {
+      index: (i+1),
+      xmin: ts.start,
+      xmax: ts.end,
+      text: ts.text,
+    }
+  })
+  // 将intervals替换到 task.textGridJson.item[0].intervals
+  task.textGridJson.item[0].intervals = intervals
+  // 转换为分段号+文本
+  newText.value = convertText(task.textGridJson)
+  diffDialogVisible.value = true
+}
+
 //操作方法
 const operationTipDialogVisible = ref(false)
 const operationTipContent = ref('')
@@ -1483,7 +1541,7 @@ async function init(){
         scale: 0.2,
         // Optionally, specify the maximum pixels-per-second factor while zooming
         //可选项地指定缩放时的最大每秒像素数值
-        maxZoom: 150,
+        maxZoom: 300,
       }),
     ],
   })
