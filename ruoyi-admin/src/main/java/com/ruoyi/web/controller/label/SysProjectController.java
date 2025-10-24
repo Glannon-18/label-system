@@ -44,6 +44,8 @@ public class SysProjectController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(SysProject sysProject)
     {
+        // 设置查询条件，只查询当前登录用户创建的项目
+        sysProject.setCreateBy(getUsername());
         startPage();
         List<SysProject> list = sysProjectService.selectSysProjectList(sysProject);
         return getDataTable(list);
