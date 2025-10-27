@@ -10,25 +10,21 @@
         <el-link underline style="margin-right: 12px;" @click="showOperationTip()">快捷键</el-link>
         <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">标注规范</el-link>
         
-        <!-- <div v-if="['unstart','underway','reject','pass'].includes(task.data.status)">
-          
-          
-          <el-button type="success" plain @click="submitTask()">提交审核</el-button>
-        </div> -->
-
         <div v-if="['pending_review'].includes(task.data.status)">
-          <!-- <el-button type="warning" plain @click="redo()">重置</el-button> -->
           <el-tooltip class="box-item" content="对比标注前的文本差异" placement="top">
             <el-button type="default" plain @click="showTextDiff()">对比</el-button>
           </el-tooltip>
+          
           <el-tooltip class="box-item" content="撤回到上一次操作（Ctrl+Z）" placement="top">
-            <el-button type="danger" plain :disabled="historyTimes.length<=1" @click="undo()">撤销</el-button>
+            <el-button type="danger" plain :disabled="historyTimes.length<=1" @click="undo()">撤消</el-button>
           </el-tooltip>
           <el-tooltip class="box-item" content="保存更改（Ctrl+S）" placement="top">
             <el-button type="primary" plain @click="saveTask()">保存</el-button>
           </el-tooltip>
+
           <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">审核驳回</el-button>
           <el-button type="success" plain @click="auditTask(true)" vhasPermi="['label:task:audit']">审核通过</el-button>
+        
         </div>
 
         <!-- 审核驳回对话框 -->
@@ -53,9 +49,22 @@
     <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
       <div style="display: flex; align-items: center;">
         <span style="margin-right: 12px;width:120px;">{{ currentTime }} / {{ duration }} </span>
-        <el-button type="info" plain id="backward">上一段</el-button>
-        <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
-        <el-button type="info" plain id="forward">下一段</el-button>
+        <el-tooltip content="上一段" placement="top">
+        <el-button type="primary" id="backward" round plain>
+          <el-icon style="transform: rotate(90deg)" ><Download /></el-icon>
+        </el-button>
+        </el-tooltip>
+        <el-tooltip :content="isPlaying?'暂停':'播放'" placement="top">
+        <el-button type="primary" id="play"  round plain>
+          <span v-if="isPlaying" style="font-size: 20px;">■</span>
+          <span v-else>▶</span>
+        </el-button>
+        </el-tooltip>
+        <el-tooltip content="下一段" placement="top">
+        <el-button type="primary" id="forward" round plain>
+          <el-icon style="transform: rotate(270deg)" ><Download /></el-icon>
+        </el-button>
+        </el-tooltip>
         <view style="margin-left: 12px;display: flex;align-items: center;">
           音量 <el-slider v-model="volume" style="width: 100px;margin-left: 3px;" />
         </view>
@@ -168,34 +177,31 @@
     <!-- 操作方法 -->
     <el-dialog v-model="operationTipDialogVisible" title="" width="700">
       <div data-v-2bde42cb="" style="font-size: 16px;color: rgb(51, 51, 51);">
-        <p>-------------操作方法-------------</p>
-        <p><strong >缩放波形</strong><span >：鼠标指针在波形图内，滚动鼠标滚轮进行缩放</span></p>
-        <!-- <p><strong >激活分段</strong><span >：点击波形图非高亮区域，相应分段被激活(高亮)</span></p> -->
-        <!-- <p><strong >取消激活</strong><span >：点击波形图的高亮区域，相应分段取消激活</span></p> -->
-        <!-- <p><strong >新增分段</strong><span >：在非激活(非高亮)区域，点击并拖动鼠标选择区域</span></p> -->
+        <el-divider>操作方法</el-divider>
+        <p><strong >缩放波形</strong><span >：在波形图上，直接滚动鼠标滚轮。</span></p>
          <p style="display: flex; justify-content: flex-start;line-height: 30px;">
           <span><strong >切割分段</strong>：</span>
-          <span>方法① 在音频波形图区域内，双击鼠标进行切分<br/>
-            方法② 在分段标注文本内容输入框内,按【回车】键进行切分
+          <span>方法①​：在波形目标位置双击。
+          <br/>方法②​：在分段标注框中按【回车】键。
           </span>
         </p>
-        <p><strong >调整分段</strong><span >：在高亮区域的边界,鼠标指针变成 ↔ 时,点击拖动边界线</span></p>
+        <p><strong >调整分段</strong><span >：将鼠标移至分段高亮区域的边界，当指针变为 ​↔​ 时，拖动即可调整分段范围。</span></p>
         <p style="display: flex; justify-content: flex-start;line-height: 30px;">
           <span><strong >合并分段</strong>：</span>
-          <span>方法① 在调整分段边界时,拖动边界使区域完全包含(覆盖)要合并的分段<br/>
-            方法② 点击高亮分段的标注文本输入框后的按钮
+          <span>方法① 拖动一个分段的边界，使其完全覆盖(包含)相邻的分段。<br/>
+            方法② 点击分段标注文本框后的
             <el-tooltip content="合并上一段" placement="top"><el-button size="small" type="primary" icon="Upload" round  plain/></el-tooltip>
-            /<el-tooltip content="合并下一段" placement="bottom"><el-button style="margin-left: 2px;" size="small" type="primary" icon="Download" round  plain/></el-tooltip>合并上/下分段
+            /<el-tooltip content="合并下一段" placement="bottom"><el-button style="margin-left: 2px;" size="small" type="primary" icon="Download" round  plain/></el-tooltip>按钮
           </span>
         </p>
-        <p>-------------快捷键-------------</p>
+        <el-divider>快捷键</el-divider>
         <p><strong >跳至上一段</strong><span >：按方向【↑】键</span></p>
         <p><strong >跳至下一段</strong><span >：按方向【↓】键</span></p>
         <p><strong >合并上一段</strong><span >：按【Alt+↑】方向键</span></p>
         <p><strong >合并下一段</strong><span >：按【Alt+↓】方向键</span></p>
         <p><strong >播放/暂停</strong><span >：按【空格】键</span></p>
         <p><strong >保存更改</strong><span >：按【Ctrl+S】键</span></p>
-        <p><strong >撤销操作</strong><span >：按【Ctrl+Z】键</span></p>
+        <p><strong >撤消更改</strong><span >：按【Ctrl+Z】键</span></p>
       </div>
     </el-dialog>
     <!-- 标注规范 -->
@@ -242,10 +248,10 @@
           <li v-for="(item, index) in validationErrors" :key="index" style="margin-bottom: 10px;">
             <span style="font-weight: bold;">第{{ item.index }}分段：</span>
             <span>{{ item.reason }}</span>
-            <div style="margin-left: 20px; font-size: 12px; color: #666;">
+            <!-- <div style="margin-left: 20px; font-size: 12px; color: #666;">
               <span>时长: {{ item.duration }}s</span>
               <span style="margin-left: 10px;">文本: "{{ item.text }}"</span>
-            </div>
+            </div> -->
           </li>
         </ul>
       </div>
@@ -253,8 +259,8 @@
         <div class="dialog-footer">
           <el-button @click="validationDialogVisible = false">取消提交</el-button>
           <el-button type="primary" @click="auditTask(false)">审核通过</el-button>
-  </div>
-</template>
+        </div>
+      </template>
     </el-dialog>
 
     <!-- 标注前后的TextGrid对比 -->
@@ -264,14 +270,12 @@
         <el-text class="mx-1" size="large">当前标注文本内容</el-text>
       </div>
       <div style="flex: 1; display: flex; flex-direction: column; height: calc(100vh - 200px);">
-        <div style="flex: 1; overflow-y: auto;">
-          <!-- :old-string="task.data.originalTextGrid" -->
-            <!-- :new-string="task.data.textGrid" -->
+        <div style="flex: 1; overflow-y: auto;" class="custom-diff-container">
           <code-diff
             :old-string="oldText"
             :new-string="newText"
+            diff-style="char"
             output-format="side-by-side"
-            xlanguage="javascript"
             theme="light"
           />
         </div>
@@ -404,12 +408,14 @@ const handleSpace = (event) => {
   if (event.key === ' ') { 
     if(ws.getCurrentTime() >= activeRegion.end){
       regions.getRegions().forEach(reg=>{
-        if(reg.start== activeRegion.start && reg.end==activeRegion.end){
+        if(reg.start== activeRegion.start && reg.end==activeRegion.end){          
           reg.play()
+          playStatus = true
         }
       })
     }else{
       ws.playPause()//音频播放/暂停
+      playStatus = false
     }
 
     event.preventDefault(); // 阻止元素的默认行为
@@ -872,7 +878,7 @@ function redo(){
 }
 
 /** 保存任务  */
-function saveTask() {
+function saveTask(autoSave=false) {
   //将最新的times转为intervals
   let intervals = times.map((ts,i)=>{
     return {
@@ -901,8 +907,9 @@ function saveTask() {
   formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
   updateTask(formData).then(response => {
     console.log(response)
-    proxy.$modal.msgSuccess("保存成功")
+    proxy.$modal.msgSuccess(autoSave?"自动保存成功":"保存成功")
   })
+  resetAutoSaveTimer()
 }
 
 
@@ -1447,13 +1454,16 @@ async function init(){
   // 加载音频文件    
   ws.load( getAudioUrl(task.data.audioFilePath) )
 
-    ws.on('loading', (percent) => {
-      audioLoadprogress.value = percent;
-    })
+  ws.on('loading', (percent) => {
+    audioLoadprogress.value = percent;
+  })
 
   ws.on('play', () => {
-    console.log('ws.pay-->currentTime:', ws.getCurrentTime())
-    currentTime.value = ws.getCurrentTime()
+    isPlaying.value = true;
+  })
+
+  ws.on('pause', () => {
+    isPlaying.value = false;
   })
 
   ws.on('zoom', (minPxPerSec) => {
@@ -1829,6 +1839,7 @@ async function init(){
       currentTime.value = ct
       if (activeRegion && ctime > activeRegion.end) {//播放到达当前激活分段的末尾
         ws.pause()
+        playStatus = true
         // if(playMode=='single_cycle'){//单段循环
         //   //重新激活当前分段
           // activateRegion(activeRegion)
@@ -1885,7 +1896,7 @@ async function init(){
 
     if (forwardButton) {
       forwardButton.onclick = () => {
-        let regionIndex = 0
+        let regionIndex = -1
         //1.定位当前段    
         // 查找当前激活的分段
         if(activeRegion.end - activeRegion.start >0){
@@ -1909,7 +1920,7 @@ async function init(){
 
     if (backButton) {
       backButton.onclick = () => {
-        let regionIndex = 0
+        let regionIndex = -1
         //1.定位当前段    
         // 查找当前激活的分段
         if(activeRegion.end - activeRegion.start >0){
@@ -1938,6 +1949,16 @@ async function init(){
 function activateRegion(ts){
   console.log('>>>激活目标分段>>>', JSON.stringify(ts))
 
+  if(activeRegion.start==ts.start && activeRegion.end==ts.end){
+    //已经是激活的分段
+    console.log('是激活的分段', activeRegion)
+    return
+  }else{
+    console.log('未激活的分段', activeRegion)
+    ws.setTime(ts.start)
+  }
+
+
   // 1.清除非分段线（取消激活区域）
   regions.getRegions().forEach((region) => {
     if (region.start != region.end) {
@@ -1959,7 +1980,10 @@ function activateRegion(ts){
   //设置区域属性（在created事件中获取不到区域属性，只能通过region.getProperties()获取）
   //region['clickAdd'] = true //点击新增区域的标识
 
-  region.play()
+  if(playStatus){
+    region.play()
+  }
+  
 
   //记录当前区域为激活区域
   activeRegion.start = ts.start;
@@ -2220,8 +2244,12 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 
-
-//播放状态控制(true为播放，false为暂停)
+// 定时保存相关变量
+let autoSaveTimer = null
+const AUTO_SAVE_INTERVAL = 10 * 60 * 1000 // 10分钟
+// 音频播放状态（true为正在播放，false为暂停）
+let isPlaying = ref(false)
+// 播放状态控制(true为播放，false为暂停)
 let playStatus = ref(true)
 
 let playMode = 'single_cycle' //播放模式（）
@@ -2438,6 +2466,28 @@ function formatDateTime(date, format) {
     .replace('ss', seconds);
 }
 
+// 启动定时保存功能
+function startAutoSaveTimer() {
+  // 先清除已存在的定时器
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+  }
+  
+  // 设置新的定时器
+  autoSaveTimer = setInterval(() => {
+    console.log("执行定时保存任务");
+    saveTask(true);
+  }, AUTO_SAVE_INTERVAL);
+  
+  console.log("定时保存功能已启动，每10分钟保存一次");
+}
+
+// 重置定时保存计时器
+function resetAutoSaveTimer() {
+  console.log("重置定时保存计时器");
+  
+}
+
 //表格
 const tableRef = ref()
 
@@ -2611,10 +2661,12 @@ onUnmounted(() => {
   padding-right: 40px;
 }
 
-.code-diff {
-  font-family: 'Monaco', 'Consolas', monospace;
-  font-size: 24px;
-  border: 1px solid #e6e6e6;
-  border-radius: 4px;
+
+/* 专门针对代码内容和行号设置字体大小 */
+.custom-diff-container :deep(.blob-num), /* 行号 */
+.custom-diff-container :deep(.blob-code-inner) { /* 代码内容 */
+  font-size: 20px !important; /* 使用 !important 确保覆盖默认样式 */
+  line-height: 1.2; /* 可以同时调整行高以获得更好视觉效果 */
+  padding: 5px 0; /* 适当增加内边距 */
 }
 </style>
