@@ -116,7 +116,16 @@
           <dict-tag :options="package_type" :value="scope.row.type" />
         </template>
       </el-table-column>
-      <el-table-column :label="$t('label.taskPackage.assigner')" align="center" prop="assigner" />
+      <el-table-column :label="$t('label.taskPackage.assigner')" align="center" prop="assigner" >
+        <template #default="scope">
+          <span v-if="scope.row.assigner && scope.row.assignerNickName">
+            ({{ scope.row.assigner }}){{ scope.row.assignerNickName }}
+          </span>
+          <span v-else-if="scope.row.assigner">
+            {{ scope.row.assigner }}
+          </span>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('label.taskPackage.creator')" align="center" prop="createBy" />
       <el-table-column :label="$t('label.taskPackage.create_time')" align="center" prop="createTime" width="180">
         <template #default="scope">
