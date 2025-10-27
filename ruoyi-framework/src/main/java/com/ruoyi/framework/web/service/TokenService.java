@@ -49,7 +49,7 @@ public class TokenService
 
     protected static final long MILLIS_MINUTE = 60 * MILLIS_SECOND;
 
-    private static final Long MILLIS_MINUTE_TWENTY = 20 * 60 * 1000L;
+    private static final Long MILLIS_MINUTE_TWENTY = 120 * 60 * 1000L;
 
     @Autowired
     private RedisCache redisCache;
