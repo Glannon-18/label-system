@@ -1,16 +1,16 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="任务名称" prop="audioFileName">
+      <el-form-item :label="$t('label.auditTask.task_name')" prop="audioFileName" label-width="auto">
         <el-input
             v-model="queryParams.audioFileName"
-            placeholder="请输入任务名称"
+            :placeholder="$t('label.auditTask.enter_task_name')"
             clearable
             @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="任务状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="请选择任务状态" clearable style="width: 120px;">
+      <el-form-item :label="$t('label.auditTask.task_status')" prop="status" label-width="auto">
+        <el-select v-model="queryParams.status" :placeholder="$t('label.auditTask.select_task_status')" clearable style="width: 120px;">
           <el-option
               v-for="dict in task_status"
               :key="dict.value"
@@ -20,8 +20,8 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('label.auditTask.search') }}</el-button>
+        <el-button icon="Refresh" @click="resetQuery">{{ $t('label.auditTask.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
@@ -31,25 +31,25 @@
 
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="音频文件名" align="center" prop="audioFileName" :show-overflow-tooltip="true">
+      <el-table-column :label="$t('label.auditTask.audio_file_name')" align="center" prop="audioFileName" :show-overflow-tooltip="true">
         <template #default="scope">
           <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
         </template>
       </el-table-column>
-      <el-table-column label="任务状态" align="center" prop="status">
+      <el-table-column :label="$t('label.auditTask.task_status_col')" align="center" prop="status">
         <template #default="scope">
           <el-tag :type="getStatusTagType(scope.row.status)">{{ getStatusTagName(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="标注人员" align="center" prop="packageAssigner" />
-      <el-table-column label="创建者" align="center" prop="createBy" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+      <el-table-column :label="$t('label.auditTask.annotator')" align="center" prop="packageAssigner" />
+      <el-table-column :label="$t('label.auditTask.creator')" align="center" prop="createBy" />
+      <el-table-column :label="$t('label.auditTask.create_time')" align="center" prop="createTime" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="备注" align="center" prop="remark" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column :label="$t('label.auditTask.remark')" align="center" prop="remark" />
+      <el-table-column :label="$t('label.auditTask.operation')" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button 
             type="primary" 
@@ -58,13 +58,13 @@
             @click="handleToAnnotator(scope.row)">
 <!--            v-if="scope.row.status === 'pending_review'"-->
 <!--          >-->
-            审核
+            {{ $t('label.auditTask.audit') }}
           </el-button>
           <el-button 
             icon="View"
             size="default" 
             @click="handleShowProgress(scope.row)">
-            查看进度
+            {{ $t('label.auditTask.view_progress') }}
           </el-button>
         </template>
       </el-table-column>
@@ -79,7 +79,7 @@
     />
 
     <!-- 任务进度弹窗 -->
-    <el-dialog title="任务进度" v-model="progressDialogVisible" width="600px" append-to-body>
+    <el-dialog :title="$t('label.auditTask.task_progress')" v-model="progressDialogVisible" width="600px" append-to-body>
       <div v-loading="progressLoading">
         <el-timeline>
           <el-timeline-item
@@ -89,12 +89,12 @@
             placement="top">
             <div class="progress-item">
               <h4>{{ getStatusDescription(log.status) }}</h4>
-              <p>操作人: {{ log.createBy }}</p>
-              <p v-if="log.remark">备注: {{ log.remark }}</p>
+              <p>{{ $t('label.auditTask.operator') }}: {{ log.createBy }}</p>
+              <p v-if="log.remark">{{ $t('label.auditTask.remark') }}: {{ log.remark }}</p>
             </div>
           </el-timeline-item>
         </el-timeline>
-        <div v-if="progressLogs.length === 0" class="empty-tips">暂无进度记录</div>
+        <div v-if="progressLogs.length === 0" class="empty-tips">{{ $t('label.auditTask.no_progress_records') }}</div>
       </div>
     </el-dialog>
   </div>
@@ -156,7 +156,26 @@ function getStatusTagType(status) {
 function getStatusTagName(status) {
   // task_status 是一个 ref 对象，需要通过 .value 访问实际数组
   const statusObj = task_status.value.find(item => item.value === status)
-  return statusObj ? statusObj.label : status
+  
+  // 如果在字典中找不到对应的状态，则根据状态代码返回国际化文本
+  if (!statusObj) {
+    switch (status) {
+      case 'unstart':
+        return proxy.$t('label.auditTask.unstart')
+      case 'underway':
+        return proxy.$t('label.auditTask.underway')
+      case 'pending_review':
+        return proxy.$t('label.auditTask.pending_review')
+      case 'reject':
+        return proxy.$t('label.auditTask.reject')
+      case 'pass':
+        return proxy.$t('label.auditTask.pass')
+      default:
+        return status
+    }
+  }
+  
+  return statusObj.label
 }
 
 /**
@@ -164,7 +183,26 @@ function getStatusTagName(status) {
  */
 function getStatusDescription(status) {
   const statusObj = task_status.value.find(item => item.value === status)
-  return statusObj ? statusObj.label : status
+  
+  // 如果在字典中找不到对应的状态，则根据状态代码返回国际化文本
+  if (!statusObj) {
+    switch (status) {
+      case 'unstart':
+        return proxy.$t('label.auditTask.unstart')
+      case 'underway':
+        return proxy.$t('label.auditTask.underway')
+      case 'pending_review':
+        return proxy.$t('label.auditTask.pending_review')
+      case 'reject':
+        return proxy.$t('label.auditTask.reject')
+      case 'pass':
+        return proxy.$t('label.auditTask.pass')
+      default:
+        return status
+    }
+  }
+  
+  return statusObj.label
 }
 
 /** 查询任务列表 */
@@ -220,7 +258,7 @@ function handleShowProgress(row) {
     progressLoading.value = false
   }).catch(() => {
     progressLoading.value = false
-    proxy.$message.error("获取任务进度失败")
+    proxy.$message.error(proxy.$t("label.auditTask.failed_to_get_progress"))
   })
 }
 

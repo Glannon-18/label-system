@@ -2,18 +2,18 @@
   <div class="app-container">
     <el-row :gutter="10" class="mb8">
       <el-col :span="24">
-        <h2> 任务包名称：{{ taskPackageName }}</h2>
+        <h2>{{ $t('label.annotatorTask.task_package_name') }}：{{ taskPackageName }}</h2>
       </el-col>
     </el-row>
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="任务状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="请选择任务状态" clearable style="width: 120px;">
+      <el-form-item :label="$t('label.annotatorTask.task_status')" prop="status">
+        <el-select v-model="queryParams.status" :placeholder="$t('label.annotatorTask.select_task_status')" clearable style="width: 120px;">
           <el-option v-for="dict in task_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('label.annotatorTask.search') }}</el-button>
+        <el-button icon="Refresh" @click="resetQuery">{{ $t('label.annotatorTask.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
@@ -24,30 +24,30 @@
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <!--      <el-table-column label="任务ID" align="center" prop="taskId" />-->
-      <el-table-column label="音频文件名" align="center" prop="audioFileName" :show-overflow-tooltip="true">
+      <el-table-column :label="$t('label.annotatorTask.audio_file_name')" align="center" prop="audioFileName" :show-overflow-tooltip="true">
         <template #default="scope">
           <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
         </template>
       </el-table-column>
-      <el-table-column label="任务状态" align="center" prop="status">
+      <el-table-column :label="$t('label.annotatorTask.task_status_col')" align="center" prop="status">
         <template #default="scope">
           <el-tag :type="getStatusTagType(scope.row.status)">{{ getStatusTagName(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
       <!--      <el-table-column label="分配人账户名" align="center" prop="annotator" />-->
       <!--      <el-table-column label="审核人员账户名" align="center" prop="auditor" />-->
-      <el-table-column label="创建者" align="center" prop="createBy" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+      <el-table-column :label="$t('label.annotatorTask.creator')" align="center" prop="createBy" />
+      <el-table-column :label="$t('label.annotatorTask.create_time')" align="center" prop="createTime" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="备注" align="center" prop="remark" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column :label="$t('label.annotatorTask.remark')" align="center" prop="remark" />
+      <el-table-column :label="$t('label.annotatorTask.operation')" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button v-if="['underway','reject'].includes(scope.row.status)"  
           type="primary" icon="Edit" size="default" 
-          @click="handleToAnnotator(scope.row)">标注</el-button>
+          @click="handleToAnnotator(scope.row)">{{ $t('label.annotatorTask.annotate') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -110,7 +110,26 @@ function getStatusTagType(status) {
 function getStatusTagName(status) {
   // task_status 是一个 ref 对象，需要通过 .value 访问实际数组
   const statusObj = task_status.value.find(item => item.value === status)
-  return statusObj ? statusObj.label : status
+  
+  // 如果在字典中找不到对应的状态，则根据状态代码返回国际化文本
+  if (!statusObj) {
+    switch (status) {
+      case 'unstart':
+        return proxy.$t('label.annotatorTask.unstart')
+      case 'underway':
+        return proxy.$t('label.annotatorTask.underway')
+      case 'pending_review':
+        return proxy.$t('label.annotatorTask.pending_review')
+      case 'reject':
+        return proxy.$t('label.annotatorTask.reject')
+      case 'pass':
+        return proxy.$t('label.annotatorTask.pass')
+      default:
+        return status
+    }
+  }
+  
+  return statusObj.label
 }
 
 /** 查询任务列表 */

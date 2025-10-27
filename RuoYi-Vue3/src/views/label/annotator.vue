@@ -24,7 +24,7 @@ const data = reactive({
   },
   rules: {
     name: [
-      { required: true, message: "任务包名不能为空", trigger: "blur" }
+      { required: true, message: proxy.$t("label.taskPackage.task_package_name_not_empty"), trigger: "blur" }
     ],
   }
 })
@@ -55,7 +55,7 @@ function resetQuery() {
 
 /** 接收按钮操作 */
 function handleReception(row) {
-  proxy.$modal.confirm('确认接收任务包之后，将无法修改任务包，确认要接收任务包"' + row.name + '"吗？').then(function () {
+  proxy.$modal.confirm(proxy.$t('label.annotator.confirm_reception', { name: row.name })).then(function () {
     // 更新任务包状态为已接收
     const taskPackage = {
       taskPackageId: row.taskPackageId,
@@ -64,7 +64,7 @@ function handleReception(row) {
     return receptionPackage(taskPackage)
   }).then(() => {
     getList()
-    proxy.$modal.msgSuccess("接收成功")
+    proxy.$modal.msgSuccess(proxy.$t("label.annotator.reception_success"))
   }).catch(() => { })
 }
 
@@ -85,52 +85,52 @@ getList()
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="任务包名" prop="name">
-        <el-input v-model="queryParams.name" placeholder="请输入任务包名" clearable @keyup.enter="handleQuery" />
+      <el-form-item :label="$t('label.annotator.task_package_name')" prop="name" label-width="auto">
+        <el-input v-model="queryParams.name" :placeholder="$t('label.annotator.enter_task_package_name')" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="任务包状态" prop="status" label-width="auto">
-        <el-select v-model="queryParams.status" placeholder="请选择任务包状态" clearable style="width: 120px;">
+      <el-form-item :label="$t('label.annotator.task_package_status')" prop="status" label-width="auto">
+        <el-select v-model="queryParams.status" :placeholder="$t('label.annotator.select_task_package_status')" clearable style="width: 120px;">
           <el-option v-for="dict in package_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('label.annotator.search') }}</el-button>
+        <el-button icon="Refresh" @click="resetQuery">{{ $t('label.annotator.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
     <el-table v-loading="loading" :data="packageList">
-      <el-table-column label="任务包名" align="center" prop="name">
+      <el-table-column :label="$t('label.annotator.task_package_name_col')" align="center" prop="name">
         <template #default="scope">
           <el-link type="primary" @click="goToTask(scope.row)">
             {{ scope.row.name }}
           </el-link>
         </template>
       </el-table-column>
-      <el-table-column label="任务包状态" align="center" prop="status">
+      <el-table-column :label="$t('label.annotator.task_package_status_col')" align="center" prop="status">
         <template #default="scope">
           <dict-tag :options="package_status" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="任务包类型" align="center" prop="type">
+      <el-table-column :label="$t('label.annotator.task_package_type')" align="center" prop="type">
         <template #default="scope">
           <dict-tag :options="package_type" :value="scope.row.type" />
         </template>
       </el-table-column>
-      <el-table-column label="项目名" align="center" prop="projectName" />
-      <el-table-column label="分配人" align="center" prop="assigner" />
-      <el-table-column label="创建者" align="center" prop="createBy" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+      <el-table-column :label="$t('label.annotator.project_name')" align="center" prop="projectName" />
+      <el-table-column :label="$t('label.annotator.assigner')" align="center" prop="assigner" />
+      <el-table-column :label="$t('label.annotator.creator')" align="center" prop="createBy" />
+      <el-table-column :label="$t('label.annotator.create_time')" align="center" prop="createTime" width="180">
         <template #default="scope">
           <span>{{ proxy.parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="备注" align="center" prop="remark" />
+      <el-table-column :label="$t('label.annotator.remark')" align="center" prop="remark" />
 
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column :label="$t('label.annotator.operation')" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" @click="handleReception(scope.row)" v-if="scope.row.status !== 'reception'">
-            接收
+            {{ $t('label.annotator.reception') }}
           </el-button>
         </template>
       </el-table-column>

@@ -1,34 +1,34 @@
 <template>
     <div class="app-container">
         <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-            <el-form-item label="任务id" prop="taskId">
-                <el-input v-model="queryParams.taskId" placeholder="请输入任务id" clearable @keyup.enter="handleQuery" />
+            <el-form-item :label="$t('label.audioRecorderAudit.task_id')" prop="taskId">
+                <el-input v-model="queryParams.taskId" :placeholder="$t('label.audioRecorderAudit.enter_task_id')" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="任务包id" prop="packageId">
-                <el-input v-model="queryParams.packageId" placeholder="请输入任务包id" clearable @keyup.enter="handleQuery" />
+            <el-form-item :label="$t('label.audioRecorderAudit.task_package_id')" prop="packageId">
+                <el-input v-model="queryParams.packageId" :placeholder="$t('label.audioRecorderAudit.enter_task_package_id')" clearable @keyup.enter="handleQuery" />
             </el-form-item>
 
-            <el-form-item label="标注员" prop="annotator">
-                <el-input v-model="queryParams.annotator" placeholder="请输入标注员" clearable @keyup.enter="handleQuery" />
+            <el-form-item :label="$t('label.audioRecorderAudit.annotator')" prop="annotator">
+                <el-input v-model="queryParams.annotator" :placeholder="$t('label.audioRecorderAudit.enter_annotator')" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item label="审计人" prop="auditor">
-                <el-input v-model="queryParams.auditor" placeholder="请输入审计人" clearable @keyup.enter="handleQuery" />
+            <el-form-item :label="$t('label.audioRecorderAudit.auditor')" prop="auditor">
+                <el-input v-model="queryParams.auditor" :placeholder="$t('label.audioRecorderAudit.enter_auditor')" clearable @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-                <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('label.audioRecorderAudit.search') }}</el-button>
+                <el-button icon="Refresh" @click="resetQuery">{{ $t('label.audioRecorderAudit.reset') }}</el-button>
             </el-form-item>
         </el-form>
 
         <el-row :gutter="10" class="mb8">
             <el-col :span="1.5" style="display: none;">
                 <el-button type="primary" plain icon="Plus" @click="handleAdd"
-                    v-hasPermi="['label:records:add']">新增</el-button>
+                    v-hasPermi="['label:records:add']">{{ $t('label.audioRecorderAudit.add') }}</el-button>
             </el-col>
  
             <el-col :span="1.5">
                 <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
-                    v-hasPermi="['label:records:remove']">删除</el-button>
+                    v-hasPermi="['label:records:remove']">{{ $t('label.audioRecorderAudit.remove') }}</el-button>
             </el-col>
           
             <!-- <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar> -->
@@ -37,16 +37,16 @@
                 <template v-if="['unstart','underway','reject','pass'].includes(task.status)">                
                     <el-col :span="1.5">
                         <el-button type="success" plain icon=""  @click="clickSummitTask()"
-                            >提交审核</el-button>
+                            >{{ $t('label.audioRecorderAudit.submit_review') }}</el-button>
                     </el-col>
                 </template>
 
                 <template v-else-if="['pending_review'].includes(task.status)">
                     <el-col :span="1.5">
-                        <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">驳回任务</el-button>
+                        <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">{{ $t('label.audioRecorderAudit.reject_task') }}</el-button>
                     </el-col>
                     <el-col :span="1.5">
-                        <el-button type="success" plain @click="auditTask('pass')" vhasPermi="['label:task:audit']">审核通过</el-button>
+                        <el-button type="success" plain @click="auditTask('pass')" vhasPermi="['label:task:audit']">{{ $t('label.audioRecorderAudit.approve_task') }}</el-button>
                     </el-col>
                 </template>
 
@@ -60,13 +60,13 @@
         :row-class-name="recording"
         >
             <el-table-column type="selection" width="50" align="center" />
-            <el-table-column label="序号" align="center" width="50">
+            <el-table-column :label="$t('label.audioRecorderAudit.serial_number')" align="center" width="50">
                 <template #default="{ $index }">
                     {{ ($index + 1) + (queryParams.pageNum - 1) * queryParams.pageSize }}
                 </template>
             </el-table-column>
 
-            <el-table-column label="关键词" width="200"  >
+            <el-table-column :label="$t('label.audioRecorderAudit.keyword')" width="200"  >
                 <template #default="{ row, $index }">
                     
                     <el-input
@@ -90,7 +90,7 @@
             </el-table-column>
 
             <!-- <el-table-column label="" align="center" prop="text" /> -->
-            <el-table-column label="文本内容" align="left">
+            <el-table-column :label="$t('label.audioRecorderAudit.text_content')" align="left">
                 <template #default="{ row, $index }">
                     <!-- <div style="display: flex;flex-direction: row;gap:15px;align-items: center;">
 
@@ -152,7 +152,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    content="录音"
+                                    :content="$t('label.audioRecorderAudit.recording')"
                                     placement="bottom"
                                     v-if="!recordingStates[$index]" 
                                 >
@@ -164,7 +164,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    content="结束"
+                                    :content="$t('label.audioRecorderAudit.finish')"
                                     placement="bottom"
                                     v-else 
                                 >
@@ -179,7 +179,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    content="播放"
+                                    :content="$t('label.audioRecorderAudit.play')"
                                     placement="bottom"
                                     v-if="!playingStates[$index]">
 
@@ -191,7 +191,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    content="暂停"
+                                    :content="$t('label.audioRecorderAudit.pause')"
                                     placement="bottom"
                                     v-else>
 
@@ -207,7 +207,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    content="修改"
+                                    :content="$t('label.audioRecorderAudit.edit')"
                                     placement="bottom">
                                 
                                     <el-icon size="22" color="orange">
@@ -229,9 +229,9 @@
             <!-- <el-table-column label="" align="center" class-name="small-padding fixed-width">
                 <template #default="scope">
                     <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                        v-hasPermi="['label:records:edit']">修改</el-button>
+                        v-hasPermi="['label:records:edit']">{{ $t('label.audioRecorderAudit.edit') }}</el-button>
                     <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                        v-hasPermi="['label:records:remove']">删除</el-button>
+                        v-hasPermi="['label:records:remove']">{{ $t('label.audioRecorderAudit.delete') }}</el-button>
                 </template>
             </el-table-column> -->
         </el-table>
@@ -243,8 +243,8 @@
         <el-dialog :title="title" v-model="open" width="500px" append-to-body>
             <el-form ref="recordsRef" :model="form" :rules="rules" label-width="80px">
 
-                <el-form-item label="文本" prop="text">
-                    <el-input v-model="form.text" type="textarea" rows="8" placeholder="请输入内容"
+                <el-form-item :label="$t('label.audioRecorderAudit.text_content')" prop="text">
+                    <el-input v-model="form.text" type="textarea" rows="8" :placeholder="$t('label.audioRecorderAudit.text_content')"
                         style="font-size: 18px;" />
                 </el-form-item>
 
@@ -252,48 +252,48 @@
             </el-form>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button type="primary" @click="submitForm">确 定</el-button>
-                    <el-button @click="cancel">取 消</el-button>
+                    <el-button type="primary" @click="submitForm">{{ $t('label.audioRecorderAudit.confirm') }}</el-button>
+                    <el-button @click="cancel">{{ $t('label.audioRecorderAudit.cancel') }}</el-button>
                 </div>
             </template>
         </el-dialog>
 
         <!-- 删除确认对话框 -->
-        <el-dialog v-model="deleteDialogVisible" title="确认删除" width="400px">
+        <el-dialog v-model="deleteDialogVisible" :title="$t('label.audioRecorderAudit.confirm_delete')" width="400px">
             <div class="delete-dialog-content">
-                <p>确定要删除这条记录吗？</p>
+                <p>{{ $t('label.audioRecorderAudit.confirm_delete_record') }}</p>
                 <p class="delete-text-preview">{{ clickedRecord.text || clickedRecord.modifiedText }}</p>
             </div>
 
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="cancelDelete">取消</el-button>
-                    <el-button type="danger" @click="confirmDelete">删除</el-button>
+                    <el-button @click="cancelDelete">{{ $t('label.audioRecorderAudit.cancel') }}</el-button>
+                    <el-button type="danger" @click="confirmDelete">{{ $t('label.audioRecorderAudit.remove') }}</el-button>
                 </div>
             </template>
         </el-dialog>
 
         <!-- 覆盖录音对话框 -->
-        <el-dialog v-model="overwriteRecordDialogVisible" title="确认覆盖" width="400px">
+        <el-dialog v-model="overwriteRecordDialogVisible" :title="$t('label.audioRecorderAudit.confirm_overwrite')" width="400px">
             <div class="delete-dialog-content">
-                <p>已存在录音，确定要覆盖这条录音吗？</p>
+                <p>{{ $t('label.audioRecorderAudit.confirm_overwrite_record') }}</p>
             </div>
 
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="cancelOverwriteRecord">取消</el-button>
-                    <el-button type="danger" @click="confirmOverwriteRecord">覆盖</el-button>
+                    <el-button @click="cancelOverwriteRecord">{{ $t('label.audioRecorderAudit.cancel') }}</el-button>
+                    <el-button type="danger" @click="confirmOverwriteRecord">{{ $t('label.audioRecorderAudit.confirm') }}</el-button>
                 </div>
             </template>
         </el-dialog>
 
         <!-- 审核驳回对话框 -->
-        <el-dialog v-model="dialogFormVisible" title="驳回任务" width="500">
-          <el-input v-model="dialogFormRemark" type="textarea" :rows="3" placeholder="请输入驳回原因" style="width: 100%;" />
+        <el-dialog v-model="dialogFormVisible" :title="$t('label.audioRecorderAudit.reject_task')" width="500">
+          <el-input v-model="dialogFormRemark" type="textarea" :rows="3" :placeholder="$t('label.audioRecorderAudit.reject_reason')" style="width: 100%;" />
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="dialogFormVisible = false">取消</el-button>
-              <el-button type="primary" @click="rejectTask()">确定</el-button>
+              <el-button @click="dialogFormVisible = false">{{ $t('label.audioRecorderAudit.cancel') }}</el-button>
+              <el-button type="primary" @click="rejectTask()">{{ $t('label.audioRecorderAudit.confirm') }}</el-button>
             </div>
           </template>
         </el-dialog>
@@ -338,13 +338,13 @@ const data = reactive({
     },
     rules: {
         packageId: [
-            { required: true, message: "任务包id不能为空", trigger: "blur" }
+            { required: true, message: proxy.$t('label.taskPackage.packageIdNotBlank'), trigger: "blur" }
         ],
         itemOrder: [
-            { required: true, message: "在excel中的顺序不能为空", trigger: "blur" }
+            { required: true, message: proxy.$t('label.records.itemOrderNotBlank'), trigger: "blur" }
         ],
         text: [
-            { required: true, message: "excel中每行文本不能为空", trigger: "blur" }
+            { required: true, message: proxy.$t('label.records.textNotBlank'), trigger: "blur" }
         ],
     }
 })
@@ -359,7 +359,7 @@ let dialogFormRemark = ref('')
 function rejectTask(){
   
     if(!dialogFormRemark.value){
-    proxy.$modal.msgError("请填写驳回原因")
+    proxy.$modal.msgError(proxy.$t('label.audioRecorderAudit.reject_reason_required'))
     return
     }
     dialogFormVisible = false
@@ -368,12 +368,12 @@ function rejectTask(){
     let sysTask = {
         taskId: task.value.taskId,      
         status: 'reject',
-        remark: '驳回原因:'+dialogFormRemark.value
+        remark: proxy.$t('label.audioRecorderAudit.reject_task') + ':' + dialogFormRemark.value
     }
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
     updateTask(formData).then(response => {
-        proxy.$modal.msgSuccess("驳回成功")
+        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.task_rejected'))
         setTimeout(() => {
             proxy.$tab.closePage()
             proxy.$tab.closeOpenPage(`/label/my-task/index/${task.value.taskId}/`)
@@ -383,24 +383,22 @@ function rejectTask(){
 
 }
 
-
-
 /** 审核任务 */
 function auditTask(status) {
-  let confirmTxt = '确定审核通过吗？'
+  let confirmTxt = proxy.$t('label.audioRecorderAudit.review_approved') + '？'
   if(status == 'reject'){
-    confirmTxt = '确定驳回任务吗？'
+    confirmTxt = proxy.$t('label.audioRecorderAudit.review_rejected') + '？'
   }
   proxy.$modal.confirm(confirmTxt).then(function () {
     let sysTask = {
         taskId: task.value.taskId,
         status: status,
-        remark: '审核通过'
+        remark: proxy.$t('label.audioRecorderAudit.review_approved')
       }
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
     updateTask(formData).then(response => {
-      proxy.$modal.msgSuccess("审核成功")
+      proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.review_approved'))
 
       setTimeout(() => {
         proxy.$tab.closePage()
@@ -484,7 +482,7 @@ function handleSelectionChange(selection) {
 function handleAdd() {
     reset()
     open.value = true
-    title.value = "添加文件录音"
+    title.value = proxy.$t('label.audioRecorderAudit.add')
 }
 
 /** 修改按钮操作 */
@@ -494,7 +492,7 @@ function handleUpdate(row) {
     getRecords(_id).then(response => {
         form.value = response.data
         open.value = true
-        title.value = "修改文本"
+        title.value = proxy.$t('label.audioRecorderAudit.edit')
     })
 }
 
@@ -504,13 +502,13 @@ function submitForm() {
         if (valid) {
             if (form.value.id != null) {
                 updateRecords(form.value).then(response => {
-                    proxy.$modal.msgSuccess("修改成功")
+                    proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.modify_success'))
                     open.value = false
                     getList()
                 })
             } else {
                 addRecords(form.value).then(response => {
-                    proxy.$modal.msgSuccess("新增成功")
+                    proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.add_success'))
                     open.value = false
                     getList()
                 })
@@ -522,11 +520,11 @@ function submitForm() {
 /** 删除按钮操作 */
 function handleDelete(row) {
     const _ids = row.id || ids.value
-    proxy.$modal.confirm('是否确认删除文件录音编号为"' + _ids + '"的数据项？').then(function () {
+    proxy.$modal.confirm(proxy.$t('label.records.confirm_delete') + '"' + _ids + '"？').then(function () {
         return delRecords(_ids)
     }).then(() => {
         getList()
-        proxy.$modal.msgSuccess("删除成功")
+        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.delete_success'))
     }).catch(() => { })
 }
 
@@ -561,7 +559,7 @@ function keyEnterConfirmEditKeywords(row, index) {
     editingKeywordsIndex.value = -1
     if(editingKeywords != row.keywords){
         updateRecords(row).then((response) => {
-            proxy.$modal.msgSuccess("修改成功")
+            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.modify_success'))
             modifiedKeywords = true
         })
     }
@@ -606,7 +604,7 @@ function keyEnterConfirmEdit(row, index) {
     editingIndex.value = -1
     if(editingText != row.text){
         updateRecords(row).then((response) => {
-            proxy.$modal.msgSuccess("修改成功")
+            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.modify_success'))
             modified = true
         })
     }
@@ -622,7 +620,7 @@ function blurText(row, index) {
 
 
 function clickSummitTask() {
-    proxy.$modal.confirm('确定提交审核吗？').then(function () {
+    proxy.$modal.confirm(proxy.$t('label.audioRecorderAudit.submit_review_confirm')).then(function () {
         const formData = new FormData();
         let sysTask = {
             taskId: task.value.taskId,            
@@ -631,7 +629,7 @@ function clickSummitTask() {
         formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
 
         updateTask(formData).then(response => {
-            proxy.$modal.msgSuccess("提交成功")
+            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.task_closed'))
             setTimeout(() => {
                 proxy.$tab.closePage()
                 proxy.$tab.closeOpenPage(`/label/my-task/index/${task.value.taskId}/`)
@@ -669,7 +667,7 @@ function confirmDelete() {
 
     delRecords([recordsList.value[deletingIndex.value].id])
         .then((response) => {
-            proxy.$modal.msgSuccess("删除成功")
+            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.delete_success'))
             recordsList.value.splice(deletingIndex.value, 1)
         })
 
@@ -690,7 +688,7 @@ var hasRecording = false
 
 function toggleRecordingWithConfirmation(index) {
     if (index != recordingRecordIndex && hasRecording) {
-        proxy.$modal.msgError("请停止录音后再开始其他录音。")
+        proxy.$modal.msgError(proxy.$t('label.audioRecorderAudit.recording_stopped'))
         return
     }
 
@@ -721,13 +719,13 @@ function toggleRecording(index) {
         recordingRecordIndex = index
         recordingRecordIndexForUI.value = index
         startRecording()
-        proxy.$modal.msgSuccess("开始录音")
+        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.recording_started'))
 
     }
     else {
 
         stopRecording()
-        // proxy.$modal.msgWarning("录音结束")
+        // proxy.$modal.msgWarning(proxy.$t('label.audioRecorderAudit.recording_stopped'))
         hasRecording = false
         recordingRecordIndex = -1
     }
@@ -743,7 +741,7 @@ var hasPalying = false
 function togglePlaying(index) {
     
     if(hasRecording){
-        proxy.$modal.msgError("停止录音后再播放")
+        proxy.$modal.msgError(proxy.$t('label.audioRecorderAudit.recording_error'))
         return
     }
 
@@ -753,7 +751,7 @@ function togglePlaying(index) {
 
     if (index != playingIndex) {
         if (hasPalying) {
-            proxy.$modal.msgError("请停止播放后再开始其他播放。")
+            proxy.$modal.msgError(proxy.$t('label.audioRecorderAudit.recording_stopped'))
             return
         }
     }
@@ -773,7 +771,7 @@ function togglePlaying(index) {
     if (playingStates.value[index]) {
         audio.play()
             .then(() => { })
-            .catch(err => console.error("播放失败", err))
+            .catch(err => console.error(proxy.$t('label.audioRecorderAudit.play') + proxy.$t('label.audioRecorderAudit.failed'), err))
 
         hasPalying = true
     }
@@ -842,7 +840,7 @@ const startRecording = async () => {
             recordsList.value[recordingRecordIndex].audioDuration = formatDuration(elapsed)
         }, 1000)
     } catch (err) {
-        console.error('无法访问麦克风:', err)
+        console.error(proxy.$t('label.audioRecorderAudit.no_microphone_access'), err)
     }
 }
 
@@ -866,8 +864,6 @@ const stopRecording = () => {
 const recording = ({ row, rowIndex }) => {
   return rowIndex === recordingRecordIndexForUI.value ? 'recording' : ''
 }
-
-
 
 /**
  * 上传文件到 /common/upload
@@ -905,23 +901,23 @@ function uploadFile(file) {
                 });
             
                 audio.addEventListener('error', (err) => {
-                    console.error('加载音频失败:', err)
+                    console.error(proxy.$t('label.audioRecorderAudit.recording_error') + ':', err)
                 })
 
                 recordingRecord.audioFilePath = res.fileName
                 recordingRecord.audioDuration = duration
                 recordsList.value[recordingRecordIndex] = recordingRecord
                 updateRecords(recordingRecord).then((response) => {
-                    proxy.$modal.msgSuccess("上传成功")
+                    proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.upload_success'))
                 })
 
             } else {
-                console.error('上传失败:', res)
-                proxy.$modal.msgError('上传失败')
+                console.error(proxy.$t('label.audioRecorderAudit.upload_failed') + ':', res)
+                proxy.$modal.msgError(proxy.$t('label.audioRecorderAudit.upload_failed'))
             }
         })
         .catch(err => {
-            console.error('上传异常:', err)
+            console.error(proxy.$t('label.audioRecorderAudit.upload_failed') + ':', err)
 
         })
         .finally(() => {
@@ -948,7 +944,7 @@ onMounted(async () => {
 
                 // 通过 fetch 获取文件二进制
                 const response = await fetch(url)
-                if (!response.ok) throw new Error("下载失败")
+                if (!response.ok) throw new Error(proxy.$t('label.audioRecorderAudit.download_failed'))
 
                 const arrayBuffer = await response.arrayBuffer()
 
@@ -985,7 +981,7 @@ onMounted(async () => {
                     newRecords.push(record)                
                 })
                 addRecords(newRecords).then(response => {
-                    // this.$modal.msgSuccess("新增成功")
+                    // this.$modal.msgSuccess(proxy.$t('label.audioRecorderAudit.add_success'))
                     getList()
                 })
 

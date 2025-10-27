@@ -28,9 +28,21 @@ const languageOptions = ref([
 ]);
 
 function handleSetLanguage(lang) {
+  // 设置Element Plus的语言包
+  let elementLang = cn;
+  if (lang === 'en') {
+    elementLang = en;
+  } else {
+    elementLang = cn;
+  }
+  
   language.value = lang;
-  localStorage.setItem('lang', language.value)
-  //刷新浏览器
+  localStorage.setItem('lang', language.value);
+  
+  // 设置Element Plus的语言
+  proxy.$i18n.locale = lang;
+  
+  // 刷新浏览器
   location.reload();
 }
 
