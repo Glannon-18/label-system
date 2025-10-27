@@ -18,14 +18,7 @@ import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.label.utils.SysTaskLogUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.TaskPackageStatus;
@@ -216,65 +209,90 @@ public class SysTaskPackageController extends BaseController
 //    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务包", businessType = BusinessType.IMPORT)
     @PostMapping("/upload")
-    public AjaxResult uploadPackage(MultipartFile file, Long projectId, String language) throws Exception
+    public AjaxResult uploadPackage(@RequestParam("files") MultipartFile[] files, Long projectId, String language) throws Exception
     {
         try {
-            // 校验文件
-            if (file == null || file.isEmpty()) {
+            // 校验文件数组
+            if (files == null || files.length == 0) {
                 return AjaxResult.error("文件不能为空");
             }
             
-            // 校验文件格式
-            String extension = FileUploadUtils.getExtension(file);
-            if (!"zip".equalsIgnoreCase(extension)) {
-                return AjaxResult.error("只允许上传zip格式的文件");
+            // 校验文件数量不超过5个
+            if (files.length > 5) {
+                return AjaxResult.error("最多只能上传5个文件");
             }
             
-            // 校验zip文件内容
-            Map<String, String> filePairs = validateAndExtractZipFile(file);
-            if (filePairs == null) {
-                return AjaxResult.error("文件校验失败，zip文件中wav和TextGrid文件必须成对出现");
+            // 第一步：预校验所有文件，确保全部符合要求
+            Map<MultipartFile, Map<String, String>> validatedFiles = new HashMap<>();
+            for (int i = 0; i < files.length; i++) {
+                MultipartFile file = files[i];
+                
+                // 校验单个文件是否为空
+                if (file == null || file.isEmpty()) {
+                    return AjaxResult.error("第" + (i + 1) + "个文件为空");
+                }
+                
+                // 校验文件格式
+                String extension = FileUploadUtils.getExtension(file);
+                if (!"zip".equalsIgnoreCase(extension)) {
+                    return AjaxResult.error("第" + (i + 1) + "个文件不是zip格式");
+                }
+                
+                // 校验zip文件内容
+                Map<String, String> filePairs = validateAndExtractZipFile(file);
+                if (filePairs == null) {
+                    return AjaxResult.error("第" + (i + 1) + "个zip文件内容不符合要求，请检查是否包含成对的wav和textgrid文件");
+                }
+                
+                // 存储校验通过的文件及其内容映射
+                validatedFiles.put(file, filePairs);
             }
             
-            // 创建任务包
-            SysTaskPackage taskPackage = new SysTaskPackage();
-            String originalFilename = file.getOriginalFilename();
-            String packageFileName = originalFilename.substring(0, originalFilename.lastIndexOf("."));
-            taskPackage.setName(packageFileName);
-            taskPackage.setProjectId(projectId);
-            taskPackage.setCreateBy(getUsername());
-            taskPackage.setType("text");
-            taskPackage.setStatus(TaskPackageStatus.UNALLOCATED);
-            taskPackage.setLanguage(language);
-            
-            // 插入任务包
-            sysTaskPackageService.insertSysTaskPackage(taskPackage);
-            
-            // 为每对文件创建任务
-            for (Map.Entry<String, String> entry : filePairs.entrySet()) {
-                String wavFileName = entry.getKey();
-                String textGridContent = entry.getValue();
+            // 第二步：所有文件都校验通过后，逐个处理上传
+            for (Map.Entry<MultipartFile, Map<String, String>> entry : validatedFiles.entrySet()) {
+                MultipartFile file = entry.getKey();
+                Map<String, String> filePairs = entry.getValue();
                 
-                // 上传wav文件
-                String filePath = RuoYiConfig.getUploadPath();
-                // 从zip中提取wav文件内容并创建MultipartFile
-                MultipartFile wavFile = createMultipartFileFromZipEntry(wavFileName, file);
-                String uploadedFileName = FileUploadUtils.upload(filePath, wavFile);
+                // 创建任务包
+                SysTaskPackage taskPackage = new SysTaskPackage();
+                String originalFilename = file.getOriginalFilename();
+                String packageFileName = originalFilename.substring(0, originalFilename.lastIndexOf("."));
+                taskPackage.setName(packageFileName);
+                taskPackage.setProjectId(projectId);
+                taskPackage.setCreateBy(getUsername());
+                taskPackage.setType("text");
+                taskPackage.setStatus(TaskPackageStatus.UNALLOCATED);
+                taskPackage.setLanguage(language);
                 
-                SysTask task = new SysTask();
-                task.setPackageId(taskPackage.getTaskPackageId());
-                task.setAudioFileName(wavFileName);
-                task.setAudioFilePath(uploadedFileName);
-                task.setTextGrid(textGridContent);
-                task.setOriginalTextGrid(textGridContent);
-                task.setStatus(TaskStatus.UNSTART);
-                task.setCreateBy(getUsername());
+                // 插入任务包
+                sysTaskPackageService.insertSysTaskPackage(taskPackage);
                 
-                sysTaskService.insertSysTask(task);
-                SysTaskLogUtils.insertSysTaskLog(task.getTaskId(), TaskStatus.UNSTART, getUsername(), null);
+                // 为每对文件创建任务
+                for (Map.Entry<String, String> filePair : filePairs.entrySet()) {
+                    String wavFileName = filePair.getKey();
+                    String textGridContent = filePair.getValue();
+                    
+                    // 上传wav文件
+                    String filePath = RuoYiConfig.getUploadPath();
+                    // 从zip中提取wav文件内容并创建MultipartFile
+                    MultipartFile wavFile = createMultipartFileFromZipEntry(wavFileName, file);
+                    String uploadedFileName = FileUploadUtils.upload(filePath, wavFile);
+                    
+                    SysTask task = new SysTask();
+                    task.setPackageId(taskPackage.getTaskPackageId());
+                    task.setAudioFileName(wavFileName);
+                    task.setAudioFilePath(uploadedFileName);
+                    task.setTextGrid(textGridContent);
+                    task.setOriginalTextGrid(textGridContent);
+                    task.setStatus(TaskStatus.UNSTART);
+                    task.setCreateBy(getUsername());
+                    
+                    sysTaskService.insertSysTask(task);
+                    SysTaskLogUtils.insertSysTaskLog(task.getTaskId(), TaskStatus.UNSTART, getUsername(), null);
+                }
             }
             
-            return AjaxResult.success("上传成功");
+            return AjaxResult.success("所有" + files.length + "个任务包上传成功");
         } catch (Exception e) {
             return AjaxResult.error("上传失败: " + e.getMessage());
         }

@@ -1,7 +1,9 @@
 package com.ruoyi.web.controller.label;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Objects;
 import javax.servlet.http.HttpServletResponse;
@@ -110,31 +112,34 @@ public class SysTaskController extends BaseController
 //    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@RequestPart("sysTask") SysTask sysTask, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException
+    public AjaxResult add(@RequestPart("sysTask") SysTask sysTask, 
+                          @RequestPart("wavFile") MultipartFile wavFile, 
+                          @RequestPart("textGridFile") MultipartFile textGridFile) throws IOException
     {
-        if (file != null) {
-            // 保存文件并获取访问路径
-            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), file);
+        if (wavFile != null) {
+            // 保存WAV文件并获取访问路径
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), wavFile);
             
             // 设置任务属性
-            sysTask.setAudioFileName(file.getOriginalFilename());
+            sysTask.setAudioFileName(wavFile.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
-
-            if(Objects.requireNonNull(file.getOriginalFilename()).endsWith(".wav")){
-                // 获取音频时长并格式化TextGrid
-                try {
-                    String absolutePath = RuoYiConfig.getProfile() + filePath.substring(filePath.indexOf("/upload"));
-                    double duration = AudioUtils.getWavDuration(absolutePath);
-                    String formattedDuration = String.format("%.3f", duration);
-                    String textGridContent = String.format(INIT_TEXTGRID, formattedDuration, formattedDuration, formattedDuration);
-                    sysTask.setTextGrid(textGridContent);
-                    sysTask.setOriginalTextGrid(textGridContent);
-                } catch (UnsupportedAudioFileException e) {
-                    logger.error("不支持的音频文件格式: {}", file.getOriginalFilename(), e);
-                    return AjaxResult.error("不支持的音频文件格式");
+        }
+        
+        if (textGridFile != null) {
+            // 读取TextGrid文件内容
+            StringBuilder textGridContent = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(textGridFile.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    textGridContent.append(line).append("\n");
                 }
             }
+            
+            // 设置TextGrid内容
+            sysTask.setTextGrid(textGridContent.toString());
+            sysTask.setOriginalTextGrid(textGridContent.toString());
         }
+        
         sysTask.setCreateBy(getUsername());
         sysTask.setStatus(TaskStatus.UNSTART);
         int rows = sysTaskService.insertSysTask(sysTask);
@@ -148,32 +153,37 @@ public class SysTaskController extends BaseController
 //    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask, @RequestPart(value = "file", required = false) MultipartFile file) throws IOException
+    public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask, 
+                          @RequestPart(value = "wavFile", required = false) MultipartFile wavFile, 
+                          @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile) throws IOException
     {
         // 获取更新前的任务信息
         SysTask oldTask = sysTaskService.selectSysTaskByTaskId(sysTask.getTaskId());
         
-        if (file != null) {
-            // 保存文件并获取访问路径
-            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), file);
+        if (wavFile != null) {
+            // 保存WAV文件并获取访问路径
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), wavFile);
             
             // 设置任务属性
-            sysTask.setAudioFileName(file.getOriginalFilename());
+            sysTask.setAudioFileName(wavFile.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
-            
-            // 获取音频时长并格式化TextGrid
-            try {
-                String absolutePath = RuoYiConfig.getProfile() + filePath.substring(filePath.indexOf("/upload"));
-                double duration = AudioUtils.getWavDuration(absolutePath);
-                String formattedDuration = String.format("%.3f", duration);
-                String textGridContent = String.format(INIT_TEXTGRID, formattedDuration, formattedDuration, formattedDuration);
-                sysTask.setTextGrid(textGridContent);
-                sysTask.setOriginalTextGrid(textGridContent);
-            } catch (UnsupportedAudioFileException e) {
-                logger.error("不支持的音频文件格式: {}", file.getOriginalFilename(), e);
-                return AjaxResult.error("不支持的音频文件格式");
-            }
         }
+        
+        if (textGridFile != null) {
+            // 读取TextGrid文件内容
+            StringBuilder textGridContent = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(textGridFile.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    textGridContent.append(line).append("\n");
+                }
+            }
+            
+            // 设置TextGrid内容
+            sysTask.setTextGrid(textGridContent.toString());
+            sysTask.setOriginalTextGrid(textGridContent.toString());
+        }
+        
         sysTask.setUpdateBy(getUsername());
         
         // 检查状态是否发生变化，如果变化则记录日志
