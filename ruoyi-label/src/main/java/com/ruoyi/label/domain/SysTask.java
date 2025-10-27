@@ -43,6 +43,9 @@ public class SysTask extends BaseEntity
 
     /** 任务包类型 */
     private String packageType;
+    
+    /** 任务包名称 */
+    private String packageName;
 
     public void setTaskId(Long taskId)
     {
@@ -94,16 +97,33 @@ public class SysTask extends BaseEntity
         return status;
     }
 
-    public String getPackageAssigner()
+    public void setTextGrid(String textGrid)
     {
+        this.textGrid = textGrid;
+    }
+
+    public String getTextGrid()
+    {
+        return textGrid;
+    }
+
+    public void setOriginalTextGrid(String originalTextGrid)
+    {
+        this.originalTextGrid = originalTextGrid;
+    }
+
+    public String getOriginalTextGrid()
+    {
+        return originalTextGrid;
+    }
+
+    public String getPackageAssigner() {
         return packageAssigner;
     }
 
-    public void setPackageAssigner(String packageAssigner)
-    {
+    public void setPackageAssigner(String packageAssigner) {
         this.packageAssigner = packageAssigner;
     }
-
 
     public String getPackageType() {
         return packageType;
@@ -113,24 +133,12 @@ public class SysTask extends BaseEntity
         this.packageType = packageType;
     }
 
-    public String getTextGrid()
-    {
-        return textGrid;
+    public String getPackageName() {
+        return packageName;
     }
 
-    public void setTextGrid(String textGrid)
-    {
-        this.textGrid = textGrid;
-    }
-
-    public String getOriginalTextGrid()
-    {
-        return originalTextGrid;
-    }
-
-    public void setOriginalTextGrid(String originalTextGrid)
-    {
-        this.originalTextGrid = originalTextGrid;
+    public void setPackageName(String packageName) {
+        this.packageName = packageName;
     }
 
     @Override
@@ -141,15 +149,16 @@ public class SysTask extends BaseEntity
             .append("audioFileName", getAudioFileName())
             .append("audioFilePath", getAudioFilePath())
             .append("status", getStatus())
-            .append("packageAssigner", getPackageAssigner())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())
             .append("updateTime", getUpdateTime())
             .append("remark", getRemark())
-            .append("packageType", getPackageType())
             .append("textGrid", getTextGrid())
-                .append("originalTextGrid", getOriginalTextGrid())
+            .append("originalTextGrid", getOriginalTextGrid())
+            .append("packageAssigner", getPackageAssigner())
+            .append("packageType", getPackageType())
+            .append("packageName", getPackageName())
             .toString();
     }
 }

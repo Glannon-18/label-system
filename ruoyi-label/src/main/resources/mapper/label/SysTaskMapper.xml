@@ -19,6 +19,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="remark"    column="remark"    />
         <result property="packageAssigner" column="package_assigner" />
         <result property="packageType" column="package_type" />
+        <result property="packageName" column="package_name" />
         <result property="textGrid" column="text_grid" />
     </resultMap>
 
@@ -38,6 +39,27 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.remark,
 			p.type as package_type,
             p.assigner as package_assigner
+        from sys_task t
+        left join sys_task_package p on t.package_id = p.task_package_id
+    </sql>
+    
+    <sql id="selectSysTaskVoWithPackage">
+        select
+            t.task_id,
+            t.package_id,
+            t.audio_file_name,
+            t.audio_file_path,
+            t.text_grid,
+            t.original_text_grid,
+            t.status,
+            t.create_by,
+            t.create_time,
+            t.update_by,
+            t.update_time,
+            t.remark,
+            p.type as package_type,
+            p.assigner as package_assigner,
+            p.name as package_name
         from sys_task t
         left join sys_task_package p on t.package_id = p.task_package_id
     </sql>
@@ -133,7 +155,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </update>
     
     <select id="selectAuditorTaskList" resultMap="SysTaskResult">
-        <include refid="selectSysTaskVo"/>
+        <include refid="selectSysTaskVoWithPackage"/>
         <where>
             <if test="sysTask.packageId != null and sysTask.packageId != ''"> and t.package_id = #{sysTask.packageId}</if>
             <if test="sysTask.status != null and sysTask.status != ''"> and t.status = #{sysTask.status}</if>

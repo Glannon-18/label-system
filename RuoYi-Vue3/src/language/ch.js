@@ -184,6 +184,7 @@ export default {
             reset: '重置',
             enter_task_name: '请输入任务名称',
             select_task_status: '请选择任务状态',
+            task_package_name: '任务包名',
             audio_file_name: '音频文件名',
             task_status_col: '任务状态',
             annotator: '标注人员',

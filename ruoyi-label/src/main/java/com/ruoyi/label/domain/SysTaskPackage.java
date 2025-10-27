@@ -43,6 +43,14 @@ public class SysTaskPackage extends BaseEntity
     /** 项目名 */
     private String projectName;
 
+    /** 分配人昵称 */
+    @Excel(name = "分配人昵称")
+    private String assignerNickName;
+
+    /** 审核人昵称 */
+    @Excel(name = "审核人昵称")
+    private String auditorNickName;
+
     public void setTaskPackageId(Long taskPackageId)
     {
         this.taskPackageId = taskPackageId;
@@ -127,6 +135,21 @@ public class SysTaskPackage extends BaseEntity
         this.language = language;
     }
 
+    public String getAssignerNickName() {
+        return assignerNickName;
+    }
+
+    public void setAssignerNickName(String assignerNickName) {
+        this.assignerNickName = assignerNickName;
+    }
+
+    public String getAuditorNickName() {
+        return auditorNickName;
+    }
+
+    public void setAuditorNickName(String auditorNickName) {
+        this.auditorNickName = auditorNickName;
+    }
 
     @Override
     public String toString() {
@@ -143,7 +166,9 @@ public class SysTaskPackage extends BaseEntity
             .append("assigner", getAssigner())
             .append("auditor", getAuditor())
             .append("type", getType())
-                .append("language",getLanguage())
+            .append("language",getLanguage())
+            .append("assignerNickName", getAssignerNickName())
+            .append("auditorNickName", getAuditorNickName())
             .toString();
     }
 }

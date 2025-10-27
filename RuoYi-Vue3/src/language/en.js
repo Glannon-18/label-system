@@ -183,6 +183,7 @@ export default {
             reset: 'Reset',
             enter_task_name: 'Please enter task name',
             select_task_status: 'Please select task status',
+            task_package_name: 'Task Package Name',
             audio_file_name: 'Audio File Name',
             task_status_col: 'Task Status',
             annotator: 'Annotator',

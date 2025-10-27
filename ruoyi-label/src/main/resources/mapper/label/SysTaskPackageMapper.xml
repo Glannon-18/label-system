@@ -19,6 +19,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="projectName"    column="project_name"    />
         <result property="type"    column="type"    />
         <result property="language"    column="language"    />
+        <result property="assignerNickName"    column="assigner_nick_name"    />
+        <result property="auditorNickName"    column="auditor_nick_name"    />
     </resultMap>
 
     <sql id="selectSysTaskPackageVo">
@@ -28,19 +30,29 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <sql id="selectSysTaskPackageVoWithProject">
         select t.create_by, t.create_time, t.update_by, t.update_time, t.remark, t.task_package_id, t.project_id, t.name, t.status, t.assigner, t.auditor, p.name as project_name, t.type, t.language from sys_task_package t left join sys_project p on t.project_id = p.project_id
     </sql>
+    
+    <sql id="selectSysTaskPackageVoWithProjectAndUser">
+        select t.create_by, t.create_time, t.update_by, t.update_time, t.remark, t.task_package_id, t.project_id, t.name, t.status, t.assigner, t.auditor, p.name as project_name, t.type, t.language,
+               u.nick_name as assigner_nick_name,
+               au.nick_name as auditor_nick_name
+        from sys_task_package t 
+        left join sys_project p on t.project_id = p.project_id
+        left join sys_user u on t.assigner = u.user_name
+        left join sys_user au on t.auditor = au.user_name
+    </sql>
 
     <select id="selectSysTaskPackageList" parameterType="SysTaskPackage" resultMap="SysTaskPackageResult">
-        <include refid="selectSysTaskPackageVo"/>
+        <include refid="selectSysTaskPackageVoWithProjectAndUser"/>
         <where>
-            <if test="params.beginCreateTime != null and params.beginCreateTime != '' and params.endCreateTime != null and params.endCreateTime != ''"> and create_time between #{params.beginCreateTime} and #{params.endCreateTime}</if>
-            <if test="name != null  and name != ''"> and name like concat('%', #{name}, '%')</if>
-            <if test="status != null  and status != ''"> and status = #{status}</if>
-            <if test="projectId != null"> and project_id = #{projectId}</if>
+            <if test="params.beginCreateTime != null and params.beginCreateTime != '' and params.endCreateTime != null and params.endCreateTime != ''"> and t.create_time between #{params.beginCreateTime} and #{params.endCreateTime}</if>
+            <if test="name != null  and name != ''"> and t.name like concat('%', #{name}, '%')</if>
+            <if test="status != null  and status != ''"> and t.status = #{status}</if>
+            <if test="projectId != null"> and t.project_id = #{projectId}</if>
         </where>
     </select>
 
     <select id="selectSysTaskPackageListByAssigner" parameterType="SysTaskPackage" resultMap="SysTaskPackageResult">
-        <include refid="selectSysTaskPackageVoWithProject"/>
+        <include refid="selectSysTaskPackageVoWithProjectAndUser"/>
         <where>
             <if test="params.beginCreateTime != null and params.beginCreateTime != '' and params.endCreateTime != null and params.endCreateTime != ''"> and t.create_time between #{params.beginCreateTime} and #{params.endCreateTime}</if>
             <if test="name != null  and name != ''"> and t.name like concat('%', #{name}, '%')</if>
@@ -48,10 +60,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="assigner != null  and assigner != ''"> and t.assigner = #{assigner}</if>
         </where>
     </select>
-
+    
     <select id="selectSysTaskPackageByTaskPackageId" parameterType="Long" resultMap="SysTaskPackageResult">
-        <include refid="selectSysTaskPackageVo"/>
-        where task_package_id = #{taskPackageId}
+        <include refid="selectSysTaskPackageVoWithProjectAndUser"/>
+        where t.task_package_id = #{taskPackageId}
     </select>
 
     <select id="countTaskPackageByProjectId" parameterType="Long" resultType="int">

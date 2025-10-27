@@ -31,6 +31,7 @@
 
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
+      <el-table-column :label="$t('label.auditTask.task_package_name')" align="center" prop="packageName" />
       <el-table-column :label="$t('label.auditTask.audio_file_name')" align="center" prop="audioFileName" :show-overflow-tooltip="true">
         <template #default="scope">
           <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
