@@ -1,28 +1,13 @@
 <template>
-  <div class="app-container" >
-
+  <div class="app-container">
     <!-- <textarea id="textarea" v-model="textGridText" style="width: 100%; height: 100px; display: none;"></textarea> -->
-
     <div style="display: flex; justify-content: space-between; ">
       <!-- <div> 任务包：{{ taskPackageName }}</div> -->
-      <div> 音频文件：{{ task.data.audioFileName }}</div>
+      <div> {{ $t('label.labelEditor.音频文件') }}：{{ task.data.audioFileName }}</div>
       <div style="display: flex; justify-content: flex-end;margin-left: 12px;">
-        <!-- <el-link underline style="margin-right: 12px;" @click="showOperationTip()">快捷键</el-link> -->
-        <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">标注规范</el-link>
         
-
-
-        <!-- 审核驳回对话框 -->
-        <el-dialog v-model="dialogFormVisible" title="审核驳回" width="500">
-          <el-input v-model="dialogFormRemark" type="textarea" :autosize="{ minRows: 3, maxRows: 20 }" placeholder="请输入驳回原因" style="width: 100%;" />
-          <template #footer>
-            <div class="dialog-footer">
-              <el-button @click="dialogFormVisible = false">取消</el-button>
-              <el-button type="primary" @click="rejectTask()">确定</el-button>
-            </div>
-          </template>
-        </el-dialog>
-
+        <el-link underline style="margin-right: 22px;" @click="showLabelStandard()">{{ $t('label.labelEditor.标注规范') }}</el-link>
+        
       </div>
     </div>
     
@@ -34,14 +19,27 @@
     <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
       <div style="display: flex; align-items: center;">
         <span style="margin-right: 12px;width:120px;">{{ currentTime }} / {{ duration }} </span>
-        <el-button type="info" plain id="backward">上一段</el-button>
-        <el-button type="info" plain id="play">▶播放/‖暂停</el-button>
-        <el-button type="info" plain id="forward">下一段</el-button>
+        <el-tooltip :content="$t('label.labelEditor.上一段')" placement="top">
+        <el-button type="primary" id="backward" round plain>
+          <el-icon style="transform: rotate(90deg)" ><Download /></el-icon>
+        </el-button>
+        </el-tooltip>
+        <el-tooltip :content="$t('label.labelEditor.播放/暂停')" placement="top">
+        <el-button type="primary" id="play"  round plain>
+          <span v-if="isPlaying" style="width: 20px;">||</span>
+          <span v-else style="width: 20px;">▶</span>
+        </el-button>
+        </el-tooltip>
+        <el-tooltip :content="$t('label.labelEditor.下一段')" placement="top">
+        <el-button type="primary" id="forward" round plain>
+          <el-icon style="transform: rotate(270deg)" ><Download /></el-icon>
+        </el-button>
+        </el-tooltip>
         <view style="margin-left: 12px;display: flex;align-items: center;">
-          音量 <el-slider v-model="volume" style="width: 100px;margin-left: 3px;" />
+          {{ $t('label.labelEditor.音量') }} <el-slider v-model="volume" style="width: 100px;margin-left: 3px;" />
         </view>
         <view style="margin-left: 12px;display: flex;align-items: center;">
-          倍速 <el-select v-model="playbackRate" size="small" style="width: 70px;margin-left: 3px;">
+          {{ $t('label.labelEditor.倍速') }} <el-select v-model="playbackRate" size="small" style="width: 70px;margin-left: 3px;">
             <el-option v-for="item in playbackRateList" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </view>
@@ -50,7 +48,7 @@
         </view> -->
       </div>
       <div style="display: flex; gap: 0.5rem; font-size: 12px; align-items: center; justify-content: center;">
-        <span style="color: gray;">无效时长标签:</span>
+        <span style="color: gray;">{{ $t('label.labelEditor.无效时长标签') }}:</span>
         <div v-for="item in labels" :key="item.label">
           <el-tooltip class="box-item" :content="item.tip" placement="top-start"><el-tag style="cursor:pointer;" checked
               :type="item.type" click="insertText(item.label)">
@@ -65,32 +63,32 @@
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
         style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; font-size: 16px;"  
         :show-header="true" :row-class-name="tableRowClassName" @row-click="rowClick">
-          <el-table-column label="分段序号" width="80"> 
+        <el-table-column :label="$t('label.labelEditor.分段序号')" width="90">
             <template #default="scope"> 
               {{ scope.$index + 1 }}
             </template>
           </el-table-column>
-        <el-table-column label="开始位置" width="90">
+        <el-table-column :label="$t('label.labelEditor.开始位置')" width="90">
             <template #default="scope"> 
               {{ scope.row.start }}
             </template>
           </el-table-column>
-        <el-table-column label="结束位置" width="90">
+        <el-table-column :label="$t('label.labelEditor.结束位置')" width="90">
             <template #default="scope"> 
               {{ scope.row.end }}
             </template>
           </el-table-column>
-        <el-table-column label="时长(秒)" width="90">
+        <el-table-column :label="$t('label.labelEditor.时长(秒)')" width="90">
             <template #default="scope"> 
             <span :style="Number((scope.row.end - scope.row.start).toFixed(3))>15?'color:red':''">
               {{ Number((scope.row.end - scope.row.start).toFixed(3)) }}
             </span>
             </template>
           </el-table-column>
-        <el-table-column label="标注文本内容">
+        <el-table-column :label="$t('label.labelEditor.标注文本内容')">
           <template #header>
             <div style="display: flex; justify-content: space-between;">
-              <div>标注文本内容</div>
+              <div>{{ $t('label.labelEditor.标注文本内容') }}</div>
               <div>
                 <!-- <el-input v-model="search" size="small" placeholder="查找与替换" /> -->
               </div>
@@ -102,7 +100,7 @@
               </div>
           </template>
           </el-table-column>
-        <el-table-column label="字符数" width="80">
+        <el-table-column :label="$t('label.labelEditor.字符数')" width="80">
             <template #default="scope"> 
             <span :style="(scope.row.text&&scope.row.text.replace(/\s+/g,'').length>120)?'color:red':''">{{ scope.row.text&&scope.row.text.replace(/\s+/g,'').length }}</span>
             </template>
@@ -113,65 +111,60 @@
     <!-- 底部提示说明 -->
     <div v-if="task.data.status==='pending_review'"
       style="line-height: 30px;margin-top: 10px; color: gray; font-size: 12px;">
-      Tip：审核人可对标注内容进行修改，提交审核结果同时保存修改的内容。
+      <!-- Tip：审核人可对标注内容进行修改，提交审核结果同时保存修改的内容。 -->
     </div>
 
 
     <!-- 操作方法 -->
-    <el-dialog v-model="operationTipDialogVisible" title="" width="700">
+    <el-dialog v-model="operationTipDialogVisible" title="" width="70%">
       <div data-v-2bde42cb="" style="font-size: 16px;color: rgb(51, 51, 51);">
-        <p>-------------操作方法-------------</p>
-        <p><strong >缩放波形</strong><span >：鼠标指针在波形图内，滚动鼠标滚轮进行缩放</span></p>
-        <!-- <p><strong >激活分段</strong><span >：点击波形图非高亮区域，相应分段被激活(高亮)</span></p> -->
-        <!-- <p><strong >取消激活</strong><span >：点击波形图的高亮区域，相应分段取消激活</span></p> -->
-        <!-- <p><strong >新增分段</strong><span >：在非激活(非高亮)区域，点击并拖动鼠标选择区域</span></p> -->
-         <p style="display: flex; justify-content: flex-start;line-height: 30px;">
-          <span><strong >切割分段</strong>：</span>
-          <span>方法① 在音频波形图区域内，双击鼠标进行切分<br/>
-            方法② 在分段标注文本内容输入框内,按【回车】键进行切分
-          </span>
-        </p>
-        <p><strong >调整分段</strong><span >：在高亮区域的边界,鼠标指针变成 ↔ 时,点击拖动边界线</span></p>
+        <el-divider>{{$t('label.labelEditor.操作方法')}}</el-divider>
+        <p><strong >{{$t('label.labelEditor.缩放波形')}}</strong><span >：{{ $t('label.labelEditor.缩放波形-方法') }}</span></p>
         <p style="display: flex; justify-content: flex-start;line-height: 30px;">
-          <span><strong >合并分段</strong>：</span>
-          <span>方法① 在调整分段边界时,拖动边界使区域完全包含(覆盖)要合并的分段<br/>
-            方法② 点击高亮分段的标注文本输入框后的按钮
-            <el-tooltip content="合并上一段" placement="top"><el-button size="small" type="primary" icon="Upload" round  plain/></el-tooltip>
-            /<el-tooltip content="合并下一段" placement="bottom"><el-button style="margin-left: 2px;" size="small" type="primary" icon="Download" round  plain/></el-tooltip>合并上/下分段
+          <span style="white-space: nowrap;"><strong>{{$t('label.labelEditor.切割分段')}}</strong>：</span>
+          <span>{{ $t('label.labelEditor.切割分段-方法1') }}<br/>{{ $t('label.labelEditor.切割分段-方法2')}}</span>
+        </p>
+        <p style="display: flex; justify-content: flex-start;line-height: 30px;">
+          <span><strong >{{$t('label.labelEditor.调整分段')}}</strong></span>
+          <span >：{{ $t('label.labelEditor.调整分段-方法') }}</span>
+        </p>
+        <p style="display: flex; justify-content: flex-start;line-height: 30px;">
+          <span><strong >{{$t('label.labelEditor.合并分段')}}</strong>：</span>
+          <span>{{ $t('label.labelEditor.合并分段-方法1') }}<br/>{{ $t('label.labelEditor.合并分段-方法2')}}
+            <el-tooltip :content="$t('label.labelEditor.合并上一段')" placement="top"><el-button size="small" type="primary" icon="Upload" round  plain/></el-tooltip>
+            /<el-tooltip :content="$t('label.labelEditor.合并下一段')" placement="bottom"><el-button style="margin-left: 2px;" size="small" type="primary" icon="Download" round  plain/></el-tooltip>
           </span>
         </p>
-        <p>-------------快捷键-------------</p>
-        <p><strong >跳至上一段</strong><span >：按方向【↑】键</span></p>
-        <p><strong >跳至下一段</strong><span >：按方向【↓】键</span></p>
-        <p><strong >合并上一段</strong><span >：按【Alt+↑】方向键</span></p>
-        <p><strong >合并下一段</strong><span >：按【Alt+↓】方向键</span></p>
-        <p><strong >播放/暂停</strong><span >：按【空格】键</span></p>
-        <p><strong >保存更改</strong><span >：按【Ctrl+S】键</span></p>
-        <p><strong >撤销操作</strong><span >：按【Ctrl+Z】键</span></p>
+        <el-divider>{{$t('label.labelEditor.快捷键')}}</el-divider>
+        <p><strong >{{$t('label.labelEditor.转到上一段')}}</strong><span >：{{$t('label.labelEditor.转到上一段-快捷键')}}</span></p>
+        <p><strong >{{$t('label.labelEditor.转到下一段')}}</strong><span >：{{$t('label.labelEditor.转到下一段-快捷键')}}</span></p>
+        <p><strong >{{$t('label.labelEditor.合并上一段')}}</strong><span >：{{$t('label.labelEditor.合并上一段-快捷键')}}</span></p>
+        <p><strong >{{$t('label.labelEditor.合并下一段')}}</strong><span >：{{$t('label.labelEditor.合并下一段-快捷键')}}</span></p>
+        <p><strong >{{$t('label.labelEditor.播放/暂停')}}</strong><span >：{{$t('label.labelEditor.播放/暂停-快捷键')}}</span></p>
+        <p><strong >{{$t('label.labelEditor.保存更改')}}</strong><span >：{{$t('label.labelEditor.保存更改-快捷键')}}</span></p>
+        <p><strong >{{$t('label.labelEditor.撤消更改')}}</strong><span >：{{$t('label.labelEditor.撤消更改-快捷键')}}</span></p>
       </div>
     </el-dialog>
     <!-- 标注规范 -->
-    <el-dialog v-model="labelStandardDialogVisible" title="标注规则要求" width="800">
+    <el-dialog v-model="labelStandardDialogVisible" :title="$t('label.labelEditor.标注规范')" width="800">
       <div data-v-2bde42cb="" style="font-size: 16px; line-height: 18px;">
-        <p><strong >1）文本</strong><span
-            >：有效语音段内字音一致，句首顶格书写，无多字、漏字、错字现象，规范使用空格，根据目标语种规范正确使用大小写。 </span></p>
-        <p><strong >2）分段</strong><span >： </span></p>
-        <p><span >①单个有效语音段不大于120个字符。 </span></p>
-        <p><span >②单个有效语音段控制在15s以内并注意保证句意的相对完整性。 </span></p>
-        <p><span >③无效时长的部分大于1s需要切分并给对应标签。 </span></p>
-        <p><strong >3）无效时长标签：</strong><span > </span></p>
-        <p><span >&lt;NOISE&gt;表示非人声噪音。 </span></p>
-        <p><span >&lt;DEAF&gt;表示无法转写的人声。 </span></p>
-        <p><span >&lt;OVERLAP&gt;表示多人同时发音：混读、听不清、文本无法转写出来。 </span></p>
-        <p><span >备注：如多人同时说话且可听清主说话人，则标注主说话人数据。 </span></p>
-        <p><span >&lt;OOV&gt;表示整段非目标语种，包括：中文、英文等。 </span></p>
-        <p><strong >4）标点符号</strong><span
-            >：根据语义语法规则，采用“逗号、句号、问号、感叹号等进行标注，不可遗漏省文撇、重音符号、发音符号等目标语种语言规范所要求的符号。 </span></p>
-        <p><strong >5）用词规范</strong><span >： </span></p>
-        <p><span >①数字需标注为常用的阿拉伯数字形式（例：sixtyeight标注为68）。 </span></p>
-        <p><span >②常用发音符号（如@、、&amp;、%等需标注为符号形式（例：fivepercent标注为5%）。 </span></p>
-        <p><span >③常用单位（如℃C、kg、km、$等）需标注成符号形式（例：fiftykilograms标注为50kg）。 </span></p>
-        <p><span >④上述标注结果需符合语言规范、语境及母语者使用习惯。</span></p>
+        <p><strong >1）{{$t('label.labelEditor.文本')}}</strong><span >：{{$t('label.labelEditor.文本-规范')}} </span></p>
+        <p><strong >2）{{$t('label.labelEditor.分段')}}</strong><span >： </span></p>
+        <p><span >①{{$t('label.labelEditor.分段-规范1')}} </span></p>
+        <p><span >②{{$t('label.labelEditor.分段-规范2')}} </span></p>
+        <p><span >③{{$t('label.labelEditor.分段-规范3')}} </span></p>
+        <p><strong >3）{{$t('label.labelEditor.无效时长标签')}}：</strong><span > </span></p>
+        <p><span >&lt;NOISE&gt;：{{$t('label.labelEditor.<NOISE>')}} </span></p>
+        <p><span >&lt;DEAF&gt;：{{$t('label.labelEditor.<DEAF>')}} </span></p>
+        <p><span >&lt;OVERLAP&gt;：{{$t('label.labelEditor.<OVERLAP>')}} </span></p>
+        <p><span >{{$t('label.labelEditor.无效标签-备注')}} </span></p>
+        <p><span >&lt;OOV&gt;：{{$t('label.labelEditor.<OOV>')}} </span></p>
+        <p><strong >4）{{$t('label.labelEditor.标点符号')}} </strong><span >：{{$t('label.labelEditor.标点符号-规范')}} </span></p>
+        <p><strong >5）{{$t('label.labelEditor.用词规范')}}</strong><span >： </span></p>
+        <p><span >①{{$t('label.labelEditor.用词规范-规范1')}} </span></p>
+        <p><span >②{{$t('label.labelEditor.用词规范-规范2')}} </span></p>
+        <p><span >③{{$t('label.labelEditor.用词规范-规范3')}} </span></p>
+        <p><span >④{{$t('label.labelEditor.用词规范-规范4')}}</span></p>
       </div>
     </el-dialog>
 
@@ -194,19 +187,144 @@ import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
 import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
 import LabelEditorLoading from './labelEditorLoading'
 import LabelEditorHistoryOper from './labelEditorHistoryOper'
+  // import KeyboardKm from './keyboard/keyboard_km'
 
 const audioLoadprogress = ref(0)
 const audioLoadOver = ref(false)
+  const activeKeyBoard = ref(null)
+  let injectedScript = null;
+  /*
+  function activeKeyBoardPanel(scope_index) {
+    activeKeyBoard.value = scope_index;
+    setTimeout(()=>{
+      const jqLink = document.createElement('script');
+      jqLink.src = '/html/keyboard_km.js';
+      document.head.appendChild(jqLink);
+      jqLink.onload = function() {
+        console.log('loaded keyboard km success!')
+      };
+    }, 1000)
+  }*/
 
-const labels = reactive([
-  { type: 'primary', label: '<NOISE>', 'tip': '表示非人声噪音' },
-  { type: 'success', label: '<DEAF>', 'tip': '表示无法转写的人声' },
-  { type: 'info', label: '<OVERLAP>', 'tip': '表示多人同时发音：混读、听不清、文本无法转写出来' },
-  { type: 'warning', label: '<OOV>', 'tip': '表示整段非目标语种，包括：中文、英文等' },
-])
+
+  function activeKeyBoardPanel(scope_index) {
+    activeKeyBoard.value = scope_index;
+    if (injectedScript) {
+      document.head.removeChild(injectedScript);
+      injectedScript = null;
+    }
+    if (scope_index !== -1) {
+      setTimeout(() => {
+        injectedScript = document.createElement('script');
+        injectedScript.src = '/html/keyboard_km.js';
+        injectedScript.onload = function() {
+          console.log('键盘脚本加载成功!');
+        };
+        injectedScript.onerror = function() {
+          console.error('键盘脚本加载失败!');
+          if (injectedScript && injectedScript.parentNode) {
+            document.head.removeChild(injectedScript);
+            injectedScript = null;
+          }
+        };
+
+        document.head.appendChild(injectedScript);
+      }, 1000);
+    } else {
+      if (injectedScript && injectedScript.parentNode) {
+        document.head.removeChild(injectedScript);
+        injectedScript = null;
+      }
+      console.log('键盘脚本已销毁');
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const labels = reactive([])
+
+// ********* s 当前任务音频列表 *********
+import AnnotatorTask from './annotatorTask'
+const popoverVisible = ref(false)
+const popoverRef = ref()
+const togglePopover = () => {
+  popoverVisible.value = !popoverVisible.value
+}
+const hidePopover = () => {
+  popoverVisible.value = false
+}
+const handleSubmit = (data) => {
+  hidePopover()
+}
+const onPopoverHide = () => {
+  console.log('Popover 已关闭')
+}
+// ********* e 当前任务音频列表 *********
+const drawerHisoryOperVisible = ref(false)
+const directionHisoryOper = ref('rtl')
+const openHisoryOperDrawer = () => {
+  drawerHisoryOperVisible.value = true
+}
+const handleCloseHisoryOper = (val) => {
+  drawerHisoryOperVisible.value = val
+}
+const handleDrawerCloseHisoryOper = (done) => {
+ done()
+}
+function updateFormHistory(history) {
+  console.log(history)
+  proxy.$message.success(`恢复成功`)
+}
 
 
 //=========================定义函数=========================
+//显示TG对比
+const diffDialogVisible = ref(false)
+const oldText = ref('')
+const newText = ref('')
+//将标注文本textGridJson转换为文本
+function convertText(textGridJson){
+  let textArray = textGridJson.item[0].intervals.map( (row, index)=>{
+    return `${row.text||''}`
+  })
+  return textArray.join('\n')
+}
+//显示标注前后文本对比
+function showTextDiff(){
+  //获取原始的分段数据
+  let oldTextGridJson = parseTextGrid(task.data.originalTextGrid)
+  //将转换为分段号+文本
+  oldText.value = convertText(oldTextGridJson)
+  //-------------------------
+  //获取最新的分段数据intervals
+  let intervals = times.map((ts,i)=>{
+    return {
+      index: (i+1),
+      xmin: ts.start,
+      xmax: ts.end,
+      text: ts.text,
+    }
+  })
+  // 将intervals替换到 task.textGridJson.item[0].intervals
+  task.textGridJson.item[0].intervals = intervals
+  // 转换为分段号+文本
+  newText.value = convertText(task.textGridJson)
+  diffDialogVisible.value = true
+}
+
 //操作方法
 const operationTipDialogVisible = ref(false)
 const operationTipContent = ref('')
@@ -271,10 +389,12 @@ const handleSpace = (event) => {
       regions.getRegions().forEach(reg=>{
         if(reg.start== activeRegion.start && reg.end==activeRegion.end){
           reg.play()
+          playStatus = true
         }
       })
     }else{
       ws.playPause()//音频播放/暂停
+      playStatus = false
     }
 
     event.preventDefault(); // 阻止元素的默认行为
@@ -445,7 +565,7 @@ function handleTextEnter(event, row) {
       let res = splitSegment(times, row, splitPoint, firstPart, secondPart);
       if(res){
         //提示切分成功，并注意调整分段边界
-        proxy.$message.success(`切分成功，注意调整分段边界`)
+        proxy.$message.success(proxy.$t('label.labelEditor.切分成功，注意调整分段边界'))
       }
     }
   }
@@ -488,7 +608,7 @@ function mergeUp(event, row){
     //将上一行的结束时间设置为当前行的结束时间
     prevRow.end = row.end
     times.splice(times.indexOf(row), 1)//删除当前行
-    proxy.$message.success(`合并成功`)
+    proxy.$message.success(proxy.$t('label.labelEditor.合并成功'))
 
     //清除所有区域
     regions.clearRegions()
@@ -521,7 +641,7 @@ function mergeDown(event, row){
     //将当前行的结束时间设置为下一行的结束时间
     row.end = nextRow.end
     times.splice(times.indexOf(nextRow), 1)//删除下一行
-    proxy.$message.success(`合并成功`)
+    proxy.$message.success(proxy.$t('label.labelEditor.合并成功'))
 
     //清除所有区域
     regions.clearRegions()
@@ -737,7 +857,7 @@ function redo(){
 }
 
 /** 保存任务  */
-function saveTask() {
+function saveTask(autoSave=false) {
   //将最新的times转为intervals
   let intervals = times.map((ts,i)=>{
     return {
@@ -751,10 +871,10 @@ function saveTask() {
   task.textGridJson.item[0].intervals = intervals
   //转换textGridJson为TG文本格式
   let textGrid = stringifyTextGrid(task.textGridJson)
-  if(task.data.textGrid === textGrid) {
-    proxy.$modal.msgError("标注内容未发生改变，无需保存")
-    return 
-  }
+  // if(task.data.textGrid === textGrid) {
+  //   proxy.$modal.msgWarning("标注内容未发生改变")
+  //   return 
+  // }
   //替换task.data的TextGrid字段
   task.data.textGrid = textGrid
   //准备保存的参数
@@ -766,7 +886,8 @@ function saveTask() {
   formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
   updateTask(formData).then(response => {
     console.log(response)
-    proxy.$modal.msgSuccess("保存成功")
+    let msg = autoSave? proxy.$t("label.labelEditor.自动保存成功") : proxy.$t("label.labelEditor.保存成功")
+    proxy.$modal.msgSuccess(msg)
   })
 }
 
@@ -788,7 +909,7 @@ function validateSegments() {
     if (text.replace(/\s+/g,'').length > 120) {
       errors.push({
         index: segmentNum,
-        reason: '文本字符数超过120个',
+        reason: proxy.$t('label.labelEditor.文本字符数超过120个'),
         duration: duration,
         text: text.substring(0, 30) + (text.length > 30 ? '...' : '')
       })
@@ -802,7 +923,7 @@ function validateSegments() {
       if (!hasInvalidTag) {
         errors.push({
           index: segmentNum,
-          reason: '分段时长超过15秒且未标记无效时长标签',
+          reason: proxy.$t('label.labelEditor.分段时长超过15秒且未标记无效时长标签'),
           duration: duration,
           text: text.substring(0, 30) + (text.length > 30 ? '...' : '')
         })
@@ -813,9 +934,9 @@ function validateSegments() {
     if (!text || text.trim() === '') {
       errors.push({
         index: segmentNum,
-        reason: '标注文本为空白',
+        reason: proxy.$t('label.labelEditor.标注文本为空白'),
         duration: duration,
-        text: '(空文本)'
+        text: `(${proxy.$t('label.labelEditor.空文本')})`
       })
     }
   })
@@ -835,7 +956,7 @@ function submitTask(isValidate=true) {
       return
     }
   }
-  proxy.$modal.confirm('确定提交审核吗？').then(function () {
+  proxy.$modal.confirm(proxy.$t('label.labelEditor.确定提交审核吗？')).then(function () {
     //将最新的times转为intervals
     let intervals = times.map((ts,i)=>{
       return {
@@ -860,7 +981,7 @@ function submitTask(isValidate=true) {
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
     updateTask(formData).then(response => {
-      proxy.$modal.msgSuccess("提交成功")
+      proxy.$modal.msgSuccess(proxy.$t('label.labelEditor.提交成功'))
       setTimeout(() => {
         //跳转回"我的任务明细"页
         proxy.$router.push(`/label/my-task/index/${task.data.packageId}/${encodeURIComponent(route.params.taskPackageName)}`);
@@ -874,7 +995,7 @@ function submitTask(isValidate=true) {
 function rejectTask(){
   console.log('rejectTask---',dialogFormRemark)
   if(!dialogFormRemark.value){
-    proxy.$modal.msgError("请填写驳回原因")
+    proxy.$modal.msgError(proxy.$t('label.labelEditor.请填写驳回原因'))
     return
   }
   dialogFormVisible = false
@@ -898,12 +1019,12 @@ function rejectTask(){
       taskId: taskId,
       textGrid: textGrid,
       status: 'reject',
-      remark: '驳回原因:'+dialogFormRemark.value
+      remark: proxy.$t('label.labelEditor.驳回原因')+':'+dialogFormRemark.value
     }
   const formData = new FormData();
   formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
   updateTask(formData).then(response => {
-    proxy.$modal.msgSuccess("驳回成功")
+    proxy.$modal.msgSuccess(proxy.$t("label.labelEditor.驳回成功"))
     setTimeout(() => {
       //跳转回“我的审核”页
       proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
@@ -928,7 +1049,7 @@ function auditTask(isValidate=true) {
       return
     }
   }
-  proxy.$modal.confirm('确定审核通过吗？').then(function () {
+  proxy.$modal.confirm(proxy.$t('label.labelEditor.确定审核通过吗？')).then(function () {
     //将最新的times转为intervals
     let intervals = times.map((ts,i)=>{
       return {
@@ -952,7 +1073,7 @@ function auditTask(isValidate=true) {
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
     updateTask(formData).then(response => {
-      proxy.$modal.msgSuccess("审核成功")
+      proxy.$modal.msgSuccess(proxy.$t('label.labelEditor.审核成功'))
       setTimeout(() => {
         //跳转回“我的审核”页
         proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
@@ -1232,7 +1353,7 @@ function splitSegment(times, oldSegment, point, firstPart, secondPart) {
 
 function loadTextGrid(){
   if(!task.data.textGrid){
-    proxy.$message.error('缺少预标注文本TextGrid')
+    proxy.$message.error(proxy.$t('label.labelEditor.缺少预标注文本TextGrid'))
     return
   }
   // ----将预标注文本转为json---
@@ -1304,7 +1425,7 @@ async function init(){
         scale: 0.2,
         // Optionally, specify the maximum pixels-per-second factor while zooming
         //可选项地指定缩放时的最大每秒像素数值
-        maxZoom: 150,
+        maxZoom: 300,
       }),
     ],
   })
@@ -1317,8 +1438,11 @@ async function init(){
     })
 
   ws.on('play', () => {
-    console.log('ws.pay-->currentTime:', ws.getCurrentTime())
-    currentTime.value = ws.getCurrentTime()
+    isPlaying.value = true;
+  })
+
+  ws.on('pause', () => {
+    isPlaying.value = false;
   })
 
   ws.on('zoom', (minPxPerSec) => {
@@ -1326,6 +1450,13 @@ async function init(){
   })
 
   ws.on('decode', () => { 
+
+    labels.push(...[
+      { type: 'primary', label: '<NOISE>', 'tip': proxy.$t('label.labelEditor.<NOISE>') },
+      { type: 'success', label: '<DEAF>', 'tip': proxy.$t('label.labelEditor.<DEAF>') },
+      { type: 'info', label: '<OVERLAP>', 'tip': proxy.$t('label.labelEditor.<OVERLAP>') },
+      { type: 'warning', label: '<OOV>', 'tip': proxy.$t('label.labelEditor.<OOV>') },
+    ])
 
     //获得音频总时长
     duration = ws.decodedData.duration
@@ -1676,7 +1807,9 @@ async function init(){
         if(clickTime>=ts.start && clickTime<=ts.end){//点击位置在此区间
           //如果点击的时当前激活分段
           if(activeRegion.start==ts.start && activeRegion.end==ts.end){
-            //忽略
+            //从点击位置开始播放
+            ws.setTime(clickTime)
+            ws.play()
           }else{
           //激活分段
           activateRegion(ts)
@@ -1694,6 +1827,7 @@ async function init(){
       currentTime.value = ct
       if (activeRegion && ctime > activeRegion.end) {//播放到达当前激活分段的末尾
         ws.pause()
+        playStatus = true
         // if(playMode=='single_cycle'){//单段循环
         //   //重新激活当前分段
           // activateRegion(activeRegion)
@@ -1736,12 +1870,14 @@ async function init(){
         }else{
         if(ws.isPlaying()){//在播放
           ws.pause()
+            playStatus = false
         }else{//已暂停
           let currentTime = ws.getCurrentTime();
           if(currentTime>=activeRegion.end){//当前播放位置已超出激活区域，则跳转到激活区域的开始处
             ws.setTime(activeRegion.start)
           }
           ws.play()
+            playStatus = true
         }
         }
         
@@ -1750,7 +1886,7 @@ async function init(){
 
     if (forwardButton) {
       forwardButton.onclick = () => {
-        let regionIndex = 0
+        let regionIndex = -1
         //1.定位当前段    
         // 查找当前激活的分段
         if(activeRegion.end - activeRegion.start >0){
@@ -1774,7 +1910,7 @@ async function init(){
 
     if (backButton) {
       backButton.onclick = () => {
-        let regionIndex = 0
+        let regionIndex = -1
         //1.定位当前段    
         // 查找当前激活的分段
         if(activeRegion.end - activeRegion.start >0){
@@ -1803,6 +1939,16 @@ async function init(){
 function activateRegion(ts){
   console.log('>>>激活目标分段>>>', JSON.stringify(ts))
 
+  if(activeRegion.start==ts.start && activeRegion.end==ts.end){
+    //已经是激活的分段
+    console.log('是激活的分段', activeRegion)
+    //return
+  }else{
+    console.log('未激活的分段', activeRegion)
+    ws.setTime(ts.start)
+  }
+
+
   // 1.清除非分段线（取消激活区域）
   regions.getRegions().forEach((region) => {
     if (region.start != region.end) {
@@ -1824,7 +1970,10 @@ function activateRegion(ts){
   //设置区域属性（在created事件中获取不到区域属性，只能通过region.getProperties()获取）
   //region['clickAdd'] = true //点击新增区域的标识
 
-  region.play()
+  if(playStatus){
+    region.play()
+  }
+  
 
   //记录当前区域为激活区域
   activeRegion.start = ts.start;
@@ -1860,14 +2009,19 @@ function formatSecondsToMMSSS(seconds) {
 // 点击表格的行
 function rowClick(row, column, event){
   console.log('表格的行被点击了--->', row, column, event)
-  //通过row.start和row.end查找到对应分段
-  // 类似分段的click事件函数：
-  // 1.激活分段区域（含高亮显示）
-  let region = activateRegion(row)
-  // // 2.跳转分段起点
-  // ws.skip(region.start)
-  // // 3.播放分段音频
-  // region.play()
+  if(row.start==activeRegion.start && row.end==activeRegion.end){
+    //点击的是当前激活的分段
+    console.log('点击的是当前激活的分段')
+  }else{
+    //通过row.start和row.end查找到对应分段
+    // 类似分段的click事件函数：
+    // 1.激活分段区域（含高亮显示）
+    let region = activateRegion(row)
+    // // 2.跳转分段起点
+    // ws.skip(region.start)
+    // // 3.播放分段音频
+    // region.play()
+  }
 }
 
 
@@ -2085,11 +2239,12 @@ const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
 
-
-//播放状态控制(true为播放，false为暂停)
+// 音频播放状态（true为正在播放，false为暂停）
+let isPlaying = ref(false)
+// 控制音频播放(true为继续播放，false为暂停播放)
 let playStatus = ref(true)
 
-let playMode = 'single_cycle' //播放模式（）
+let playMode = 'single_only' //播放模式（单播single_only，单循环single_loop，顺序播放list_order）
 
 //播放音量
 let volume = ref(50)
@@ -2194,12 +2349,16 @@ function addHistoryTimes(actionName) {
     actionTime: formatDateTime(new Date(), 'yyyy-MM-dd HH:mm:ss')
   })
   console.log('新增历史记录', JSON.parse(JSON.stringify(historyTimes.value)))
+  //自动保存修改
+  if(historyTimes.value.length>1){
+    //saveTask(true)
+  }  
 }
 
 //退回上一次操作
 function undo(){
   if(historyTimes.value.length<=1){
-    proxy.$message.error('没有历史操作可以撤销了')
+    // proxy.$message.error('没有历史操作可以撤销了')
     return
   };
 
@@ -2474,5 +2633,14 @@ onUnmounted(() => {
 }
 ::v-deep .el-textarea__inner[placeholder="请输入标注内容"] {
   padding-right: 40px;
+}
+
+
+/* 专门针对代码内容和行号设置字体大小 */
+.custom-diff-container :deep(.blob-num), /* 行号 */
+.custom-diff-container :deep(.blob-code-inner) { /* 代码内容 */
+  font-size: 20px !important; /* 使用 !important 确保覆盖默认样式 */
+  line-height: 1.2; /* 可以同时调整行高以获得更好视觉效果 */
+  padding: 5px 0; /* 适当增加内边距 */
 }
 </style>
