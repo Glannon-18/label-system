@@ -140,11 +140,11 @@
                   </el-input>
                 </div>
                 <div style="width:40px;margin-left:5px;" v-if="scope.row.start==activeRegion.start && scope.row.end==activeRegion.end">
-                  <div><el-tooltip v-if="scope.$index>0" :content="$t('label.labelEditor.合并上一段')+'（Alt+↑）'" placement="top">
+                  <div><el-tooltip v-if="scope.$index>0" :content="$t('label.labelEditor.合并上一段')+'（Ctrl + ↑）'" placement="top">
                     <el-button size="small" type="primary" icon="Upload" round  plain @click="mergeUp($event, scope.row)"></el-button>
                   </el-tooltip></div>
                   <!-- <br/> -->
-                  <div><el-tooltip v-if="scope.$index<(times.length-1)" :content="$t('label.labelEditor.合并下一段')+'（Alt+↓）'" placement="bottom">
+                  <div><el-tooltip v-if="scope.$index<(times.length-1)" :content="$t('label.labelEditor.合并下一段')+'（Ctrl + ↓）'" placement="bottom">
                     <el-button size="small" type="primary" icon="Download" round plain @click="mergeDown($event, scope.row)"></el-button>
                   </el-tooltip></div>
                 </div>
@@ -203,7 +203,7 @@
       </div>
     </el-dialog>
     <!-- 标注规范 -->
-    <el-dialog v-model="labelStandardDialogVisible" :title="$t('label.labelEditor.标注规范')" width="800">
+    <el-dialog v-model="labelStandardDialogVisible" :title="$t('label.labelEditor.标注规范')" width="80%">
       <div data-v-2bde42cb="" style="font-size: 16px; line-height: 18px;">
         <p><strong >1）{{$t('label.labelEditor.文本')}}</strong><span >：{{$t('label.labelEditor.文本-规范')}} </span></p>
         <p><strong >2）{{$t('label.labelEditor.分段')}}</strong><span >： </span></p>
@@ -489,38 +489,29 @@ const tableRowClassName = ({ row, rowIndex }) => {
   return ''
 }
 
+//播放/暂停
+function playOrPause(){
+  if(ws.getCurrentTime() >= activeRegion.end){
+    regions.getRegions().forEach(reg=>{
+      if(reg.start== activeRegion.start && reg.end==activeRegion.end){          
+        reg.play()
+        playStatus = true
+      }
+    })
+  }else{
+    ws.playPause()//音频播放/暂停
+    playStatus = false
+  }
+ }
 
 const handleSpace = (event) => {
-  // 按下空格键
-  if (event.key === ' ') { 
-    if(ws.getCurrentTime() >= activeRegion.end){
-      regions.getRegions().forEach(reg=>{
-        if(reg.start== activeRegion.start && reg.end==activeRegion.end){          
-          reg.play()
-          playStatus = true
-        }
-      })
-    }else{
-      ws.playPause()//音频播放/暂停
-      playStatus = false
-    }
-
+  // 按Alt键
+  if(event.altKey) {
+    console.log('alt键被按下');
     event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
-    console.log('空格键被按下');
-  } 
-  // 按Alt+↑上方向键
-  /*else if(event.altKey && event.key === 'ArrowUp') {
-    console.log('Alt+↑ 键被按下');
-    event.preventDefault(); // 阻止元素的默认行为
-    mergeUp(event,activeRegion)
+    playOrPause()
   }
-  // 按Alt+↓下方向键
-  else if(event.altKey && event.key === 'ArrowDown') {
-    console.log('Alt+↓ 键被按下');
-    event.preventDefault(); // 阻止元素的默认行为
-    mergeDown(event, activeRegion)
-  }*/
   // 按Ctrl+S键
   else if (event.ctrlKey && event.key === 's') { 
     console.log('按Ctrl+S键执行保存更改');
@@ -557,7 +548,7 @@ const handleSpace = (event) => {
   else if(event.ctrlKey && event.key=='z'){
     event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
-    console.log('keyup--按了ctrl+z')
+    console.log('按了ctrl+z')
     //撤销操作
     undo()
   }
@@ -570,27 +561,36 @@ const handleSpace = (event) => {
  * @param {Object} row - 当前行数据
  */
 function handleTextArrow(event, row) {
+  //按Alt键
+  if(event.altKey){
+    console.log('Alt键被按下');
+    event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
+    playOrPause()
+  }
   // 按下空格键
-  if (event.key === ' ') { 
+  else if (event.key === ' ') {
     //event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
   }
-  // 按Alt+↑上方向键
-  if(event.altKey && event.key === 'ArrowUp') {
-    console.log('Alt+↑ 键被按下');
+  // 按Ctrl+↑上方向键
+  else if(event.ctrlKey && event.key === 'ArrowUp') {
+    console.log('Ctrl+↑ 键被按下');
     event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
     mergeUp(event,row)
   }
-  // 按Alt+↓下方向键
-  else if(event.altKey && event.key === 'ArrowDown') {
-    console.log('Alt+↓ 键被按下');
+  // 按Ctrl+↓下方向键
+  else if(event.ctrlKey && event.key === 'ArrowDown') {
+    console.log('Ctrl+↓ 键被按下');
     event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
     mergeDown(event,row)
   }
-  // 按上下方向键
+  // 按上/下方向键
   else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-    console.log('方向键被按下--', event.key);
+    console.log('方向键被按下-->', event.key);
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     const textarea = event.target;
     const cursorPos = textarea.selectionStart;
@@ -644,7 +644,6 @@ function handleTextArrow(event, row) {
   }
   //按下Ctrl+Z键
   else if(event.ctrlKey && event.key=='z'){
-    //event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('keydown--按了ctrl+z')
   }
@@ -2698,12 +2697,35 @@ let dialogFormRemark = ref('')
 // 添加键盘事件监听器
 onMounted(() => {
   window.addEventListener('keydown', handleSpace);
+  // 启动定时器
+  startTimer();
 })
 
 // 移除键盘事件监听器
 onUnmounted(() => {
   window.removeEventListener('keydown', handleSpace);
+  // 清除定时器
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
 })
+
+let timer = null
+// 启动定时器
+function startTimer() {
+  // 先清除已存在的定时器
+  if (timer) {
+    clearInterval(timer);
+  }
+  // 设置新的定时器
+  timer = setInterval(() => {
+    console.log("执行定时任务");
+    getTask(taskId).then(res=>{
+      console.log('任务详情：', res)
+    })
+  }, 10 * 60 * 1000); //间隔10分钟
+}
 
 </script>
 
