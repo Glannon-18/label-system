@@ -4,12 +4,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import javax.servlet.http.HttpServletResponse;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import com.ruoyi.common.constant.TaskStatus;
+import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.label.utils.SysTaskLogUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,26 +52,7 @@ public class SysTaskController extends BaseController
 {
     @Autowired
     private ISysTaskService sysTaskService;
-    
 
-    private static final String INIT_TEXTGRID="File type = \"ooTextFile\"\n" +
-            "Object class = \"TextGrid\"\n" +
-            "\n" +
-            "xmin = 0.0\n" +
-            "xmax = %s\n" +
-            "tiers? <exists>\n" +
-            "size = 1\n" +
-            "item []:\n" +
-            "    item[1]:\n" +
-            "        class = \"IntervalTier\"\n" +
-            "        name = \"Subtitle-Tier\"\n" +
-            "        xmin = 0.0\n" +
-            "        xmax = %s\n" +
-            "        intervals: size = 1\n" +
-            "        intervals [1]\n" +
-            "            xmin = 0.0\n" +
-            "            xmax = %s\n" +
-            "            text = \"\"";
 
     /**
      * 查询任务列表
@@ -190,6 +173,10 @@ public class SysTaskController extends BaseController
         if (sysTask.getStatus() != null && !sysTask.getStatus().equals(oldTask.getStatus())) {
             SysTaskLogUtils.insertSysTaskLog(sysTask.getTaskId(), sysTask.getStatus(), getUsername(), null);
         }
+        //如果审核通过，则设置通过时间
+        if(sysTask.getStatus().equals(TaskStatus.PASS)){
+            sysTask.setPassTime(DateUtils.getNowDate());
+        }
         
         return toAjax(sysTaskService.updateSysTask(sysTask));
     }
@@ -228,6 +215,20 @@ public class SysTaskController extends BaseController
         // 获取审计员为当前登录用户
         String auditor = getUsername();
         List<SysTask> list = sysTaskService.selectAuditorTaskList(sysTask, auditor);
+        return getDataTable(list);
+    }
+    
+    /**
+     * 查询当前用户创建的任务列表
+     */
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
+    @GetMapping("/creator/list")
+    public TableDataInfo creatorList(SysTask sysTask)
+    {
+        startPage();
+        // 获取创建者为当前登录用户
+        sysTask.setCreateBy(getUsername());
+        List<SysTask> list = sysTaskService.selectSysTaskList(sysTask);
         return getDataTable(list);
     }
 }

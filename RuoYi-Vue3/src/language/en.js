@@ -40,6 +40,10 @@ export default {
         关闭左侧: 'Close the left side',
         关闭右侧: 'Close the right side',
         全部关闭: 'Close All',
+        我的审核: 'my audits',
+        管理员任务: 'admin task',
+        我的审核: 'my audits',
+        管理员任务: 'admin task',
     },
     label: {
         project: {
@@ -210,6 +214,7 @@ export default {
             annotator: 'Annotator',
             creator: 'Creator',
             create_time: 'Create Time',
+            pass_time: 'Pass Time',
             remark: 'Remark',
             operation: 'Operation',
             audit: 'Audit',

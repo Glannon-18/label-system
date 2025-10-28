@@ -20,7 +20,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="packageAssigner" column="package_assigner" />
         <result property="packageType" column="package_type" />
         <result property="packageName" column="package_name" />
-        <result property="textGrid" column="text_grid" />
+        <result property="passTime" column="pass_time" />
     </resultMap>
 
     <sql id="selectSysTaskVo">
@@ -37,8 +37,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.update_by,
             t.update_time,
             t.remark,
+            t.pass_time,
 			p.type as package_type,
-            p.assigner as package_assigner
+            p.assigner as package_assigner,
+            p.name as package_name
         from sys_task t
         left join sys_task_package p on t.package_id = p.task_package_id
     </sql>
@@ -57,6 +59,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.update_by,
             t.update_time,
             t.remark,
+            t.pass_time,
             p.type as package_type,
             p.assigner as package_assigner,
             p.name as package_name
@@ -71,6 +74,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="status != null  and status != ''"> and t.status = #{status}</if>
             <if test="params.beginCreateBy != null and params.beginCreateBy != '' and params.endCreateBy != null and params.endCreateBy != ''"> and t.create_by between #{params.beginCreateBy} and #{params.endCreateBy}</if>
             <if test="packageId != null and packageId != ''"> and t.package_id = #{packageId}</if>
+            <if test="createBy != null  and createBy != ''"> and t.create_by = #{createBy}</if>
         </where>
     </select>
     
@@ -98,6 +102,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="remark != null">remark,</if>
             <if test="textGrid != null">text_grid,</if>
             <if test="originalTextGrid != null">original_text_grid,</if>
+            <if test="passTime != null">pass_time,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="packageId != null">#{packageId},</if>
@@ -111,6 +116,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="remark != null">#{remark},</if>
             <if test="textGrid != null">#{textGrid},</if>
             <if test="originalTextGrid != null">#{originalTextGrid},</if>
+            <if test="passTime != null">#{passTime},</if>
          </trim>
     </insert>
 
@@ -128,7 +134,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null">update_by = #{updateBy},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
             <if test="remark != null">remark = #{remark},</if>
-            <if test="textGrid != null">text_grid = #{textGrid},</if>
+            <if test="passTime != null">pass_time = #{passTime},</if>
         </trim>
         where task_id = #{taskId}
     </update>
