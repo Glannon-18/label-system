@@ -1094,3 +1094,81 @@ function rejectTask(){
 
 }
 </script>
+<style scoped>
+
+.item-root {
+    margin: 40px;
+}
+
+.item-container {
+    width: 100%;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    transition: box-shadow 0.3s;
+}
+
+.item-text__edit{
+    font-size: 20px;
+    color: #333 !important;
+    word-wrap: break-word;
+}
+
+
+.item-text {
+    width: 100%;
+    font-size: 20px;
+    color: #333;
+    line-height: 1.6;
+    word-wrap: break-word;
+    margin-bottom: 0px;
+}
+
+.item-keywords {
+    width: 100%;
+    font-size: 16px;
+    color: #333;
+    
+    word-wrap: break-word;
+    margin-bottom: 0px;
+}
+
+
+.item-keywords__edit{
+    font-size: 16px;
+    color: #333 !important;
+    word-wrap: break-word;
+}
+
+.item-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 5px;
+}
+
+.action-btn {
+    cursor: pointer;
+    color: #409EFF;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.action-btn:hover {
+    color: #66b1ff;
+}
+
+.fixed-textarea {
+
+    font-size: 20px;
+}
+
+
+</style>
+
+<style> 
+.recording {
+    background-color: #f5f7fa !important;
+}
+</style>
