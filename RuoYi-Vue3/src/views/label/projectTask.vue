@@ -58,13 +58,6 @@
       <el-table-column :label="$t('label.auditTask.operation')" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button 
-            type="primary" 
-            icon="View" 
-            size="default" 
-            @click="handleViewDetail(scope.row)">
-            {{ $t('label.auditTask.view_detail') }}
-          </el-button>
-          <el-button 
             icon="View"
             size="default" 
             @click="handleShowProgress(scope.row)">
