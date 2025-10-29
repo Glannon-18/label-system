@@ -84,3 +84,13 @@ export function listCreatorTask(query) {
     params: query
   })
 }
+
+// 批量下载任务文件
+export function downloadTasks(taskIds) {
+  return request({
+    url: '/label/task/download',
+    method: 'post',
+    data: taskIds,
+    responseType: 'blob'
+  })
+}

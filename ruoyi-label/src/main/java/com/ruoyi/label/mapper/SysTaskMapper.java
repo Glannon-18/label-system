@@ -60,6 +60,14 @@ public interface SysTaskMapper
      * @return 结果
      */
     public int deleteSysTaskByTaskId(Long taskId);
+    
+    /**
+     * 根据任务ID列表查询任务列表
+     * 
+     * @param taskIds 任务ID数组
+     * @return 任务集合
+     */
+    public List<SysTask> selectSysTaskListByTaskIds(Long[] taskIds);
 
     /**
      * 批量删除任务

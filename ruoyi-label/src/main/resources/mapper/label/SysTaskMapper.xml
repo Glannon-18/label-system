@@ -168,4 +168,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="auditor != null and auditor != ''"> and p.auditor = #{auditor}</if>
         </where>
     </select>
+    
+    <select id="selectSysTaskListByTaskIds" resultMap="SysTaskResult">
+        <include refid="selectSysTaskVo"/>
+        where t.task_id in
+        <foreach item="taskId" collection="array" open="(" separator="," close=")">
+            #{taskId}
+        </foreach>
+    </select>
 </mapper>

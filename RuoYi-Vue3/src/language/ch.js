@@ -227,7 +227,11 @@ export default {
             underway: '标注中',
             pending_review: '待审核',
             reject: '已驳回',
-            pass: '审核通过'
+            pass: '审核通过',
+            download: '下载',
+            select_at_least_one_task: '请至少选择一个任务',
+            confirm_download: '确认下载选中的任务文件吗？',
+            download_success: '下载成功'
         },
         audioRecorder: {
             task_id: '任务id',

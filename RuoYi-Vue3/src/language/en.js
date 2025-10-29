@@ -227,7 +227,11 @@ export default {
             underway: 'Underway',
             pending_review: 'Pending Review',
             reject: 'Reject',
-            pass: 'Pass'
+            pass: 'Pass',
+            download: 'Download',
+            select_at_least_one_task: 'Please select at least one task',
+            confirm_download: 'Confirm to download the selected task files?',
+            download_success: 'Download success'
         },
         audioRecorder: {
             task_id: 'Task ID',

@@ -95,6 +95,18 @@ public class SysTaskServiceImpl implements ISysTaskService
     }
     
     /**
+     * 根据任务ID列表查询任务列表
+     * 
+     * @param taskIds 任务ID数组
+     * @return 任务集合
+     */
+    @Override
+    public List<SysTask> selectSysTaskListByTaskIds(Long[] taskIds)
+    {
+        return sysTaskMapper.selectSysTaskListByTaskIds(taskIds);
+    }
+    
+    /**
      * 审核任务
      * 
      * @param sysTask 任务信息

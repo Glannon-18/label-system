@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -77,6 +80,43 @@ public class SysTaskController extends BaseController
         List<SysTask> list = sysTaskService.selectSysTaskList(sysTask);
         ExcelUtil<SysTask> util = new ExcelUtil<SysTask>(SysTask.class);
         util.exportExcel(response, list, "任务数据");
+    }
+
+    /**
+     * 批量下载任务文件
+     */
+    @Log(title = "任务", businessType = BusinessType.EXPORT)
+    @PostMapping("/download")
+    public void downloadTasks(@RequestBody Long[] taskIds, HttpServletResponse response) throws IOException {
+        List<SysTask> tasks = sysTaskService.selectSysTaskListByTaskIds(taskIds);
+        
+        response.setContentType("application/zip");
+        response.setHeader("Content-Disposition", "attachment; filename=tasks.zip");
+        
+        try (ZipOutputStream zipOut = new ZipOutputStream(response.getOutputStream())) {
+            for (SysTask task : tasks) {
+                // 添加WAV文件到ZIP
+                if (task.getAudioFilePath() != null && !task.getAudioFilePath().isEmpty()) {
+                    File wavFile = new File(RuoYiConfig.getProfile(), task.getAudioFilePath().replaceFirst("/profile",""));
+                    if (wavFile.exists()) {
+                        // 为避免文件名冲突，添加任务ID作为前缀
+                        String uniqueAudioFileName = task.getTaskId() + "_" + task.getAudioFileName();
+                        zipOut.putNextEntry(new ZipEntry(uniqueAudioFileName));
+                        java.nio.file.Files.copy(wavFile.toPath(), zipOut);
+                        zipOut.closeEntry();
+                    }
+                }
+                
+                // 添加TextGrid文件到ZIP
+                if (task.getTextGrid() != null && !task.getTextGrid().isEmpty()) {
+                    // 为避免文件名冲突，添加任务ID作为前缀
+                    String textGridFileName = task.getTaskId() + "_" + task.getAudioFileName().replaceAll("\\.wav$", ".TextGrid");
+                    zipOut.putNextEntry(new ZipEntry(textGridFileName));
+                    zipOut.write(task.getTextGrid().getBytes(StandardCharsets.UTF_8));
+                    zipOut.closeEntry();
+                }
+            }
+        }
     }
 
     /**

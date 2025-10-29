@@ -26,6 +26,16 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button
+            type="primary"
+            plain
+            icon="Download"
+            size="default"
+            :disabled="single"
+            @click="handleDownload"
+        >{{ $t('label.auditTask.download') }}</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -43,7 +53,6 @@
         </template>
       </el-table-column>
       <el-table-column :label="$t('label.auditTask.annotator')" align="center" prop="packageAssigner" />
-      <el-table-column :label="$t('label.auditTask.creator')" align="center" prop="createBy" />
       <el-table-column :label="$t('label.auditTask.create_time')" align="center" prop="createTime" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
@@ -98,7 +107,7 @@
 </template>
 
 <script setup name="ProjectTask">
-import { getTaskProgress, listCreatorTask } from "@/api/label/task"
+import { getTaskProgress, listCreatorTask, downloadTasks } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()
 const { task_status } = proxy.useDict('task_status')
@@ -109,6 +118,8 @@ const loading = ref(true)
 const showSearch = ref(true)
 const total = ref(0)
 const uniqueId = ref("") // 添加唯一标识用于判断是否需要刷新
+const ids = ref([])
+const single = ref(true)
 
 // 任务进度相关
 const progressDialogVisible = ref(false)
@@ -125,6 +136,12 @@ const data = reactive({
 })
 
 const { queryParams } = toRefs(data)
+
+/** 选中项发生变化时触发 */
+function handleSelectionChange(selection) {
+  ids.value = selection.map(item => item.taskId)
+  single.value = selection.length === 0
+}
 
 /**
  * 根据任务状态获取标签类型
@@ -230,6 +247,27 @@ function handleQuery() {
 function resetQuery() {
   proxy.resetForm("queryRef")
   handleQuery()
+}
+
+/** 下载按钮操作 */
+function handleDownload() {
+  if (ids.value.length === 0) {
+    proxy.$message.warning(proxy.$t('label.auditTask.select_at_least_one_task'))
+    return
+  }
+  
+  proxy.$modal.confirm(proxy.$t('label.auditTask.confirm_download')).then(function() {
+    return downloadTasks(ids.value)
+  }).then(response => {
+    const blob = new Blob([response])
+    const fileName = 'tasks.zip'
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = fileName
+    link.click()
+    URL.revokeObjectURL(link.href)
+    proxy.$modal.msgSuccess(proxy.$t('label.auditTask.download_success'))
+  }).catch(function() {})
 }
 
 /** 查看详情 **/
