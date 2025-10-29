@@ -36,9 +36,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                u.nick_name as assigner_nick_name,
                au.nick_name as auditor_nick_name
         from sys_task_package t 
+        left join sys_user u on t.assigner = u.user_name and u.del_flag = '0' and u.status = '0'
+        left join sys_user au on t.auditor = au.user_name and au.del_flag = '0' and au.status = '0'
         left join sys_project p on t.project_id = p.project_id
-        left join sys_user u on t.assigner = u.user_name
-        left join sys_user au on t.auditor = au.user_name
     </sql>
 
     <select id="selectSysTaskPackageList" parameterType="SysTaskPackage" resultMap="SysTaskPackageResult">

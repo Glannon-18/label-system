@@ -1,9 +1,7 @@
 package com.ruoyi.label.service;
 
-import com.ruoyi.label.domain.SysTask;
-import org.apache.ibatis.annotations.Param;
-
 import java.util.List;
+import com.ruoyi.label.domain.SysTask;
 
 /**
  * 任务Service接口

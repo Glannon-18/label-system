@@ -75,3 +75,12 @@ export function listAuditorTask(query) {
     params: query
   })
 }
+
+// 查询当前用户创建的任务列表
+export function listCreatorTask(query) {
+  return request({
+    url: '/label/task/creator/list',
+    method: 'get',
+    params: query
+  })
+}

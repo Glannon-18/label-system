@@ -144,7 +144,7 @@
             icon="Edit" 
             @click="handleUpdate(scope.row)" 
             v-hasPermi="['label:project:edit']"
-            :disabled="scope.row.status !== 'unallocated'">
+            :disabled="scope.row.status == 'reception'">
             {{ $t('label.taskPackage.edit_btn') }}
           </el-button>
           <el-button 
@@ -153,7 +153,7 @@
             icon="Delete" 
             @click="handleDelete(scope.row)" 
             v-hasPermi="['label:project:remove']"
-            :disabled="scope.row.status !== 'unallocated'">
+            :disabled="scope.row.status == 'reception'">
             {{ $t('label.taskPackage.delete_btn') }}
           </el-button>
           <el-button 
@@ -161,7 +161,7 @@
             type="primary"  
             @click="showUser(scope.row)" 
             v-hasPermi="['label:project:edit']"
-            :disabled="scope.row.status !== 'unallocated'">
+            :disabled="scope.row.status == 'reception'">
             {{ $t('label.taskPackage.assign_user') }}
           </el-button>
         </template>
@@ -294,7 +294,6 @@
 
 <script setup name="Package">
 import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser, uploadPackage, downloadPackage } from "@/api/label/package"
-import {listProject, getProject, delProject, addProject, updateProject} from "@/api/label/project"
 import { listTask } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()
