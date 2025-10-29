@@ -131,16 +131,20 @@ public class SysTaskController extends BaseController {
 //    @PreAuthorize("@ss.hasPermi('label:project:add')")
     @Log(title = "任务", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@RequestPart("sysTask") SysTask sysTask, @RequestPart("wavFile") MultipartFile wavFile, @RequestPart("textGridFile") MultipartFile textGridFile) throws IOException {
+    public AjaxResult add(@RequestPart("sysTask") SysTask sysTask, 
+                          @RequestPart(value = "wavFile", required = false) MultipartFile wavFile,
+                          @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile,
+                          @RequestPart(value = "xlsxFile", required = false) MultipartFile xlsxFile) throws IOException
+    {
         if (wavFile != null) {
             // 保存WAV文件并获取访问路径
             String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), wavFile);
-
+            
             // 设置任务属性
             sysTask.setAudioFileName(wavFile.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
         }
-
+        
         if (textGridFile != null) {
             // 读取TextGrid文件内容
             StringBuilder textGridContent = new StringBuilder();
@@ -150,10 +154,19 @@ public class SysTaskController extends BaseController {
                     textGridContent.append(line).append("\n");
                 }
             }
-
+            
             // 设置TextGrid内容
             sysTask.setTextGrid(textGridContent.toString());
             sysTask.setOriginalTextGrid(textGridContent.toString());
+        }
+
+        if (wavFile == null && xlsxFile != null) {
+            // 保存WAV文件并获取访问路径
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), xlsxFile);
+
+            // 设置任务属性
+            sysTask.setAudioFileName(xlsxFile.getOriginalFilename());
+            sysTask.setAudioFilePath(filePath);
         }
 
         sysTask.setCreateBy(getUsername());
@@ -169,19 +182,23 @@ public class SysTaskController extends BaseController {
 //    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask, @RequestPart(value = "wavFile", required = false) MultipartFile wavFile, @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile) throws IOException {
+    public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask, 
+                          @RequestPart(value = "wavFile", required = false) MultipartFile wavFile, 
+                          @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile,
+                          @RequestPart(value = "xlsxFile", required = false) MultipartFile xlsxFile) throws IOException
+    {
         // 获取更新前的任务信息
         SysTask oldTask = sysTaskService.selectSysTaskByTaskId(sysTask.getTaskId());
-
+        
         if (wavFile != null) {
             // 保存WAV文件并获取访问路径
             String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), wavFile);
-
+            
             // 设置任务属性
             sysTask.setAudioFileName(wavFile.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
         }
-
+        
         if (textGridFile != null) {
             // 读取TextGrid文件内容
             StringBuilder textGridContent = new StringBuilder();
@@ -191,14 +208,23 @@ public class SysTaskController extends BaseController {
                     textGridContent.append(line).append("\n");
                 }
             }
-
+            
             // 设置TextGrid内容
             sysTask.setTextGrid(textGridContent.toString());
             sysTask.setOriginalTextGrid(textGridContent.toString());
         }
 
-        sysTask.setUpdateBy(getUsername());
+        if (wavFile == null && xlsxFile != null) {
+            // 保存WAV文件并获取访问路径
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), xlsxFile);
 
+            // 设置任务属性
+            sysTask.setAudioFileName(xlsxFile.getOriginalFilename());
+            sysTask.setAudioFilePath(filePath);
+        }
+
+        sysTask.setUpdateBy(getUsername());
+        
         // 检查状态是否发生变化，如果变化则记录日志
         if (sysTask.getStatus() != null && !sysTask.getStatus().equals(oldTask.getStatus())) {
             SysTaskLogUtils.insertSysTaskLog(sysTask.getTaskId(), sysTask.getStatus(), getUsername(), null);
@@ -207,7 +233,7 @@ public class SysTaskController extends BaseController {
         if (sysTask.getStatus() != null && sysTask.getStatus().equals(TaskStatus.PASS)) {
             sysTask.setPassTime(DateUtils.getNowDate());
         }
-
+        
         return toAjax(sysTaskService.updateSysTask(sysTask));
     }
 
@@ -231,7 +257,7 @@ public class SysTaskController extends BaseController {
         sysTask.setUpdateBy(getUsername());
         return toAjax(sysTaskService.auditTask(sysTask));
     }
-
+    
     /**
      * 查询审核员任务列表
      */
@@ -244,7 +270,7 @@ public class SysTaskController extends BaseController {
         List<SysTask> list = sysTaskService.selectAuditorTaskList(sysTask, auditor);
         return getDataTable(list);
     }
-
+    
     /**
      * 查询当前用户创建的任务列表
      */
