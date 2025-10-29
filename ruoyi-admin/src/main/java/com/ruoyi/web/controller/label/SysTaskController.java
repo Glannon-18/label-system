@@ -136,8 +136,9 @@ public class SysTaskController extends BaseController
     @Log(title = "任务", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestPart("sysTask") SysTask sysTask, 
-                          @RequestPart("wavFile") MultipartFile wavFile, 
-                          @RequestPart("textGridFile") MultipartFile textGridFile) throws IOException
+                          @RequestPart(value = "wavFile", required = false) MultipartFile wavFile,
+                          @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile,
+                          @RequestPart(value = "xlsxFile", required = false) MultipartFile xlsxFile) throws IOException
     {
         if (wavFile != null) {
             // 保存WAV文件并获取访问路径
@@ -162,6 +163,15 @@ public class SysTaskController extends BaseController
             sysTask.setTextGrid(textGridContent.toString());
             sysTask.setOriginalTextGrid(textGridContent.toString());
         }
+
+        if (wavFile == null && xlsxFile != null) {
+            // 保存WAV文件并获取访问路径
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), xlsxFile);
+
+            // 设置任务属性
+            sysTask.setAudioFileName(xlsxFile.getOriginalFilename());
+            sysTask.setAudioFilePath(filePath);
+        }
         
         sysTask.setCreateBy(getUsername());
         sysTask.setStatus(TaskStatus.UNSTART);
@@ -178,7 +188,8 @@ public class SysTaskController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask, 
                           @RequestPart(value = "wavFile", required = false) MultipartFile wavFile, 
-                          @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile) throws IOException
+                          @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile,
+                          @RequestPart(value = "xlsxFile", required = false) MultipartFile xlsxFile) throws IOException
     {
         // 获取更新前的任务信息
         SysTask oldTask = sysTaskService.selectSysTaskByTaskId(sysTask.getTaskId());
@@ -205,6 +216,15 @@ public class SysTaskController extends BaseController
             // 设置TextGrid内容
             sysTask.setTextGrid(textGridContent.toString());
             sysTask.setOriginalTextGrid(textGridContent.toString());
+        }
+
+        if (wavFile == null && xlsxFile != null) {
+            // 保存WAV文件并获取访问路径
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), xlsxFile);
+
+            // 设置任务属性
+            sysTask.setAudioFileName(xlsxFile.getOriginalFilename());
+            sysTask.setAudioFilePath(filePath);
         }
         
         sysTask.setUpdateBy(getUsername());

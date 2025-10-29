@@ -112,6 +112,7 @@
                                 type="textarea"
                                 @keydown.enter.prevent="keyEnterConfirmEdit(row, $index)"
                                 @keydown.esc="keyEscCancelEdit()"
+                                @blur="blurText(row, $index)"
                             />
 
                             <div v-else @click="clickStartEdit($index)" class="item-text" style="text-align: left !important;">
