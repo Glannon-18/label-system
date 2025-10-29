@@ -19,18 +19,18 @@
     <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
       <div style="display: flex; align-items: center;">
         <span style="margin-right: 12px;width:120px;">{{ currentTime }} / {{ duration }} </span>
-        <el-tooltip :content="$t('label.labelEditor.上一段')" placement="top">
+        <el-tooltip :content="$t('label.labelEditor.上一段')+'（ ↑ ）'" placement="top">
         <el-button type="primary" id="backward" round plain>
           <el-icon style="transform: rotate(90deg)" ><Download /></el-icon>
         </el-button>
         </el-tooltip>
-        <el-tooltip :content="$t('label.labelEditor.播放/暂停')" placement="top">
+        <el-tooltip :content="$t('label.labelEditor.播放/暂停')+'（ Alt ）'" placement="top">
         <el-button type="primary" id="play"  round plain>
           <span v-if="isPlaying" style="width: 20px;">||</span>
           <span v-else style="width: 20px;">▶</span>
         </el-button>
         </el-tooltip>
-        <el-tooltip :content="$t('label.labelEditor.下一段')" placement="top">
+        <el-tooltip :content="$t('label.labelEditor.下一段')+'（ ↓ ）'" placement="top">
         <el-button type="primary" id="forward" round plain>
           <el-icon style="transform: rotate(270deg)" ><Download /></el-icon>
         </el-button>
@@ -61,7 +61,7 @@
     <!--分段标注列表-->
     <div style="margin-top: 0px; display: flex; flex-direction:column">
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
-        style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; font-size: 16px;"  
+        :style="{width: '100%', height: tableHeight + 'px', marginTop:'10px', border:'1px solid #ddd', borderRadius:'5px', fontSize:'16px'}"
         :show-header="true" :row-class-name="tableRowClassName" @row-click="rowClick">
         <el-table-column :label="$t('label.labelEditor.分段序号')" width="90">
             <template #default="scope"> 
@@ -100,7 +100,7 @@
               </div>
           </template>
           </el-table-column>
-        <el-table-column :label="$t('label.labelEditor.字符数')" width="80">
+        <el-table-column :label="$t('label.labelEditor.字符数')" width="100">
             <template #default="scope"> 
             <span :style="(scope.row.text&&scope.row.text.replace(/\s+/g,'').length>120)?'color:red':''">{{ scope.row.text&&scope.row.text.replace(/\s+/g,'').length }}</span>
             </template>
@@ -116,7 +116,7 @@
 
 
     <!-- 操作方法 -->
-    <el-dialog v-model="operationTipDialogVisible" title="" width="70%">
+    <el-dialog v-model="operationTipDialogVisible" title="" width="80%">
       <div data-v-2bde42cb="" style="font-size: 16px;color: rgb(51, 51, 51);">
         <el-divider>{{$t('label.labelEditor.操作方法')}}</el-divider>
         <p><strong >{{$t('label.labelEditor.缩放波形')}}</strong><span >：{{ $t('label.labelEditor.缩放波形-方法') }}</span></p>
@@ -146,7 +146,7 @@
       </div>
     </el-dialog>
     <!-- 标注规范 -->
-    <el-dialog v-model="labelStandardDialogVisible" :title="$t('label.labelEditor.标注规范')" width="800">
+    <el-dialog v-model="labelStandardDialogVisible" :title="$t('label.labelEditor.标注规范')" width="80%">
       <div data-v-2bde42cb="" style="font-size: 16px; line-height: 18px;">
         <p><strong >1）{{$t('label.labelEditor.文本')}}</strong><span >：{{$t('label.labelEditor.文本-规范')}} </span></p>
         <p><strong >2）{{$t('label.labelEditor.分段')}}</strong><span >： </span></p>
@@ -184,7 +184,7 @@ import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
 import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js'
 import ZoomPlugin from 'wavesurfer.js/dist/plugins/zoom.esm.js'
 import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
-import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
+  import { nextTick, onMounted, onUpdated, onUnmounted, reactive, watch } from "vue"
 import LabelEditorLoading from './labelEditorLoading'
 import LabelEditorHistoryOper from './labelEditorHistoryOper'
   // import KeyboardKm from './keyboard/keyboard_km'
@@ -381,10 +381,8 @@ const tableRowClassName = ({ row, rowIndex }) => {
   return ''
 }
 
-
-const handleSpace = (event) => {
-  // 按下空格键
-  if (event.key === ' ') { 
+//播放/暂停
+function playOrPause(){
     if(ws.getCurrentTime() >= activeRegion.end){
       regions.getRegions().forEach(reg=>{
         if(reg.start== activeRegion.start && reg.end==activeRegion.end){
@@ -395,24 +393,17 @@ const handleSpace = (event) => {
     }else{
       ws.playPause()//音频播放/暂停
       playStatus = false
+  }
     }
 
+const handleSpace = (event) => {
+  // 按Alt键
+  if(event.altKey) {
+    console.log('alt键被按下');
     event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
-    console.log('空格键被按下');
-  } 
-  // 按Alt+↑上方向键
-  /*else if(event.altKey && event.key === 'ArrowUp') {
-    console.log('Alt+↑ 键被按下');
-    event.preventDefault(); // 阻止元素的默认行为
-    mergeUp(event,activeRegion)
+    playOrPause()
   }
-  // 按Alt+↓下方向键
-  else if(event.altKey && event.key === 'ArrowDown') {
-    console.log('Alt+↓ 键被按下');
-    event.preventDefault(); // 阻止元素的默认行为
-    mergeDown(event, activeRegion)
-  }*/
   // 按Ctrl+S键
   else if (event.ctrlKey && event.key === 's') { 
     console.log('按Ctrl+S键执行保存更改');
@@ -449,7 +440,7 @@ const handleSpace = (event) => {
   else if(event.ctrlKey && event.key=='z'){
     event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
-    console.log('keyup--按了ctrl+z')
+    console.log('按了ctrl+z')
     //撤销操作
     undo()
   }
@@ -462,27 +453,36 @@ const handleSpace = (event) => {
  * @param {Object} row - 当前行数据
  */
 function handleTextArrow(event, row) {
+  //按Alt键
+  if(event.altKey){
+    console.log('Alt键被按下');
+    event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
+    playOrPause()
+  }
   // 按下空格键
-  if (event.key === ' ') { 
+  else if (event.key === ' ') {
     //event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('空格键被按下');
   }
-  // 按Alt+↑上方向键
-  if(event.altKey && event.key === 'ArrowUp') {
-    console.log('Alt+↑ 键被按下');
+  // 按Ctrl+↑上方向键
+  else if(event.ctrlKey && event.key === 'ArrowUp') {
+    console.log('Ctrl+↑ 键被按下');
     event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
     mergeUp(event,row)
   }
-  // 按Alt+↓下方向键
-  else if(event.altKey && event.key === 'ArrowDown') {
-    console.log('Alt+↓ 键被按下');
+  // 按Ctrl+↓下方向键
+  else if(event.ctrlKey && event.key === 'ArrowDown') {
+    console.log('Ctrl+↓ 键被按下');
     event.preventDefault(); // 阻止元素的默认行为
+    event.stopPropagation();// 阻止事件继续在DOM树中传播
     mergeDown(event,row)
   }
-  // 按上下方向键
+  // 按上/下方向键
   else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-    console.log('方向键被按下--', event.key);
+    console.log('方向键被按下-->', event.key);
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     const textarea = event.target;
     const cursorPos = textarea.selectionStart;
@@ -536,7 +536,6 @@ function handleTextArrow(event, row) {
   }
   //按下Ctrl+Z键
   else if(event.ctrlKey && event.key=='z'){
-    //event.preventDefault(); // 阻止元素的默认行为
     event.stopPropagation();// 阻止事件继续在DOM树中传播
     console.log('keydown--按了ctrl+z')
   }
@@ -1357,17 +1356,17 @@ function loadTextGrid(){
     return
   }
   // ----将预标注文本转为json---
-  console.log('task.textGrid-->\n',task.data.textGrid)
+  // console.log('task.textGrid-->\n',task.data.textGrid)
   task.textGridJson = parseTextGrid(task.data.textGrid)
-  console.log('解析TextGrid-->\n',task.textGridJson)
+  // console.log('解析TextGrid-->\n',task.textGridJson)
 
   //检查并修复时间序列数据
   task.textGridJson = fixIntervals(task.textGridJson)
-  console.log('检查并修复时间序列数据-->\n',task.textGridJson)
+  // console.log('检查并修复时间序列数据-->\n',task.textGridJson)
 
   //JSON转TextGrid
   task.textGrid = stringifyTextGrid(task.textGridJson)
-  console.log('JSON转TextGrid-->\n',task.textGrid)
+  // console.log('JSON转TextGrid-->\n',task.textGrid)
 
   // 生成时间序列数据
   let realtimes = task.textGridJson.item[0].intervals.map(e => {//默认取第一个层的数据
@@ -1466,13 +1465,13 @@ async function init(){
 
     //加载预标注文本
     loadTextGrid()
-    console.log('times-->', JSON.stringify(times))
+    // console.log('times-->', JSON.stringify(times))
 
     //末尾分段的结束时间设为音频总时长
     times[times.length - 1].end = duration
 
     //添加分段标记 (零长度区域)
-    console.log(`当前点：`,times);
+    // console.log(`当前点：`,times);
     console.log('添加初始分段标记-->')
     times.forEach( (ts,index) => {
       regionCreationSource = 'code'
@@ -2586,16 +2585,55 @@ watch(textGridText, (newValue, oldValue) => {
 
 let dialogFormVisible = ref(false)
 let dialogFormRemark = ref('')
+let tableHeight = ref(400)
 
 // 添加键盘事件监听器
 onMounted(() => {
   window.addEventListener('keydown', handleSpace);
+  // 启动定时器
+  startTimer();
 })
+
+onUpdated(() => {
+  nextTick(() => {
+    calculateTableHeight(); // 初始化表格高度
+    window.addEventListener('resize', calculateTableHeight);
+  });
+})
+
+//计算表格高度
+function calculateTableHeight() {
+  const windowHeight = window.innerHeight;
+  const tableTop = tableRef.value.$el.getBoundingClientRect().top;
+  tableHeight.value = Math.abs(windowHeight - tableTop - 20); // 20是底部留白
+  console.log('tableHeight-->', tableHeight.value)
+}
 
 // 移除键盘事件监听器
 onUnmounted(() => {
   window.removeEventListener('keydown', handleSpace);
+  // 清除定时器
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
 })
+
+let timer = null
+// 启动定时器
+function startTimer() {
+  // 先清除已存在的定时器
+  if (timer) {
+    clearInterval(timer);
+  }
+  // 设置新的定时器
+  timer = setInterval(() => {
+    console.log("执行定时任务");
+    getTask(taskId).then(res=>{
+      console.log('任务详情：', res)
+    })
+  }, 10 * 60 * 1000); //间隔10分钟
+}
 
 </script>
 
