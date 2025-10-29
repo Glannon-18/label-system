@@ -1,12 +1,12 @@
 package com.ruoyi.label.service.impl;
 
 import java.util.List;
-import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.label.mapper.SysTaskMapper;
 import com.ruoyi.label.domain.SysTask;
 import com.ruoyi.label.service.ISysTaskService;
+import com.ruoyi.common.utils.DateUtils;
 
 /**
  * 任务Service业务层处理
@@ -95,6 +95,18 @@ public class SysTaskServiceImpl implements ISysTaskService
     }
     
     /**
+     * 根据任务ID列表查询任务列表
+     * 
+     * @param taskIds 任务ID数组
+     * @return 任务集合
+     */
+    @Override
+    public List<SysTask> selectSysTaskListByTaskIds(Long[] taskIds)
+    {
+        return sysTaskMapper.selectSysTaskListByTaskIds(taskIds);
+    }
+    
+    /**
      * 审核任务
      * 
      * @param sysTask 任务信息
@@ -145,5 +157,18 @@ public class SysTaskServiceImpl implements ISysTaskService
     public List<SysTask> selectAuditorTaskList(SysTask sysTask, String auditor)
     {
         return sysTaskMapper.selectAuditorTaskList(sysTask, auditor);
+    }
+    
+    /**
+     * 查询创建者任务列表
+     * 
+     * @param projectName 项目名称
+     * @param task_status 任务状态
+     * @return 任务集合
+     */
+    @Override
+    public List<SysTask> selectCreatorTaskList(String projectName, String task_status, String creator)
+    {
+        return sysTaskMapper.selectCreatorTaskList(projectName, task_status, creator);
     }
 }

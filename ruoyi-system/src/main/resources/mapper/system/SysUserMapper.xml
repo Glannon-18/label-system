@@ -149,11 +149,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</select>
 	
 	<select id="selectUserForPackageByRoleAndLanguage" resultMap="TaskPackageUserResult">
-	    select distinct u.user_id, u.user_name, u.nick_name 
+        select distinct u.user_id, u.user_name, u.nick_name 
         from sys_user u
         left join sys_user_role ur on u.user_id = ur.user_id
         left join sys_role r on ur.role_id = r.role_id
         where u.del_flag = '0' 
+            and u.status = '0'
             and r.role_key = #{roleKey}
             and u.language = #{language}
         <if test="userName != null and userName != ''">

@@ -1,10 +1,10 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item :label="$t('label.auditTask.task_name')" prop="audioFileName" label-width="auto">
+      <el-form-item :label="$t('label.auditTask.project_name')" prop="projectName" label-width="auto">
         <el-input
-            v-model="queryParams.audioFileName"
-            :placeholder="$t('label.auditTask.enter_task_name')"
+            v-model="queryParams.projectName"
+            :placeholder="$t('label.auditTask.enter_project_name')"
             clearable
             @keyup.enter="handleQuery"
         />
@@ -26,15 +26,26 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button
+            type="primary"
+            plain
+            icon="Download"
+            size="default"
+            :disabled="single"
+            @click="handleDownload"
+        >{{ $t('label.auditTask.download') }}</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
+      <el-table-column :label="$t('label.auditTask.project_name_col')" align="center" prop="projectName" />
       <el-table-column :label="$t('label.auditTask.task_package_name')" align="center" prop="packageName" />
       <el-table-column :label="$t('label.auditTask.audio_file_name')" align="center" prop="audioFileName" :show-overflow-tooltip="true">
         <template #default="scope">
-          <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
+          <el-link @click="handleViewDetail(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
         </template>
       </el-table-column>
       <el-table-column :label="$t('label.auditTask.task_status_col')" align="center" prop="status">
@@ -43,24 +54,19 @@
         </template>
       </el-table-column>
       <el-table-column :label="$t('label.auditTask.annotator')" align="center" prop="packageAssigner" />
-      <el-table-column :label="$t('label.auditTask.creator')" align="center" prop="createBy" />
       <el-table-column :label="$t('label.auditTask.create_time')" align="center" prop="createTime" width="180">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
+      <el-table-column :label="$t('label.auditTask.pass_time')" align="center" prop="passTime" width="180">
+        <template #default="scope">
+          <span>{{ scope.row.passTime ? parseTime(scope.row.passTime, '{y}-{m}-{d}') : '' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column :label="$t('label.auditTask.remark')" align="center" prop="remark" />
       <el-table-column :label="$t('label.auditTask.operation')" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button 
-            type="primary" 
-            icon="Edit" 
-            size="default" 
-            @click="handleToAnnotator(scope.row)">
-<!--            v-if="scope.row.status === 'pending_review'"-->
-<!--          >-->
-            {{ $t('label.auditTask.audit') }}
-          </el-button>
           <el-button 
             icon="View"
             size="default" 
@@ -101,8 +107,8 @@
   </div>
 </template>
 
-<script setup name="AuditTask">
-import { listAuditorTask,  getTaskProgress } from "@/api/label/task"
+<script setup name="ProjectTask">
+import { getTaskProgress, listCreatorTask, downloadTasks } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()
 const { task_status } = proxy.useDict('task_status')
@@ -113,6 +119,8 @@ const loading = ref(true)
 const showSearch = ref(true)
 const total = ref(0)
 const uniqueId = ref("") // 添加唯一标识用于判断是否需要刷新
+const ids = ref([])
+const single = ref(true)
 
 // 任务进度相关
 const progressDialogVisible = ref(false)
@@ -124,12 +132,16 @@ const data = reactive({
     pageNum: 1,
     pageSize: 10,
     status: null,
-    audioFileName:null,
-    packageId: route.params.taskPackageId  // 添加任务包ID作为查询条件
   }
 })
 
 const { queryParams } = toRefs(data)
+
+/** 选中项发生变化时触发 */
+function handleSelectionChange(selection) {
+  ids.value = selection.map(item => item.taskId)
+  single.value = selection.length === 0
+}
 
 /**
  * 根据任务状态获取标签类型
@@ -155,7 +167,28 @@ function getStatusTagType(status) {
  * 根据任务状态获取标签名称
  */
 function getStatusTagName(status) {
-  return proxy.$t(`label.annotatorTask.${status}`)
+  // task_status 是一个 ref 对象，需要通过 .value 访问实际数组
+  const statusObj = task_status.value.find(item => item.value === status)
+  
+  // 如果在字典中找不到对应的状态，则根据状态代码返回国际化文本
+  if (!statusObj) {
+    switch (status) {
+      case 'unstart':
+        return proxy.$t('label.auditTask.unstart')
+      case 'underway':
+        return proxy.$t('label.auditTask.underway')
+      case 'pending_review':
+        return proxy.$t('label.auditTask.pending_review')
+      case 'reject':
+        return proxy.$t('label.auditTask.reject')
+      case 'pass':
+        return proxy.$t('label.auditTask.pass')
+      default:
+        return status
+    }
+  }
+  
+  return statusObj.label
 }
 
 /**
@@ -188,7 +221,7 @@ function getStatusDescription(status) {
 /** 查询任务列表 */
 function getList() {
   loading.value = true
-  listAuditorTask(queryParams.value).then(response => {
+  listCreatorTask(queryParams.value).then(response => {
     taskList.value = response.rows
     total.value = response.total
     loading.value = false
@@ -216,8 +249,29 @@ function resetQuery() {
   handleQuery()
 }
 
-/** 跳转到标注/录音页面 **/
-function handleToAnnotator(row) {
+/** 下载按钮操作 */
+function handleDownload() {
+  if (ids.value.length === 0) {
+    proxy.$message.warning(proxy.$t('label.auditTask.select_at_least_one_task'))
+    return
+  }
+  
+  proxy.$modal.confirm(proxy.$t('label.auditTask.confirm_download')).then(function() {
+    return downloadTasks(ids.value)
+  }).then(response => {
+    const blob = new Blob([response])
+    const fileName = 'tasks.zip'
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = fileName
+    link.click()
+    URL.revokeObjectURL(link.href)
+    proxy.$modal.msgSuccess(proxy.$t('label.auditTask.download_success'))
+  }).catch(function() {})
+}
+
+/** 查看详情 **/
+function handleViewDetail(row) {
   const taskId = row.taskId
   const type = row.packageType
   if (type === "audio") {

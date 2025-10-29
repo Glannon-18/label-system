@@ -4,12 +4,17 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import com.ruoyi.common.constant.TaskStatus;
+import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.label.utils.SysTaskLogUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,44 +45,23 @@ import com.ruoyi.common.utils.audio.AudioUtils;
 
 /**
  * 任务Controller
- * 
+ *
  * @author ruoyi
  * @date 2025-10-04
  */
 @RestController
 @RequestMapping("/label/task")
-public class SysTaskController extends BaseController
-{
+public class SysTaskController extends BaseController {
     @Autowired
     private ISysTaskService sysTaskService;
-    
 
-    private static final String INIT_TEXTGRID="File type = \"ooTextFile\"\n" +
-            "Object class = \"TextGrid\"\n" +
-            "\n" +
-            "xmin = 0.0\n" +
-            "xmax = %s\n" +
-            "tiers? <exists>\n" +
-            "size = 1\n" +
-            "item []:\n" +
-            "    item[1]:\n" +
-            "        class = \"IntervalTier\"\n" +
-            "        name = \"Subtitle-Tier\"\n" +
-            "        xmin = 0.0\n" +
-            "        xmax = %s\n" +
-            "        intervals: size = 1\n" +
-            "        intervals [1]\n" +
-            "            xmin = 0.0\n" +
-            "            xmax = %s\n" +
-            "            text = \"\"";
 
     /**
      * 查询任务列表
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/list")
-    public TableDataInfo list(SysTask sysTask)
-    {
+    public TableDataInfo list(SysTask sysTask) {
         startPage();
         List<SysTask> list = sysTaskService.selectSysTaskList(sysTask);
         return getDataTable(list);
@@ -89,11 +73,47 @@ public class SysTaskController extends BaseController
 //    @PreAuthorize("@ss.hasPermi('label:project:export')")
     @Log(title = "任务", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    public void export(HttpServletResponse response, SysTask sysTask)
-    {
+    public void export(HttpServletResponse response, SysTask sysTask) {
         List<SysTask> list = sysTaskService.selectSysTaskList(sysTask);
         ExcelUtil<SysTask> util = new ExcelUtil<SysTask>(SysTask.class);
         util.exportExcel(response, list, "任务数据");
+    }
+
+    /**
+     * 批量下载任务文件
+     */
+    @Log(title = "任务", businessType = BusinessType.EXPORT)
+    @PostMapping("/download")
+    public void downloadTasks(@RequestBody Long[] taskIds, HttpServletResponse response) throws IOException {
+        List<SysTask> tasks = sysTaskService.selectSysTaskListByTaskIds(taskIds);
+
+        response.setContentType("application/zip");
+        response.setHeader("Content-Disposition", "attachment; filename=tasks.zip");
+
+        try (ZipOutputStream zipOut = new ZipOutputStream(response.getOutputStream())) {
+            for (SysTask task : tasks) {
+                // 添加WAV文件到ZIP
+                if (task.getAudioFilePath() != null && !task.getAudioFilePath().isEmpty()) {
+                    File wavFile = new File(RuoYiConfig.getProfile(), task.getAudioFilePath().replaceFirst("/profile", ""));
+                    if (wavFile.exists()) {
+                        // 为避免文件名冲突，添加任务ID作为前缀
+                        String uniqueAudioFileName = task.getTaskId() + "_" + task.getAudioFileName();
+                        zipOut.putNextEntry(new ZipEntry(uniqueAudioFileName));
+                        java.nio.file.Files.copy(wavFile.toPath(), zipOut);
+                        zipOut.closeEntry();
+                    }
+                }
+
+                // 添加TextGrid文件到ZIP
+                if (task.getTextGrid() != null && !task.getTextGrid().isEmpty()) {
+                    // 为避免文件名冲突，添加任务ID作为前缀
+                    String textGridFileName = task.getTaskId() + "_" + task.getAudioFileName().replaceAll("\\.wav$", ".TextGrid");
+                    zipOut.putNextEntry(new ZipEntry(textGridFileName));
+                    zipOut.write(task.getTextGrid().getBytes(StandardCharsets.UTF_8));
+                    zipOut.closeEntry();
+                }
+            }
+        }
     }
 
     /**
@@ -101,8 +121,7 @@ public class SysTaskController extends BaseController
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:query')")
     @GetMapping(value = "/{taskId}")
-    public AjaxResult getInfo(@PathVariable("taskId") Long taskId)
-    {
+    public AjaxResult getInfo(@PathVariable("taskId") Long taskId) {
         return success(sysTaskService.selectSysTaskByTaskId(taskId));
     }
 
@@ -113,8 +132,9 @@ public class SysTaskController extends BaseController
     @Log(title = "任务", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestPart("sysTask") SysTask sysTask, 
-                          @RequestPart("wavFile") MultipartFile wavFile, 
-                          @RequestPart("textGridFile") MultipartFile textGridFile) throws IOException
+                          @RequestPart(value = "wavFile", required = false) MultipartFile wavFile,
+                          @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile,
+                          @RequestPart(value = "xlsxFile", required = false) MultipartFile xlsxFile) throws IOException
     {
         if (wavFile != null) {
             // 保存WAV文件并获取访问路径
@@ -139,7 +159,16 @@ public class SysTaskController extends BaseController
             sysTask.setTextGrid(textGridContent.toString());
             sysTask.setOriginalTextGrid(textGridContent.toString());
         }
-        
+
+        if (wavFile == null && xlsxFile != null) {
+            // 保存WAV文件并获取访问路径
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), xlsxFile);
+
+            // 设置任务属性
+            sysTask.setAudioFileName(xlsxFile.getOriginalFilename());
+            sysTask.setAudioFilePath(filePath);
+        }
+
         sysTask.setCreateBy(getUsername());
         sysTask.setStatus(TaskStatus.UNSTART);
         int rows = sysTaskService.insertSysTask(sysTask);
@@ -155,7 +184,8 @@ public class SysTaskController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask, 
                           @RequestPart(value = "wavFile", required = false) MultipartFile wavFile, 
-                          @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile) throws IOException
+                          @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile,
+                          @RequestPart(value = "xlsxFile", required = false) MultipartFile xlsxFile) throws IOException
     {
         // 获取更新前的任务信息
         SysTask oldTask = sysTaskService.selectSysTaskByTaskId(sysTask.getTaskId());
@@ -183,12 +213,25 @@ public class SysTaskController extends BaseController
             sysTask.setTextGrid(textGridContent.toString());
             sysTask.setOriginalTextGrid(textGridContent.toString());
         }
-        
+
+        if (wavFile == null && xlsxFile != null) {
+            // 保存WAV文件并获取访问路径
+            String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), xlsxFile);
+
+            // 设置任务属性
+            sysTask.setAudioFileName(xlsxFile.getOriginalFilename());
+            sysTask.setAudioFilePath(filePath);
+        }
+
         sysTask.setUpdateBy(getUsername());
         
         // 检查状态是否发生变化，如果变化则记录日志
         if (sysTask.getStatus() != null && !sysTask.getStatus().equals(oldTask.getStatus())) {
             SysTaskLogUtils.insertSysTaskLog(sysTask.getTaskId(), sysTask.getStatus(), getUsername(), null);
+        }
+        //如果审核通过，则设置通过时间
+        if (sysTask.getStatus() != null && sysTask.getStatus().equals(TaskStatus.PASS)) {
+            sysTask.setPassTime(DateUtils.getNowDate());
         }
         
         return toAjax(sysTaskService.updateSysTask(sysTask));
@@ -199,20 +242,18 @@ public class SysTaskController extends BaseController
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:remove')")
     @Log(title = "任务", businessType = BusinessType.DELETE)
-	@DeleteMapping("/{taskIds}")
-    public AjaxResult remove(@PathVariable Long[] taskIds)
-    {
+    @DeleteMapping("/{taskIds}")
+    public AjaxResult remove(@PathVariable Long[] taskIds) {
         return toAjax(sysTaskService.deleteSysTaskByTaskIds(taskIds));
     }
-    
+
     /**
      * 审核任务
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务", businessType = BusinessType.UPDATE)
     @PutMapping("/audit")
-    public AjaxResult audit(@RequestBody SysTask sysTask)
-    {
+    public AjaxResult audit(@RequestBody SysTask sysTask) {
         sysTask.setUpdateBy(getUsername());
         return toAjax(sysTaskService.auditTask(sysTask));
     }
@@ -222,12 +263,22 @@ public class SysTaskController extends BaseController
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/auditor/list")
-    public TableDataInfo auditorList(SysTask sysTask)
-    {
+    public TableDataInfo auditorList(SysTask sysTask) {
         startPage();
         // 获取审计员为当前登录用户
         String auditor = getUsername();
         List<SysTask> list = sysTaskService.selectAuditorTaskList(sysTask, auditor);
+        return getDataTable(list);
+    }
+    
+    /**
+     * 查询当前用户创建的任务列表
+     */
+//    @PreAuthorize("@ss.hasPermi('label:project:list')")
+    @GetMapping("/creator/list")
+    public TableDataInfo creatorList(String projectName, String status) {
+        startPage();
+        List<SysTask> list = sysTaskService.selectCreatorTaskList(projectName, status, getUsername());
         return getDataTable(list);
     }
 }

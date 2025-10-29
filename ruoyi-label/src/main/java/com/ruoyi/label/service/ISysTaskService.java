@@ -1,9 +1,7 @@
 package com.ruoyi.label.service;
 
-import com.ruoyi.label.domain.SysTask;
-import org.apache.ibatis.annotations.Param;
-
 import java.util.List;
+import com.ruoyi.label.domain.SysTask;
 
 /**
  * 任务Service接口
@@ -62,6 +60,14 @@ public interface ISysTaskService
     public int deleteSysTaskByTaskId(Long taskId);
     
     /**
+     * 根据任务ID列表查询任务列表
+     * 
+     * @param taskIds 任务ID数组
+     * @return 任务集合
+     */
+    public List<SysTask> selectSysTaskListByTaskIds(Long[] taskIds);
+    
+    /**
      * 审核任务
      * 
      * @param sysTask 任务信息
@@ -93,4 +99,13 @@ public interface ISysTaskService
      * @return 任务集合
      */
     public List<SysTask> selectAuditorTaskList(SysTask sysTask, String auditor);
+    
+    /**
+     * 查询创建者任务列表
+     * 
+     * @param projectName 项目名称
+     * @param task_status 任务状态
+     * @return 任务集合
+     */
+    public List<SysTask> selectCreatorTaskList(String projectName, String task_status, String creator);
 }

@@ -26,7 +26,13 @@
       <!--      <el-table-column label="任务ID" align="center" prop="taskId" />-->
       <el-table-column :label="$t('label.annotatorTask.audio_file_name')" align="center" prop="audioFileName" :show-overflow-tooltip="true">
         <template #default="scope">
-          <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
+          <!-- 不给标注员进去看待审核和审核通过的 -->
+          <view v-if="['pending_review','pass'].includes(scope.row.status)">
+            {{ scope.row.audioFileName }}
+          </view>
+          <view v-else>
+            <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
+          </view>
         </template>
       </el-table-column>
       <el-table-column :label="$t('label.annotatorTask.task_status_col')" align="center" prop="status">
@@ -57,7 +63,7 @@
   </div>
 </template>
 
-<script setup name="Task">
+<script setup name="my-task">
 import { listTask } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()
@@ -108,28 +114,7 @@ function getStatusTagType(status) {
  * 根据任务状态获取标签名称
  */
 function getStatusTagName(status) {
-  // task_status 是一个 ref 对象，需要通过 .value 访问实际数组
-  const statusObj = task_status.value.find(item => item.value === status)
-  
-  // 如果在字典中找不到对应的状态，则根据状态代码返回国际化文本
-  if (!statusObj) {
-    switch (status) {
-      case 'unstart':
-        return proxy.$t('label.annotatorTask.unstart')
-      case 'underway':
-        return proxy.$t('label.annotatorTask.underway')
-      case 'pending_review':
-        return proxy.$t('label.annotatorTask.pending_review')
-      case 'reject':
-        return proxy.$t('label.annotatorTask.reject')
-      case 'pass':
-        return proxy.$t('label.annotatorTask.pass')
-      default:
-        return status
-    }
-  }
-  
-  return statusObj.label
+  return proxy.$t(`label.annotatorTask.${status}`)
 }
 
 /** 查询任务列表 */

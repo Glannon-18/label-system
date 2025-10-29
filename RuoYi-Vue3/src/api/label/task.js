@@ -75,3 +75,22 @@ export function listAuditorTask(query) {
     params: query
   })
 }
+
+// 查询当前用户创建的任务列表
+export function listCreatorTask(query) {
+  return request({
+    url: '/label/task/creator/list',
+    method: 'get',
+    params: query
+  })
+}
+
+// 批量下载任务文件
+export function downloadTasks(taskIds) {
+  return request({
+    url: '/label/task/download',
+    method: 'post',
+    data: taskIds,
+    responseType: 'blob'
+  })
+}

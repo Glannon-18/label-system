@@ -5,6 +5,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
+import java.util.Date;
+
 /**
  * 任务对象 sys_task
  * 
@@ -46,6 +48,12 @@ public class SysTask extends BaseEntity
     
     /** 任务包名称 */
     private String packageName;
+    
+    /** 项目名称 */
+    private String projectName;
+
+    /** 审核通过时间 **/
+    private Date passTime ;
 
     public void setTaskId(Long taskId)
     {
@@ -141,6 +149,23 @@ public class SysTask extends BaseEntity
         this.packageName = packageName;
     }
 
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public Date getPassTime() {
+        return passTime;
+    }
+
+    public void setPassTime(Date passTime) {
+        this.passTime = passTime;
+    }
+
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -159,6 +184,7 @@ public class SysTask extends BaseEntity
             .append("packageAssigner", getPackageAssigner())
             .append("packageType", getPackageType())
             .append("packageName", getPackageName())
+                .append("passTime", getPassTime())
             .toString();
     }
 }
