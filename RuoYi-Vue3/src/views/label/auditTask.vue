@@ -155,28 +155,7 @@ function getStatusTagType(status) {
  * 根据任务状态获取标签名称
  */
 function getStatusTagName(status) {
-  // task_status 是一个 ref 对象，需要通过 .value 访问实际数组
-  const statusObj = task_status.value.find(item => item.value === status)
-  
-  // 如果在字典中找不到对应的状态，则根据状态代码返回国际化文本
-  if (!statusObj) {
-    switch (status) {
-      case 'unstart':
-        return proxy.$t('label.auditTask.unstart')
-      case 'underway':
-        return proxy.$t('label.auditTask.underway')
-      case 'pending_review':
-        return proxy.$t('label.auditTask.pending_review')
-      case 'reject':
-        return proxy.$t('label.auditTask.reject')
-      case 'pass':
-        return proxy.$t('label.auditTask.pass')
-      default:
-        return status
-    }
-  }
-  
-  return statusObj.label
+  return proxy.$t(`label.annotatorTask.${status}`)
 }
 
 /**

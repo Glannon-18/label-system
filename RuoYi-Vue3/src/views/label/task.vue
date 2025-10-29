@@ -65,7 +65,7 @@
       </el-table-column>
       <el-table-column :label="$t('label.task.task_status_col')" align="center" prop="status">
         <template #default="scope">
-          <dict-tag :options="task_status" :value="scope.row.status"/>
+          <el-tag :type="getStatusTagType(scope.row.status)">{{ getStatusTagName(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
 <!--      <el-table-column label="分配人账户名" align="center" prop="annotator" />-->
@@ -189,6 +189,33 @@ const taskPackage = ref(null)
 const fileSuffix = computed(() => {
   return taskPackage.value && taskPackage.value.type === 'audio' ? '.xlsx' : '.wav'
 })
+
+/** 
+ * 根据任务状态获取标签类型
+ */
+function getStatusTagType(status) {
+  switch (status) {
+    case 'unstart': // 未开始
+      return 'info'
+    case 'underway': // 标注中
+      return 'primary'
+    case 'pending_review': // 待审核
+      return 'warning'
+    case 'reject': // 已驳回
+      return 'danger'
+    case 'pass': // 审核通过
+      return 'success'
+    default:
+      return 'info'
+  }
+}
+
+/**
+ * 根据任务状态获取标签名称
+ */
+function getStatusTagName(status) {
+  return proxy.$t(`label.annotatorTask.${status}`)
+}
 
 // 文件选择处理
 function handleFileChange(file, fileList, type) {
