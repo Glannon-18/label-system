@@ -47,18 +47,18 @@
     <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: center;font-size: 14px;">
       <div style="display: flex; align-items: center;">
         <span style="margin-right: 12px;width:120px;">{{ currentTime }} / {{ duration }} </span>
-        <el-tooltip :content="$t('label.labelEditor.上一段')" placement="top">
+        <el-tooltip :content="$t('label.labelEditor.上一段')+'（ ↑ ）'" placement="top">
         <el-button type="primary" id="backward" round plain>
           <el-icon style="transform: rotate(90deg)" ><Download /></el-icon>
         </el-button>
         </el-tooltip>
-        <el-tooltip :content="$t('label.labelEditor.播放/暂停')" placement="top">
+        <el-tooltip :content="$t('label.labelEditor.播放/暂停')+'（ Alt ）'" placement="top">
         <el-button type="primary" id="play"  round plain>
           <span v-if="isPlaying" style="width: 20px;">||</span>
           <span v-else style="width: 20px;">▶</span>
         </el-button>
         </el-tooltip>
-        <el-tooltip :content="$t('label.labelEditor.下一段')" placement="top">
+        <el-tooltip :content="$t('label.labelEditor.下一段')+'（ ↓ ）'" placement="top">
         <el-button type="primary" id="forward" round plain>
           <el-icon style="transform: rotate(270deg)" ><Download /></el-icon>
         </el-button>
@@ -90,7 +90,7 @@
     <!--分段标注列表-->
     <div style="margin-top: 0px; display: flex; flex-direction:column">
       <el-table ref="tableRef" :data="times" :highlight-current-row="false" 
-        style="width: 100%;height: 400px; margin-top:10px; border:1px solid #ddd; border-radius: 5px; font-size: 16px;"  
+        :style="{width: '100%', height: tableHeight + 'px', marginTop:'10px', border:'1px solid #ddd', borderRadius:'5px', fontSize:'16px'}"
         :show-header="true" :row-class-name="tableRowClassName" @row-click="rowClick">
         <el-table-column :label="$t('label.labelEditor.分段序号')" width="90">
             <template #default="scope"> 
@@ -292,7 +292,7 @@ import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
 import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js'
 import ZoomPlugin from 'wavesurfer.js/dist/plugins/zoom.esm.js'
 import Hover from 'wavesurfer.js/dist/plugins/hover.esm.js'
-import { nextTick, onMounted, onUnmounted, reactive, watch } from "vue"
+  import { nextTick, onMounted, onUpdated, onUnmounted, reactive, watch } from "vue"
 import LabelEditorLoading from './labelEditorLoading'
 import LabelEditorHistoryOper from './labelEditorHistoryOper'
   // import KeyboardKm from './keyboard/keyboard_km'
@@ -1464,17 +1464,17 @@ function loadTextGrid(){
     return
   }
   // ----将预标注文本转为json---
-  console.log('task.textGrid-->\n',task.data.textGrid)
+  // console.log('task.textGrid-->\n',task.data.textGrid)
   task.textGridJson = parseTextGrid(task.data.textGrid)
-  console.log('解析TextGrid-->\n',task.textGridJson)
+  // console.log('解析TextGrid-->\n',task.textGridJson)
 
   //检查并修复时间序列数据
   task.textGridJson = fixIntervals(task.textGridJson)
-  console.log('检查并修复时间序列数据-->\n',task.textGridJson)
+  // console.log('检查并修复时间序列数据-->\n',task.textGridJson)
 
   //JSON转TextGrid
   task.textGrid = stringifyTextGrid(task.textGridJson)
-  console.log('JSON转TextGrid-->\n',task.textGrid)
+  // console.log('JSON转TextGrid-->\n',task.textGrid)
 
   // 生成时间序列数据
   let realtimes = task.textGridJson.item[0].intervals.map(e => {//默认取第一个层的数据
@@ -1573,13 +1573,13 @@ async function init(){
 
     //加载预标注文本
     loadTextGrid()
-    console.log('times-->', JSON.stringify(times))
+    // console.log('times-->', JSON.stringify(times))
 
     //末尾分段的结束时间设为音频总时长
     times[times.length - 1].end = duration
 
     //添加分段标记 (零长度区域)
-    console.log(`当前点：`,times);
+    // console.log(`当前点：`,times);
     console.log('添加初始分段标记-->')
     times.forEach( (ts,index) => {
       regionCreationSource = 'code'
@@ -2693,6 +2693,7 @@ watch(textGridText, (newValue, oldValue) => {
 
 let dialogFormVisible = ref(false)
 let dialogFormRemark = ref('')
+let tableHeight = ref(400)
 
 // 添加键盘事件监听器
 onMounted(() => {
@@ -2700,6 +2701,21 @@ onMounted(() => {
   // 启动定时器
   startTimer();
 })
+
+onUpdated(() => {
+  nextTick(() => {
+    calculateTableHeight(); // 初始化表格高度
+    window.addEventListener('resize', calculateTableHeight);
+  });
+})
+
+//计算表格高度
+function calculateTableHeight() {
+  const windowHeight = window.innerHeight;
+  const tableTop = tableRef.value.$el.getBoundingClientRect().top;
+  tableHeight.value = Math.abs(windowHeight - tableTop - 20); // 20是底部留白
+  console.log('tableHeight-->', tableHeight.value)
+}
 
 // 移除键盘事件监听器
 onUnmounted(() => {
