@@ -1,3 +1,5 @@
+ruoyi:
+  profile: /home/cp-system/uploadPath
 # 数据源配置
 spring:
   datasource:
