@@ -146,7 +146,7 @@
   </div>
 </template>
 
-<script setup name="Task">
+<script setup name="project-task">
 import { listTask, getTask, delTask, addTask, updateTask } from "@/api/label/task"
 import { getPackage } from "@/api/label/package"
 import { computed } from 'vue'

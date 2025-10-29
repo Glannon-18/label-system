@@ -282,7 +282,7 @@
 </template>
 
 
-<script setup name="labelEditor">
+<script setup name="audit-label">
 //=========================引入模块=========================
 import { getPackage } from "@/api/label/package"
 import { listTask, getTask, updateTask } from "@/api/label/task"

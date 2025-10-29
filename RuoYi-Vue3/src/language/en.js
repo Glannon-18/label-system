@@ -202,7 +202,9 @@ export default {
             pass: 'Pass'
         },
         auditTask: {
-            task_name: 'Task Name',
+            project_name: 'Project Name',
+            project_name_col: 'Project Name',
+            enter_project_name: 'Please enter project name',
             task_status: 'Task Status',
             search: 'Search',
             reset: 'Reset',

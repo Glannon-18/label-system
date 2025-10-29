@@ -93,4 +93,13 @@ public interface SysTaskMapper
      * @return 任务集合
      */
     public List<SysTask> selectAuditorTaskList(@Param("sysTask") SysTask sysTask, @Param("auditor") String auditor);
+
+    /**
+     * 查询创建者任务列表
+     * 
+     * @param projectName 项目名称
+     * @param task_status 任务状态
+     * @return 任务集合
+     */
+    public List<SysTask> selectCreatorTaskList(@Param("projectName") String projectName, @Param("task_status") String task_status, @Param("creator") String creator);
 }

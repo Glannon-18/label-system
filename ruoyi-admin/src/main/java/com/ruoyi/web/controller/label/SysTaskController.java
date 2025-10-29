@@ -45,14 +45,13 @@ import com.ruoyi.common.utils.audio.AudioUtils;
 
 /**
  * 任务Controller
- * 
+ *
  * @author ruoyi
  * @date 2025-10-04
  */
 @RestController
 @RequestMapping("/label/task")
-public class SysTaskController extends BaseController
-{
+public class SysTaskController extends BaseController {
     @Autowired
     private ISysTaskService sysTaskService;
 
@@ -62,8 +61,7 @@ public class SysTaskController extends BaseController
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/list")
-    public TableDataInfo list(SysTask sysTask)
-    {
+    public TableDataInfo list(SysTask sysTask) {
         startPage();
         List<SysTask> list = sysTaskService.selectSysTaskList(sysTask);
         return getDataTable(list);
@@ -75,8 +73,7 @@ public class SysTaskController extends BaseController
 //    @PreAuthorize("@ss.hasPermi('label:project:export')")
     @Log(title = "任务", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    public void export(HttpServletResponse response, SysTask sysTask)
-    {
+    public void export(HttpServletResponse response, SysTask sysTask) {
         List<SysTask> list = sysTaskService.selectSysTaskList(sysTask);
         ExcelUtil<SysTask> util = new ExcelUtil<SysTask>(SysTask.class);
         util.exportExcel(response, list, "任务数据");
@@ -89,15 +86,15 @@ public class SysTaskController extends BaseController
     @PostMapping("/download")
     public void downloadTasks(@RequestBody Long[] taskIds, HttpServletResponse response) throws IOException {
         List<SysTask> tasks = sysTaskService.selectSysTaskListByTaskIds(taskIds);
-        
+
         response.setContentType("application/zip");
         response.setHeader("Content-Disposition", "attachment; filename=tasks.zip");
-        
+
         try (ZipOutputStream zipOut = new ZipOutputStream(response.getOutputStream())) {
             for (SysTask task : tasks) {
                 // 添加WAV文件到ZIP
                 if (task.getAudioFilePath() != null && !task.getAudioFilePath().isEmpty()) {
-                    File wavFile = new File(RuoYiConfig.getProfile(), task.getAudioFilePath().replaceFirst("/profile",""));
+                    File wavFile = new File(RuoYiConfig.getProfile(), task.getAudioFilePath().replaceFirst("/profile", ""));
                     if (wavFile.exists()) {
                         // 为避免文件名冲突，添加任务ID作为前缀
                         String uniqueAudioFileName = task.getTaskId() + "_" + task.getAudioFileName();
@@ -106,7 +103,7 @@ public class SysTaskController extends BaseController
                         zipOut.closeEntry();
                     }
                 }
-                
+
                 // 添加TextGrid文件到ZIP
                 if (task.getTextGrid() != null && !task.getTextGrid().isEmpty()) {
                     // 为避免文件名冲突，添加任务ID作为前缀
@@ -124,8 +121,7 @@ public class SysTaskController extends BaseController
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:query')")
     @GetMapping(value = "/{taskId}")
-    public AjaxResult getInfo(@PathVariable("taskId") Long taskId)
-    {
+    public AjaxResult getInfo(@PathVariable("taskId") Long taskId) {
         return success(sysTaskService.selectSysTaskByTaskId(taskId));
     }
 
@@ -172,7 +168,7 @@ public class SysTaskController extends BaseController
             sysTask.setAudioFileName(xlsxFile.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
         }
-        
+
         sysTask.setCreateBy(getUsername());
         sysTask.setStatus(TaskStatus.UNSTART);
         int rows = sysTaskService.insertSysTask(sysTask);
@@ -226,7 +222,7 @@ public class SysTaskController extends BaseController
             sysTask.setAudioFileName(xlsxFile.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
         }
-        
+
         sysTask.setUpdateBy(getUsername());
         
         // 检查状态是否发生变化，如果变化则记录日志
@@ -246,20 +242,18 @@ public class SysTaskController extends BaseController
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:remove')")
     @Log(title = "任务", businessType = BusinessType.DELETE)
-	@DeleteMapping("/{taskIds}")
-    public AjaxResult remove(@PathVariable Long[] taskIds)
-    {
+    @DeleteMapping("/{taskIds}")
+    public AjaxResult remove(@PathVariable Long[] taskIds) {
         return toAjax(sysTaskService.deleteSysTaskByTaskIds(taskIds));
     }
-    
+
     /**
      * 审核任务
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务", businessType = BusinessType.UPDATE)
     @PutMapping("/audit")
-    public AjaxResult audit(@RequestBody SysTask sysTask)
-    {
+    public AjaxResult audit(@RequestBody SysTask sysTask) {
         sysTask.setUpdateBy(getUsername());
         return toAjax(sysTaskService.auditTask(sysTask));
     }
@@ -269,8 +263,7 @@ public class SysTaskController extends BaseController
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/auditor/list")
-    public TableDataInfo auditorList(SysTask sysTask)
-    {
+    public TableDataInfo auditorList(SysTask sysTask) {
         startPage();
         // 获取审计员为当前登录用户
         String auditor = getUsername();
@@ -283,12 +276,9 @@ public class SysTaskController extends BaseController
      */
 //    @PreAuthorize("@ss.hasPermi('label:project:list')")
     @GetMapping("/creator/list")
-    public TableDataInfo creatorList(SysTask sysTask)
-    {
+    public TableDataInfo creatorList(String projectName, String status) {
         startPage();
-        // 获取创建者为当前登录用户
-        sysTask.setCreateBy(getUsername());
-        List<SysTask> list = sysTaskService.selectSysTaskList(sysTask);
+        List<SysTask> list = sysTaskService.selectCreatorTaskList(projectName, status, getUsername());
         return getDataTable(list);
     }
 }

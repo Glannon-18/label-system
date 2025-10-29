@@ -1,10 +1,10 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item :label="$t('label.auditTask.task_name')" prop="audioFileName" label-width="auto">
+      <el-form-item :label="$t('label.auditTask.project_name')" prop="projectName" label-width="auto">
         <el-input
-            v-model="queryParams.audioFileName"
-            :placeholder="$t('label.auditTask.enter_task_name')"
+            v-model="queryParams.projectName"
+            :placeholder="$t('label.auditTask.enter_project_name')"
             clearable
             @keyup.enter="handleQuery"
         />
@@ -41,6 +41,7 @@
 
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
+      <el-table-column :label="$t('label.auditTask.project_name_col')" align="center" prop="projectName" />
       <el-table-column :label="$t('label.auditTask.task_package_name')" align="center" prop="packageName" />
       <el-table-column :label="$t('label.auditTask.audio_file_name')" align="center" prop="audioFileName" :show-overflow-tooltip="true">
         <template #default="scope">
@@ -131,7 +132,6 @@ const data = reactive({
     pageNum: 1,
     pageSize: 10,
     status: null,
-    audioFileName: null
   }
 })
 

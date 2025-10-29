@@ -202,7 +202,9 @@ export default {
             pass: '审核通过'
         },
         auditTask: {
-            task_name: '任务名称',
+            project_name: '项目名称',
+            project_name_col: '项目名称',
+            enter_project_name: '请输入项目名称',
             task_status: '任务状态',
             search: '搜索',
             reset: '重置',

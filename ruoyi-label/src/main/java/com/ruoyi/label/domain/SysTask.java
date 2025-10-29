@@ -48,6 +48,9 @@ public class SysTask extends BaseEntity
     
     /** 任务包名称 */
     private String packageName;
+    
+    /** 项目名称 */
+    private String projectName;
 
     /** 审核通过时间 **/
     private Date passTime ;
@@ -144,6 +147,14 @@ public class SysTask extends BaseEntity
 
     public void setPackageName(String packageName) {
         this.packageName = packageName;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 
     public Date getPassTime() {
