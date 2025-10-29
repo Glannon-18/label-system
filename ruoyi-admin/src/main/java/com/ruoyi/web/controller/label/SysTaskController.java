@@ -214,7 +214,7 @@ public class SysTaskController extends BaseController
             SysTaskLogUtils.insertSysTaskLog(sysTask.getTaskId(), sysTask.getStatus(), getUsername(), null);
         }
         //如果审核通过，则设置通过时间
-        if(sysTask.getStatus().equals(TaskStatus.PASS)){
+        if (sysTask.getStatus() != null && sysTask.getStatus().equals(TaskStatus.PASS)) {
             sysTask.setPassTime(DateUtils.getNowDate());
         }
         
