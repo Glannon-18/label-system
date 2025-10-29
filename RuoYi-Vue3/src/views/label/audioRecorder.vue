@@ -112,7 +112,6 @@
                                 type="textarea"
                                 @keydown.enter.prevent="keyEnterConfirmEdit(row, $index)"
                                 @keydown.esc="keyEscCancelEdit()"
-                                @blur="blurText(row, $index)"
                             />
 
                             <div v-else @click="clickStartEdit($index)" class="item-text" style="text-align: left !important;">
@@ -356,6 +355,34 @@ const task = ref({status:"?"})
 let dialogFormVisible = ref(false)
 let dialogFormRemark = ref('')
 
+//驳回任务
+function rejectTask(){
+  
+    if(!dialogFormRemark.value){
+    proxy.$modal.msgError(proxy.$t('label.audioRecorder.reject_reason_required'))
+    return
+    }
+    dialogFormVisible = false
+
+    //准备提交的参数
+    let sysTask = {
+        taskId: task.value.taskId,      
+        status: 'reject',
+        remark: proxy.$t('label.audioRecorder.reject_task') + ':' + dialogFormRemark.value
+    }
+    const formData = new FormData();
+    formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
+    updateTask(formData).then(response => {
+        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.task_rejected'))
+        setTimeout(() => {
+            proxy.$tab.closePage()
+            proxy.$tab.closeOpenPage(`/label/my-task/index/${task.value.taskId}/`)
+        }, 1000)
+    
+  })
+
+}
+
 /** 审核任务 */
 function auditTask(status) {
   let confirmTxt = proxy.$t('label.audioRecorder.review_approved') + '？'
@@ -388,11 +415,10 @@ function getList() {
     if (_responseRecords != null) {
         if (_responseRecords.total > 0) {
             recordsList.value = _responseRecords.rows
-            total.value = _responseRecords.total
-            
-            loading.value = false
-            _responseRecords = null
+            total.value = _responseRecords.total                    
         }
+        loading.value = false
+        _responseRecords = null
     } else {
         listRecords(queryParams.value)
         .then(response => {
@@ -652,11 +678,11 @@ const dialogVisible = ref(false)
 const deleteDialogVisible = ref(false)
 const modifyingIndex = ref(-1)
 const deletingIndex = ref(-1)
-const clickedRecord = ""
+const clickedRecord = ref("")
 
 const recordingStates = ref(Array(recordsList.value.length).fill(false))
 const playingStates = ref(Array(recordsList.value.length).fill(false))
-var _responseRecords = {}
+var _responseRecords = null
 var hasRecording = false
 
 function toggleRecordingWithConfirmation(index) {
@@ -838,8 +864,6 @@ const recording = ({ row, rowIndex }) => {
   return rowIndex === recordingRecordIndexForUI.value ? 'recording' : ''
 }
 
-
-
 /**
  * 上传文件到 /common/upload
  * @param {File|Blob} file
@@ -919,7 +943,7 @@ onMounted(async () => {
 
                 // 通过 fetch 获取文件二进制
                 const response = await fetch(url)
-                if (!response.ok) throw new Error("下载失败")
+                if (!response.ok) throw new Error(proxy.$t('label.audioRecorder.download_failed'))
 
                 const arrayBuffer = await response.arrayBuffer()
 
@@ -956,7 +980,7 @@ onMounted(async () => {
                     newRecords.push(record)                
                 })
                 addRecords(newRecords).then(response => {
-                    // this.$modal.msgSuccess("新增成功")
+                    // this.$modal.msgSuccess(proxy.$t('label.audioRecorder.add_success'))
                     getList()
                 })
 
@@ -1066,34 +1090,8 @@ const floatTo16BitPCM = (output, offset, input) => {
         output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true)
     }
 }
-
-function rejectTask(){
-  
-    if(!dialogFormRemark.value){
-    proxy.$modal.msgError(proxy.$t('label.audioRecorder.reject_reason_required'))
-    return
-    }
-    dialogFormVisible = false
-
-    //准备提交的参数
-    let sysTask = {
-        taskId: task.value.taskId,      
-        status: 'reject',
-        remark: proxy.$t('label.audioRecorder.reject_task') + ':' + dialogFormRemark.value
-    }
-    const formData = new FormData();
-    formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
-    updateTask(formData).then(response => {
-        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.task_rejected'))
-        setTimeout(() => {
-            proxy.$tab.closePage()
-            proxy.$tab.closeOpenPage(`/label/my-task/index/${task.value.taskId}/`)
-        }, 1000)
-    
-  })
-
-}
 </script>
+
 <style scoped>
 
 .item-root {

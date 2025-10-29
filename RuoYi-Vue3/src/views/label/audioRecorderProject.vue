@@ -1,34 +1,34 @@
 <template>
     <div class="app-container">
         <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-            <el-form-item :label="$t('label.audioRecorderProject.task_id')" prop="taskId">
-                <el-input v-model="queryParams.taskId" :placeholder="$t('label.audioRecorderProject.enter_task_id')" clearable @keyup.enter="handleQuery" />
+            <el-form-item :label="$t('label.audioRecorder.task_id')" prop="taskId">
+                <el-input v-model="queryParams.taskId" :placeholder="$t('label.audioRecorder.enter_task_id')" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item :label="$t('label.audioRecorderProject.task_package_id')" prop="packageId">
-                <el-input v-model="queryParams.packageId" :placeholder="$t('label.audioRecorderProject.enter_task_package_id')" clearable @keyup.enter="handleQuery" />
+            <el-form-item :label="$t('label.audioRecorder.task_package_id')" prop="packageId">
+                <el-input v-model="queryParams.packageId" :placeholder="$t('label.audioRecorder.enter_task_package_id')" clearable @keyup.enter="handleQuery" />
             </el-form-item>
 
-            <el-form-item :label="$t('label.audioRecorderProject.annotator')" prop="annotator">
-                <el-input v-model="queryParams.annotator" :placeholder="$t('label.audioRecorderProject.enter_annotator')" clearable @keyup.enter="handleQuery" />
+            <el-form-item :label="$t('label.audioRecorder.annotator')" prop="annotator">
+                <el-input v-model="queryParams.annotator" :placeholder="$t('label.audioRecorder.enter_annotator')" clearable @keyup.enter="handleQuery" />
             </el-form-item>
-            <el-form-item :label="$t('label.audioRecorderProject.auditor')" prop="auditor">
-                <el-input v-model="queryParams.auditor" :placeholder="$t('label.audioRecorderProject.enter_auditor')" clearable @keyup.enter="handleQuery" />
+            <el-form-item :label="$t('label.audioRecorder.auditor')" prop="auditor">
+                <el-input v-model="queryParams.auditor" :placeholder="$t('label.audioRecorder.enter_auditor')" clearable @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('label.audioRecorderProject.search') }}</el-button>
-                <el-button icon="Refresh" @click="resetQuery">{{ $t('label.audioRecorderProject.reset') }}</el-button>
+                <el-button type="primary" icon="Search" @click="handleQuery">{{ $t('label.audioRecorder.search') }}</el-button>
+                <el-button icon="Refresh" @click="resetQuery">{{ $t('label.audioRecorder.reset') }}</el-button>
             </el-form-item>
         </el-form>
 
         <el-row :gutter="10" class="mb8">
             <el-col :span="1.5" style="display: none;">
                 <el-button type="primary" plain icon="Plus" @click="handleAdd"
-                    v-hasPermi="['label:records:add']">{{ $t('label.audioRecorderProject.add') }}</el-button>
+                    v-hasPermi="['label:records:add']">{{ $t('label.audioRecorder.add') }}</el-button>
             </el-col>
  
             <el-col :span="1.5">
                 <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
-                    v-hasPermi="['label:records:remove']">{{ $t('label.audioRecorderProject.remove') }}</el-button>
+                    v-hasPermi="['label:records:remove']">{{ $t('label.audioRecorder.remove') }}</el-button>
             </el-col>
           
             <!-- <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar> -->
@@ -37,16 +37,16 @@
                 <template v-if="['unstart','underway','reject','pass'].includes(task.status)">                
                     <el-col :span="1.5">
                         <el-button type="success" plain icon=""  @click="clickSummitTask()"
-                            >{{ $t('label.audioRecorderProject.submit_review') }}</el-button>
+                            >{{ $t('label.audioRecorder.submit_review') }}</el-button>
                     </el-col>
                 </template>
 
                 <template v-else-if="['pending_review'].includes(task.status)">
                     <el-col :span="1.5">
-                        <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">{{ $t('label.audioRecorderProject.reject_task') }}</el-button>
+                        <el-button type="danger" plain @click="dialogFormVisible = true" vhasPermi="['label:task:audit']">{{ $t('label.audioRecorder.reject_task') }}</el-button>
                     </el-col>
                     <el-col :span="1.5">
-                        <el-button type="success" plain @click="auditTask('pass')" vhasPermi="['label:task:audit']">{{ $t('label.audioRecorderProject.approve_task') }}</el-button>
+                        <el-button type="success" plain @click="auditTask('pass')" vhasPermi="['label:task:audit']">{{ $t('label.audioRecorder.approve_task') }}</el-button>
                     </el-col>
                 </template>
 
@@ -60,13 +60,13 @@
         :row-class-name="recording"
         >
             <el-table-column type="selection" width="50" align="center" />
-            <el-table-column :label="$t('label.audioRecorderProject.serial_number')" align="center" width="50">
+            <el-table-column :label="$t('label.audioRecorder.serial_number')" align="center" width="50">
                 <template #default="{ $index }">
                     {{ ($index + 1) + (queryParams.pageNum - 1) * queryParams.pageSize }}
                 </template>
             </el-table-column>
 
-            <el-table-column :label="$t('label.audioRecorderProject.keyword')" width="200"  >
+            <el-table-column :label="$t('label.audioRecorder.keyword')" width="200"  >
                 <template #default="{ row, $index }">
                     
                     <el-input
@@ -90,7 +90,7 @@
             </el-table-column>
 
             <!-- <el-table-column label="" align="center" prop="text" /> -->
-            <el-table-column :label="$t('label.audioRecorderProject.text_content')" align="left">
+            <el-table-column :label="$t('label.audioRecorder.text_content')" align="left">
                 <template #default="{ row, $index }">
                     <!-- <div style="display: flex;flex-direction: row;gap:15px;align-items: center;">
 
@@ -152,7 +152,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    :content="$t('label.audioRecorderProject.recording')"
+                                    :content="$t('label.audioRecorder.recording')"
                                     placement="bottom"
                                     v-if="!recordingStates[$index]" 
                                 >
@@ -164,7 +164,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    :content="$t('label.audioRecorderProject.finish')"
+                                    :content="$t('label.audioRecorder.finish')"
                                     placement="bottom"
                                     v-else 
                                 >
@@ -179,7 +179,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    :content="$t('label.audioRecorderProject.play')"
+                                    :content="$t('label.audioRecorder.play')"
                                     placement="bottom"
                                     v-if="!playingStates[$index]">
 
@@ -191,7 +191,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    :content="$t('label.audioRecorderProject.pause')"
+                                    :content="$t('label.audioRecorder.pause')"
                                     placement="bottom"
                                     v-else>
 
@@ -207,7 +207,7 @@
                                 <el-tooltip
                                     class="box-item"
                                     effect="dark"
-                                    :content="$t('label.audioRecorderProject.edit')"
+                                    :content="$t('label.audioRecorder.edit')"
                                     placement="bottom">
                                 
                                     <el-icon size="22" color="orange">
@@ -229,9 +229,9 @@
             <!-- <el-table-column label="" align="center" class-name="small-padding fixed-width">
                 <template #default="scope">
                     <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                        v-hasPermi="['label:records:edit']">{{ $t('label.audioRecorderProject.edit') }}</el-button>
+                        v-hasPermi="['label:records:edit']">{{ $t('label.audioRecorder.edit') }}</el-button>
                     <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                        v-hasPermi="['label:records:remove']">{{ $t('label.audioRecorderProject.delete') }}</el-button>
+                        v-hasPermi="['label:records:remove']">{{ $t('label.audioRecorder.delete') }}</el-button>
                 </template>
             </el-table-column> -->
         </el-table>
@@ -243,8 +243,8 @@
         <el-dialog :title="title" v-model="open" width="500px" append-to-body>
             <el-form ref="recordsRef" :model="form" :rules="rules" label-width="80px">
 
-                <el-form-item :label="$t('label.audioRecorderProject.text_content')" prop="text">
-                    <el-input v-model="form.text" type="textarea" rows="8" :placeholder="$t('label.audioRecorderProject.text_content')"
+                <el-form-item :label="$t('label.audioRecorder.text_content')" prop="text">
+                    <el-input v-model="form.text" type="textarea" rows="8" :placeholder="$t('label.audioRecorder.text_content')"
                         style="font-size: 18px;" />
                 </el-form-item>
 
@@ -252,48 +252,48 @@
             </el-form>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button type="primary" @click="submitForm">{{ $t('label.audioRecorderProject.confirm') }}</el-button>
-                    <el-button @click="cancel">{{ $t('label.audioRecorderProject.cancel') }}</el-button>
+                    <el-button type="primary" @click="submitForm">{{ $t('label.audioRecorder.confirm') }}</el-button>
+                    <el-button @click="cancel">{{ $t('label.audioRecorder.cancel') }}</el-button>
                 </div>
             </template>
         </el-dialog>
 
         <!-- 删除确认对话框 -->
-        <el-dialog v-model="deleteDialogVisible" :title="$t('label.audioRecorderProject.confirm_delete')" width="400px">
+        <el-dialog v-model="deleteDialogVisible" :title="$t('label.audioRecorder.confirm_delete')" width="400px">
             <div class="delete-dialog-content">
-                <p>{{ $t('label.audioRecorderProject.confirm_delete_record') }}</p>
+                <p>{{ $t('label.audioRecorder.confirm_delete_record') }}</p>
                 <p class="delete-text-preview">{{ clickedRecord.text || clickedRecord.modifiedText }}</p>
             </div>
 
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="cancelDelete">{{ $t('label.audioRecorderProject.cancel') }}</el-button>
-                    <el-button type="danger" @click="confirmDelete">{{ $t('label.audioRecorderProject.remove') }}</el-button>
+                    <el-button @click="cancelDelete">{{ $t('label.audioRecorder.cancel') }}</el-button>
+                    <el-button type="danger" @click="confirmDelete">{{ $t('label.audioRecorder.remove') }}</el-button>
                 </div>
             </template>
         </el-dialog>
 
         <!-- 覆盖录音对话框 -->
-        <el-dialog v-model="overwriteRecordDialogVisible" :title="$t('label.audioRecorderProject.confirm_overwrite')" width="400px">
+        <el-dialog v-model="overwriteRecordDialogVisible" :title="$t('label.audioRecorder.confirm_overwrite')" width="400px">
             <div class="delete-dialog-content">
-                <p>{{ $t('label.audioRecorderProject.confirm_overwrite_record') }}</p>
+                <p>{{ $t('label.audioRecorder.confirm_overwrite_record') }}</p>
             </div>
 
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="cancelOverwriteRecord">{{ $t('label.audioRecorderProject.cancel') }}</el-button>
-                    <el-button type="danger" @click="confirmOverwriteRecord">{{ $t('label.audioRecorderProject.confirm') }}</el-button>
+                    <el-button @click="cancelOverwriteRecord">{{ $t('label.audioRecorder.cancel') }}</el-button>
+                    <el-button type="danger" @click="confirmOverwriteRecord">{{ $t('label.audioRecorder.confirm') }}</el-button>
                 </div>
             </template>
         </el-dialog>
 
         <!-- 审核驳回对话框 -->
-        <el-dialog v-model="dialogFormVisible" :title="$t('label.audioRecorderProject.reject_task')" width="500">
-          <el-input v-model="dialogFormRemark" type="textarea" :rows="3" :placeholder="$t('label.audioRecorderProject.reject_reason')" style="width: 100%;" />
+        <el-dialog v-model="dialogFormVisible" :title="$t('label.audioRecorder.reject_task')" width="500">
+          <el-input v-model="dialogFormRemark" type="textarea" :rows="3" :placeholder="$t('label.audioRecorder.reject_reason')" style="width: 100%;" />
           <template #footer>
             <div class="dialog-footer">
-              <el-button @click="dialogFormVisible = false">{{ $t('label.audioRecorderProject.cancel') }}</el-button>
-              <el-button type="primary" @click="rejectTask()">{{ $t('label.audioRecorderProject.confirm') }}</el-button>
+              <el-button @click="dialogFormVisible = false">{{ $t('label.audioRecorder.cancel') }}</el-button>
+              <el-button type="primary" @click="rejectTask()">{{ $t('label.audioRecorder.confirm') }}</el-button>
             </div>
           </template>
         </el-dialog>
@@ -359,7 +359,7 @@ let dialogFormRemark = ref('')
 function rejectTask(){
   
     if(!dialogFormRemark.value){
-    proxy.$modal.msgError(proxy.$t('label.audioRecorderProject.reject_reason_required'))
+    proxy.$modal.msgError(proxy.$t('label.audioRecorder.reject_reason_required'))
     return
     }
     dialogFormVisible = false
@@ -368,12 +368,12 @@ function rejectTask(){
     let sysTask = {
         taskId: task.value.taskId,      
         status: 'reject',
-        remark: proxy.$t('label.audioRecorderProject.reject_task') + ':' + dialogFormRemark.value
+        remark: proxy.$t('label.audioRecorder.reject_task') + ':' + dialogFormRemark.value
     }
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
     updateTask(formData).then(response => {
-        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.task_rejected'))
+        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.task_rejected'))
         setTimeout(() => {
             proxy.$tab.closePage()
             proxy.$tab.closeOpenPage(`/label/my-task/index/${task.value.taskId}/`)
@@ -385,20 +385,20 @@ function rejectTask(){
 
 /** 审核任务 */
 function auditTask(status) {
-  let confirmTxt = proxy.$t('label.audioRecorderProject.review_approved') + '？'
+  let confirmTxt = proxy.$t('label.audioRecorder.review_approved') + '？'
   if(status == 'reject'){
-    confirmTxt = proxy.$t('label.audioRecorderProject.review_rejected') + '？'
+    confirmTxt = proxy.$t('label.audioRecorder.review_rejected') + '？'
   }
   proxy.$modal.confirm(confirmTxt).then(function () {
     let sysTask = {
         taskId: task.value.taskId,
         status: status,
-        remark: proxy.$t('label.audioRecorderProject.review_approved')
+        remark: proxy.$t('label.audioRecorder.review_approved')
       }
     const formData = new FormData();
     formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
     updateTask(formData).then(response => {
-      proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.review_approved'))
+      proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.review_approved'))
 
       setTimeout(() => {
         proxy.$tab.closePage()
@@ -415,11 +415,10 @@ function getList() {
     if (_responseRecords != null) {
         if (_responseRecords.total > 0) {
             recordsList.value = _responseRecords.rows
-            total.value = _responseRecords.total
-            
-            loading.value = false
-            _responseRecords = null
+            total.value = _responseRecords.total                    
         }
+        loading.value = false
+        _responseRecords = null
     } else {
         listRecords(queryParams.value)
         .then(response => {
@@ -482,7 +481,7 @@ function handleSelectionChange(selection) {
 function handleAdd() {
     reset()
     open.value = true
-    title.value = proxy.$t('label.audioRecorderProject.add')
+    title.value = proxy.$t('label.audioRecorder.add')
 }
 
 /** 修改按钮操作 */
@@ -492,7 +491,7 @@ function handleUpdate(row) {
     getRecords(_id).then(response => {
         form.value = response.data
         open.value = true
-        title.value = proxy.$t('label.audioRecorderProject.edit')
+        title.value = proxy.$t('label.audioRecorder.edit')
     })
 }
 
@@ -502,13 +501,13 @@ function submitForm() {
         if (valid) {
             if (form.value.id != null) {
                 updateRecords(form.value).then(response => {
-                    proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.modify_success'))
+                    proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.modify_success'))
                     open.value = false
                     getList()
                 })
             } else {
                 addRecords(form.value).then(response => {
-                    proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.add_success'))
+                    proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.add_success'))
                     open.value = false
                     getList()
                 })
@@ -524,7 +523,7 @@ function handleDelete(row) {
         return delRecords(_ids)
     }).then(() => {
         getList()
-        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.delete_success'))
+        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.delete_success'))
     }).catch(() => { })
 }
 
@@ -559,7 +558,7 @@ function keyEnterConfirmEditKeywords(row, index) {
     editingKeywordsIndex.value = -1
     if(editingKeywords != row.keywords){
         updateRecords(row).then((response) => {
-            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.modify_success'))
+            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.modify_success'))
             modifiedKeywords = true
         })
     }
@@ -604,7 +603,7 @@ function keyEnterConfirmEdit(row, index) {
     editingIndex.value = -1
     if(editingText != row.text){
         updateRecords(row).then((response) => {
-            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.modify_success'))
+            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.modify_success'))
             modified = true
         })
     }
@@ -620,7 +619,7 @@ function blurText(row, index) {
 
 
 function clickSummitTask() {
-    proxy.$modal.confirm(proxy.$t('label.audioRecorderProject.submit_review_confirm')).then(function () {
+    proxy.$modal.confirm(proxy.$t('label.audioRecorder.submit_review_confirm')).then(function () {
         const formData = new FormData();
         let sysTask = {
             taskId: task.value.taskId,            
@@ -629,7 +628,7 @@ function clickSummitTask() {
         formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
 
         updateTask(formData).then(response => {
-            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.task_closed'))
+            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.task_closed'))
             setTimeout(() => {
                 proxy.$tab.closePage()
                 proxy.$tab.closeOpenPage(`/label/my-task/index/${task.value.taskId}/`)
@@ -667,7 +666,7 @@ function confirmDelete() {
 
     delRecords([recordsList.value[deletingIndex.value].id])
         .then((response) => {
-            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.delete_success'))
+            proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.delete_success'))
             recordsList.value.splice(deletingIndex.value, 1)
         })
 
@@ -683,12 +682,12 @@ const clickedRecord = ref("")
 
 const recordingStates = ref(Array(recordsList.value.length).fill(false))
 const playingStates = ref(Array(recordsList.value.length).fill(false))
-var _responseRecords = {}
+var _responseRecords = null
 var hasRecording = false
 
 function toggleRecordingWithConfirmation(index) {
     if (index != recordingRecordIndex && hasRecording) {
-        proxy.$modal.msgError(proxy.$t('label.audioRecorderProject.recording_stopped'))
+        proxy.$modal.msgError(proxy.$t('label.audioRecorder.recording_stopped'))
         return
     }
 
@@ -719,13 +718,13 @@ function toggleRecording(index) {
         recordingRecordIndex = index
         recordingRecordIndexForUI.value = index
         startRecording()
-        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.recording_started'))
+        proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.recording_started'))
 
     }
     else {
 
         stopRecording()
-        // proxy.$modal.msgWarning(proxy.$t('label.audioRecorderProject.recording_stopped'))
+        // proxy.$modal.msgWarning(proxy.$t('label.audioRecorder.recording_stopped'))
         hasRecording = false
         recordingRecordIndex = -1
     }
@@ -741,7 +740,7 @@ var hasPalying = false
 function togglePlaying(index) {
     
     if(hasRecording){
-        proxy.$modal.msgError(proxy.$t('label.audioRecorderProject.recording_error'))
+        proxy.$modal.msgError(proxy.$t('label.audioRecorder.recording_error'))
         return
     }
 
@@ -751,7 +750,7 @@ function togglePlaying(index) {
 
     if (index != playingIndex) {
         if (hasPalying) {
-            proxy.$modal.msgError(proxy.$t('label.audioRecorderProject.recording_stopped'))
+            proxy.$modal.msgError(proxy.$t('label.audioRecorder.recording_stopped'))
             return
         }
     }
@@ -771,7 +770,7 @@ function togglePlaying(index) {
     if (playingStates.value[index]) {
         audio.play()
             .then(() => { })
-            .catch(err => console.error(proxy.$t('label.audioRecorderProject.play') + proxy.$t('label.audioRecorderProject.failed'), err))
+            .catch(err => console.error(proxy.$t('label.audioRecorder.play') + proxy.$t('label.audioRecorder.failed'), err))
 
         hasPalying = true
     }
@@ -840,7 +839,7 @@ const startRecording = async () => {
             recordsList.value[recordingRecordIndex].audioDuration = formatDuration(elapsed)
         }, 1000)
     } catch (err) {
-        console.error(proxy.$t('label.audioRecorderProject.no_microphone_access'), err)
+        console.error(proxy.$t('label.audioRecorder.no_microphone_access'), err)
     }
 }
 
@@ -901,23 +900,23 @@ function uploadFile(file) {
                 });
             
                 audio.addEventListener('error', (err) => {
-                    console.error(proxy.$t('label.audioRecorderProject.recording_error') + ':', err)
+                    console.error(proxy.$t('label.audioRecorder.recording_error') + ':', err)
                 })
 
                 recordingRecord.audioFilePath = res.fileName
                 recordingRecord.audioDuration = duration
                 recordsList.value[recordingRecordIndex] = recordingRecord
                 updateRecords(recordingRecord).then((response) => {
-                    proxy.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.upload_success'))
+                    proxy.$modal.msgSuccess(proxy.$t('label.audioRecorder.upload_success'))
                 })
 
             } else {
-                console.error(proxy.$t('label.audioRecorderProject.upload_failed') + ':', res)
-                proxy.$modal.msgError(proxy.$t('label.audioRecorderProject.upload_failed'))
+                console.error(proxy.$t('label.audioRecorder.upload_failed') + ':', res)
+                proxy.$modal.msgError(proxy.$t('label.audioRecorder.upload_failed'))
             }
         })
         .catch(err => {
-            console.error(proxy.$t('label.audioRecorderProject.upload_failed') + ':', err)
+            console.error(proxy.$t('label.audioRecorder.upload_failed') + ':', err)
 
         })
         .finally(() => {
@@ -944,7 +943,7 @@ onMounted(async () => {
 
                 // 通过 fetch 获取文件二进制
                 const response = await fetch(url)
-                if (!response.ok) throw new Error(proxy.$t('label.audioRecorderProject.download_failed'))
+                if (!response.ok) throw new Error(proxy.$t('label.audioRecorder.download_failed'))
 
                 const arrayBuffer = await response.arrayBuffer()
 
@@ -981,7 +980,7 @@ onMounted(async () => {
                     newRecords.push(record)                
                 })
                 addRecords(newRecords).then(response => {
-                    // this.$modal.msgSuccess(proxy.$t('label.audioRecorderProject.add_success'))
+                    // this.$modal.msgSuccess(proxy.$t('label.audioRecorder.add_success'))
                     getList()
                 })
 
