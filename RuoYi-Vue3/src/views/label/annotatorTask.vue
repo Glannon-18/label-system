@@ -57,7 +57,7 @@
   </div>
 </template>
 
-<script setup name="Task">
+<script setup name="my-task">
 import { listTask } from "@/api/label/task"
 
 const { proxy } = getCurrentInstance()

@@ -292,7 +292,7 @@
   </div>
 </template>
 
-<script setup name="Package">
+<script setup name="project-package">
 import { listPackage, getPackage, delPackage, addPackage, updatePackage, getUserForPackage, assignPackageToUser, uploadPackage, downloadPackage } from "@/api/label/package"
 import { listTask } from "@/api/label/task"
 
