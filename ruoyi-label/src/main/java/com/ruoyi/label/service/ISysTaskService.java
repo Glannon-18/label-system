@@ -99,4 +99,13 @@ public interface ISysTaskService
      * @return 任务集合
      */
     public List<SysTask> selectAuditorTaskList(SysTask sysTask, String auditor);
+    
+    /**
+     * 查询创建者任务列表
+     * 
+     * @param projectName 项目名称
+     * @param task_status 任务状态
+     * @return 任务集合
+     */
+    public List<SysTask> selectCreatorTaskList(String projectName, String task_status, String creator);
 }
