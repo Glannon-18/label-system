@@ -26,7 +26,13 @@
       <!--      <el-table-column label="任务ID" align="center" prop="taskId" />-->
       <el-table-column :label="$t('label.annotatorTask.audio_file_name')" align="center" prop="audioFileName" :show-overflow-tooltip="true">
         <template #default="scope">
-          <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
+          <!-- 不给标注员进去看待审核和审核通过的 -->
+          <view v-if="['pending_review','pass'].includes(scope.row.status)">
+            {{ scope.row.audioFileName }}
+          </view>
+          <view v-else>
+            <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
+          </view>
         </template>
       </el-table-column>
       <el-table-column :label="$t('label.annotatorTask.task_status_col')" align="center" prop="status">
