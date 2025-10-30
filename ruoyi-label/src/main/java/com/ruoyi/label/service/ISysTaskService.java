@@ -1,6 +1,7 @@
 package com.ruoyi.label.service;
 
 import java.util.List;
+import java.util.Map;
 import com.ruoyi.label.domain.SysTask;
 
 /**
@@ -108,4 +109,12 @@ public interface ISysTaskService
      * @return 任务集合
      */
     public List<SysTask> selectCreatorTaskList(String projectName, String task_status, String creator);
+    
+    /**
+     * 根据部门ID统计label_worker用户的任务
+     * 
+     * @param deptId 部门ID
+     * @return 任务统计结果
+     */
+    public List<Map<String, Object>> getTaskStatisticsByDeptId(Long deptId);
 }

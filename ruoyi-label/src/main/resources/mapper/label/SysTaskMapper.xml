@@ -25,6 +25,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="duration" column="duration" />
     </resultMap>
 
+    <resultMap id="TaskStatisticsResult" type="map">
+        <result property="userName" column="user_name"/>
+        <result property="nickName" column="nick_name"/>
+        <result property="unstartCount" column="unstart_count"/>
+        <result property="underwayCount" column="underway_count"/>
+        <result property="pendingReviewCount" column="pending_review_count"/>
+        <result property="rejectCount" column="reject_count"/>
+        <result property="passCount" column="pass_count"/>
+        <result property="passDuration" column="pass_duration"/>
+    </resultMap>
+
     <sql id="selectSysTaskVo">
         select
             t.task_id,
@@ -212,5 +223,28 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <foreach item="taskId" collection="array" open="(" separator="," close=")">
             #{taskId}
         </foreach>
+    </select>
+    
+    <select id="getTaskStatisticsByDeptId" resultMap="TaskStatisticsResult">
+        SELECT 
+            assigner_user.user_name,
+            assigner_user.nick_name,
+            SUM(CASE WHEN t.status = 'unstart' THEN 1 ELSE 0 END) AS unstart_count,
+            SUM(CASE WHEN t.status = 'underway' THEN 1 ELSE 0 END) AS underway_count,
+            SUM(CASE WHEN t.status = 'pending_review' THEN 1 ELSE 0 END) AS pending_review_count,
+            SUM(CASE WHEN t.status = 'reject' THEN 1 ELSE 0 END) AS reject_count,
+            SUM(CASE WHEN t.status = 'pass' THEN 1 ELSE 0 END) AS pass_count,
+            SUM(CASE WHEN t.status = 'pass' THEN t.duration ELSE 0 END) AS pass_duration
+        FROM sys_task t
+        JOIN sys_task_package p ON t.package_id = p.task_package_id
+        JOIN sys_user assigner_user ON p.assigner = assigner_user.user_name
+        JOIN sys_user_role ur ON assigner_user.user_id = ur.user_id
+        JOIN sys_role r ON ur.role_id = r.role_id
+        <where>
+            r.role_key = 'label_worker'
+            <if test="deptId != null"> AND assigner_user.dept_id = #{deptId}</if>
+        </where>
+        GROUP BY assigner_user.user_name, assigner_user.nick_name
+        ORDER BY assigner_user.user_name
     </select>
 </mapper>
