@@ -104,7 +104,22 @@
                </el-col>
                <el-col :span="12">
                   <el-form-item label="负责人" prop="leader">
-                     <el-input v-model="form.leader" placeholder="请输入负责人" maxlength="20" />
+                     <el-select 
+                        v-model="form.leader" 
+                        placeholder="请输入负责人" 
+                        clearable 
+                        filterable 
+                        remote 
+                        :remote-method="queryUsers" 
+                        :loading="userLoading"
+                        @change="handleUserSelect">
+                        <el-option
+                           v-for="item in userList"
+                           :key="item.userId"
+                           :label="item.nickName + '(' + item.userName + ')'"
+                           :value="item.userName"
+                        />
+                     </el-select>
                   </el-form-item>
                </el-col>
                <el-col :span="12">
@@ -141,7 +156,7 @@
 </template>
 
 <script setup name="Dept">
-import { listDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from "@/api/system/dept"
+import { listDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild, listDeptUsers } from "@/api/system/dept"
 
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
@@ -149,11 +164,13 @@ const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
 const deptList = ref([])
 const open = ref(false)
 const loading = ref(true)
+const userLoading = ref(false)
 const showSearch = ref(true)
 const title = ref("")
 const deptOptions = ref([])
 const isExpandAll = ref(true)
 const refreshTable = ref(true)
+const userList = ref([])
 
 const data = reactive({
   form: {},
@@ -277,6 +294,28 @@ function handleDelete(row) {
     getList()
     proxy.$modal.msgSuccess("删除成功")
   }).catch(() => {})
+}
+
+/** 查询用户 */
+function queryUsers(query) {
+  if (query !== '') {
+    userLoading.value = true
+    // 调用后端接口查询用户
+    listDeptUsers(query).then(response => {
+      userList.value = response.data
+      userLoading.value = false
+    }).catch(() => {
+      userLoading.value = false
+      proxy.$modal.msgError("查询用户失败")
+    })
+  } else {
+    userList.value = []
+  }
+}
+
+/** 用户选择处理 */
+function handleUserSelect(val) {
+  // 可以在这里添加额外的处理逻辑
 }
 
 getList()

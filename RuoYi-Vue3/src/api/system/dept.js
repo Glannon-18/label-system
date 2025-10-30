@@ -50,3 +50,14 @@ export function delDept(deptId) {
     method: 'delete'
   })
 }
+
+// 查询部门用户列表
+export function listDeptUsers(query) {
+  return request({
+    url: '/system/dept/users',
+    method: 'get',
+    params: {
+      query: query
+    }
+  })
+}

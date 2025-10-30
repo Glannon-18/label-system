@@ -139,11 +139,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectUserForPackage" resultMap="TaskPackageUserResult">
 	    select u.user_id, u.user_name, u.nick_name 
 	    from sys_user u
-	    where u.del_flag = '0'
-	    <if test="userName != null and userName != ''">
+	    where u.del_flag = '0' and u.status = '0'
+	    <if test="userName != null and userName != '' and nickName != null and nickName != ''">
+	        AND (u.user_name like concat('%', #{userName}, '%') OR u.nick_name like concat('%', #{nickName}, '%'))
+	    </if>
+	    <if test="userName != null and userName != '' and (nickName == null or nickName == '')">
 	        AND u.user_name like concat('%', #{userName}, '%')
 	    </if>
-	    <if test="nickName != null and nickName != ''">
+	    <if test="nickName != null and nickName != '' and (userName == null or userName == '')">
 	        AND u.nick_name like concat('%', #{nickName}, '%')
 	    </if>
 	</select>
