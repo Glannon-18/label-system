@@ -1,6 +1,7 @@
 package com.ruoyi.label.service.impl;
 
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.label.mapper.SysTaskMapper;
@@ -170,5 +171,16 @@ public class SysTaskServiceImpl implements ISysTaskService
     public List<SysTask> selectCreatorTaskList(String projectName, String task_status, String creator)
     {
         return sysTaskMapper.selectCreatorTaskList(projectName, task_status, creator);
+    }
+    
+    /**
+     * 根据部门ID统计label_worker用户的任务
+     * 
+     * @param deptId 部门ID
+     * @return 任务统计结果
+     */
+    @Override
+    public List<Map<String, Object>> getTaskStatisticsByDeptId(Long deptId) {
+        return sysTaskMapper.getTaskStatisticsByDeptId(deptId);
     }
 }

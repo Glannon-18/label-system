@@ -143,8 +143,17 @@ public class SysTaskController extends BaseController {
             // 设置任务属性
             sysTask.setAudioFileName(wavFile.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
+
+            // 获取音频文件时长并保存
+            try {
+                String absolutePath = RuoYiConfig.getProfile() + filePath.replaceFirst("/profile", "");
+                double duration = AudioUtils.getWavDuration(absolutePath);
+                sysTask.setDuration(duration);
+            } catch (UnsupportedAudioFileException e) {
+                logger.error("不支持的音频文件格式: {}", wavFile.getOriginalFilename(), e);
+            }
         }
-        
+
         if (textGridFile != null) {
             // 读取TextGrid文件内容
             StringBuilder textGridContent = new StringBuilder();
@@ -154,7 +163,7 @@ public class SysTaskController extends BaseController {
                     textGridContent.append(line).append("\n");
                 }
             }
-            
+
             // 设置TextGrid内容
             sysTask.setTextGrid(textGridContent.toString());
             sysTask.setOriginalTextGrid(textGridContent.toString());
@@ -182,23 +191,32 @@ public class SysTaskController extends BaseController {
 //    @PreAuthorize("@ss.hasPermi('label:project:edit')")
     @Log(title = "任务", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask, 
-                          @RequestPart(value = "wavFile", required = false) MultipartFile wavFile, 
+    public AjaxResult edit(@RequestPart("sysTask") SysTask sysTask,
+                          @RequestPart(value = "wavFile", required = false) MultipartFile wavFile,
                           @RequestPart(value = "textGridFile", required = false) MultipartFile textGridFile,
                           @RequestPart(value = "xlsxFile", required = false) MultipartFile xlsxFile) throws IOException
     {
         // 获取更新前的任务信息
         SysTask oldTask = sysTaskService.selectSysTaskByTaskId(sysTask.getTaskId());
-        
+
         if (wavFile != null) {
             // 保存WAV文件并获取访问路径
             String filePath = FileUploadUtils.upload(RuoYiConfig.getUploadPath(), wavFile);
-            
+
             // 设置任务属性
             sysTask.setAudioFileName(wavFile.getOriginalFilename());
             sysTask.setAudioFilePath(filePath);
+
+            // 获取音频文件时长并保存
+            try {
+                String absolutePath = RuoYiConfig.getProfile() + filePath.replaceFirst("/profile", "");
+                double duration = AudioUtils.getWavDuration(absolutePath);
+                sysTask.setDuration(duration);
+            } catch (UnsupportedAudioFileException e) {
+                logger.error("不支持的音频文件格式: {}", wavFile.getOriginalFilename(), e);
+            }
         }
-        
+
         if (textGridFile != null) {
             // 读取TextGrid文件内容
             StringBuilder textGridContent = new StringBuilder();
@@ -208,7 +226,7 @@ public class SysTaskController extends BaseController {
                     textGridContent.append(line).append("\n");
                 }
             }
-            
+
             // 设置TextGrid内容
             sysTask.setTextGrid(textGridContent.toString());
             sysTask.setOriginalTextGrid(textGridContent.toString());

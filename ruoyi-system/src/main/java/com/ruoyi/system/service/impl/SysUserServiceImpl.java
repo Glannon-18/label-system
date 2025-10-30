@@ -131,6 +131,18 @@ public class SysUserServiceImpl implements ISysUserService
     }
     
     /**
+     * 查询可用于部门输入的用户列表
+     * 
+     * @param query 查询关键字
+     * @return 用户对象列表（只包含用户名和昵称）
+     */
+    @Override
+    public List<SysUser> selectUserForDeptInput(String query)
+    {
+        return userMapper.selectUserForPackage(query, query);
+    }
+    
+    /**
      * 根据角色和语言查询可用于任务包分配的用户列表
      * 
      * @param userName 用户名

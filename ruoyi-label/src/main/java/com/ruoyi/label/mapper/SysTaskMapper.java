@@ -4,6 +4,7 @@ import com.ruoyi.label.domain.SysTask;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 任务Mapper接口
@@ -102,4 +103,12 @@ public interface SysTaskMapper
      * @return 任务集合
      */
     public List<SysTask> selectCreatorTaskList(@Param("projectName") String projectName, @Param("task_status") String task_status, @Param("creator") String creator);
+    
+    /**
+     * 根据部门ID统计label_worker用户的任务
+     * 
+     * @param deptId 部门ID
+     * @return 任务统计结果
+     */
+    public List<Map<String, Object>> getTaskStatisticsByDeptId(@Param("deptId") Long deptId);
 }

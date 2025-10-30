@@ -7,13 +7,9 @@
     </el-row>
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item :label="$t('label.task.task_status')" prop="status" label-width="auto">
-        <el-select v-model="queryParams.status" :placeholder="$t('label.task.select_task_package_status')" clearable style="width: 120px;">
-          <el-option
-            v-for="dict in task_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
+        <el-select v-model="queryParams.status" :placeholder="$t('label.task.select_task_package_status')" clearable
+          style="width: 120px;">
+          <el-option v-for="dict in task_status" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -24,40 +20,23 @@
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['label:project:add']"
-        >{{ $t('label.task.add') }}</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['label:project:add']">{{
+      $t('label.task.add') }}</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="Edit"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['label:project:edit']"
-        >{{ $t('label.task.edit') }}</el-button>
+        <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['label:project:edit']">{{ $t('label.task.edit') }}</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['label:project:remove']"
-        >{{ $t('label.task.remove') }}</el-button>
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['label:project:remove']">{{ $t('label.task.remove') }}</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-<!--      <el-table-column label="任务ID" align="center" prop="taskId" />-->
+      <!--      <el-table-column label="任务ID" align="center" prop="taskId" />-->
       <el-table-column :label="$t('label.task.audio_file_name')" align="center" prop="audioFileName">
         <template #default="scope">
           <el-link @click="handleToAnnotator(scope.row)" type="primary">{{ scope.row.audioFileName }}</el-link>
@@ -68,8 +47,8 @@
           <el-tag :type="getStatusTagType(scope.row.status)">{{ getStatusTagName(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
-<!--      <el-table-column label="分配人账户名" align="center" prop="annotator" />-->
-<!--      <el-table-column label="审核人员账户名" align="center" prop="auditor" />-->
+      <!--      <el-table-column label="分配人账户名" align="center" prop="annotator" />-->
+      <!--      <el-table-column label="审核人员账户名" align="center" prop="auditor" />-->
       <el-table-column :label="$t('label.task.creator')" align="center" prop="createBy" />
       <el-table-column :label="$t('label.task.create_time')" align="center" prop="createTime" width="180">
         <template #default="scope">
@@ -79,66 +58,76 @@
       <el-table-column :label="$t('label.task.remark')" align="center" prop="remark" />
       <el-table-column :label="$t('label.task.operation')" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['label:project:edit']">{{ $t('label.task.edit_btn') }}</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['label:project:remove']">{{ $t('label.task.delete_btn') }}</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['label:project:edit']">{{ $t('label.task.edit_btn') }}</el-button>
+          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
+            v-hasPermi="['label:project:remove']">{{ $t('label.task.delete_btn') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
-    
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <!-- 添加或修改任务对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="taskRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item :label="$t('label.task.audio_file_name_label')" prop="audioFileName">
-          <el-upload
-            ref="wavUploadRef"
-            :limit="1"
-            :auto-upload="false"
-            :on-change="(file, fileList) => handleFileChange(file, fileList, 'wav')"
-            :on-exceed="handleFileExceed"
-            :file-list="wavFileList"
-            accept=".wav,.WAV"
-          >
-            <el-button type="primary">{{ $t('label.task.select_wav_file') }}</el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                {{ $t('label.task.wav_file_tip') }}
-              </div>
-            </template>
-          </el-upload>
-        </el-form-item>
-        <el-form-item :label="$t('label.task.textgrid_file_label')" prop="textGridFileName">
-          <el-upload
-            ref="textGridUploadRef"
-            :limit="1"
-            :auto-upload="false"
-            :on-change="(file, fileList) => handleFileChange(file, fileList, 'textGrid')"
-            :on-exceed="handleFileExceed"
-            :file-list="textGridFileList"
-            accept=".TextGrid,.textgrid"
-          >
-            <el-button type="primary">{{ $t('label.task.select_textgrid_file') }}</el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                {{ $t('label.task.textgrid_file_tip') }}
-              </div>
-            </template>
-          </el-upload>
-        </el-form-item>
+
+        <!-- 语音标注 -->
+        <template v-if="taskPackage.type != 'audio'">
+
+          <el-form-item :label="$t('label.task.audio_file_name_label')" prop="audioFileName">
+
+            <el-upload ref="wavUploadRef" :limit="1" :auto-upload="false"
+              :on-change="(file, fileList) => handleFileChange(file, fileList, 'wav')" :on-exceed="handleFileExceed"
+              :file-list="wavFileList" accept=".wav,.WAV">
+              <el-button type="primary">{{ $t('label.task.select_wav_file') }}</el-button>
+              <template #tip>
+                <div class="el-upload__tip">
+                  {{ $t('label.task.wav_file_tip') }}
+                </div>
+              </template>
+            </el-upload>
+          </el-form-item>
+          <el-form-item :label="$t('label.task.textgrid_file_label')" prop="textGridFileName">
+            <el-upload ref="textGridUploadRef" :limit="1" :auto-upload="false"
+              :on-change="(file, fileList) => handleFileChange(file, fileList, 'textGrid')"
+              :on-exceed="handleFileExceed" :file-list="textGridFileList" accept=".TextGrid,.textgrid">
+              <el-button type="primary">{{ $t('label.task.select_textgrid_file') }}</el-button>
+              <template #tip>
+                <div class="el-upload__tip">
+                  {{ $t('label.task.textgrid_file_tip') }}
+                </div>
+              </template>
+            </el-upload>
+          </el-form-item>
+
+        </template>
+
+        <template v-else>
+          <el-form-item :label="$t('label.audioRecorder.xlsx_file_name_label')" prop="xlsxFileName">
+
+            <el-upload ref="xlsxUploadRef" :limit="1" :auto-upload="false"
+              :on-change="(file, fileList) => handleFileChange(file, fileList, 'xlsx')" :on-exceed="handleFileExceed"
+              :file-list="xlsxFileList" accept=".xlsx">
+              <el-button type="primary">{{ $t('label.audioRecorder.select_xlsx_file') }}</el-button>
+              <template #tip>
+                <div class="el-upload__tip">
+                  {{ $t('label.audioRecorder.xlsx_file_tip') }}
+                </div>
+              </template>
+            </el-upload>
+          </el-form-item>
+        </template>
+
         <el-form-item :label="$t('label.task.remark')" prop="remark">
           <el-input v-model="form.remark" type="textarea" :placeholder="$t('label.task.enter_remark')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">{{ $t('label.task.add') === title ? $t('label.task.add') : $t('label.task.edit') }}</el-button>
+          <el-button type="primary" @click="submitForm">{{ $t('label.task.add') === title ? $t('label.task.add') :
+      $t('label.task.edit') }}</el-button>
           <el-button @click="cancel">{{ $t('label.task.reset') }}</el-button>
         </div>
       </template>
@@ -183,8 +172,10 @@ const data = reactive({
 const { queryParams, form, rules } = toRefs(data)
 const wavFile = ref(null)
 const textGridFile = ref(null)
+const xlsxFile = ref(null)
 const wavFileList = ref([]) // 用于存储WAV文件列表
 const textGridFileList = ref([]) // 用于存储TextGrid文件列表
+const xlsxFileList = ref([])
 const taskPackage = ref(null)
 const fileSuffix = computed(() => {
   return taskPackage.value && taskPackage.value.type === 'audio' ? '.xlsx' : '.wav'
@@ -243,6 +234,18 @@ function handleFileChange(file, fileList, type) {
       form.value.textGridFileName = fileName
     }
     textGridFileList.value = fileList
+  } else if (type === 'xlsx') {
+    xlsxFile.value = file.raw
+
+    let fileName = file.raw.name
+    if (fileName.toLowerCase().endsWith('.wav')) {
+
+      form.value.xlsxFileName = fileName
+    } else {
+      // 不是WAV文件的情况已经在文件选择器中被过滤，这里只是额外的安全检查
+      form.value.xlsxFileName = fileName
+    }
+    xlsxFileList.value = fileList
   }
 }
 
@@ -279,6 +282,7 @@ function reset() {
     audioFileName: null,
     audioFilePath: null,
     textGridFileName: null,
+    xlsxFileName: null,
     status: null,
     annotator: null,
     auditor: null,
@@ -351,21 +355,25 @@ function submitForm() {
           proxy.$modal.msgWarning(proxy.$t("label.task.select_wav_file_warning"));
           return;
         }
-        
+
         // 构造FormData对象，确保总是发送multipart/form-data请求
         const formData = new FormData();
         // 添加sysTask部分（JSON字符串）
         formData.append("sysTask", new Blob([JSON.stringify(form.value)], { type: "application/json" }));
-        
+
         // 如果有新文件则添加文件部分
         if (wavFile.value) {
           formData.append("wavFile", wavFile.value);
         }
-        
+
         if (textGridFile.value) {
           formData.append("textGridFile", textGridFile.value);
         }
-        
+
+        if (xlsxFile.value) {
+          formData.append("xlsxFile", xlsxFile.value);
+        }
+
         // 使用修改后的API接口上传任务和文件
         updateTask(formData).then(response => {
           proxy.$modal.msgSuccess(proxy.$t("label.task.update_success"));
@@ -376,24 +384,39 @@ function submitForm() {
           proxy.$modal.msgError(proxy.$t("label.task.update_failed", { error: error.message || proxy.$t("common.unknown_error") }));
         });
       } else {
-        // 新增操作
-        if (!wavFile.value) {
-          proxy.$modal.msgWarning(proxy.$t("label.task.select_wav_file_warning"));
-          return;
-        }
-        
-        if (!textGridFile.value) {
-          proxy.$modal.msgWarning(proxy.$t("label.task.select_textgrid_file_warning"));
-          return;
-        }
-        
+
         // 创建FormData对象用于文件上传
         const formData = new FormData();
-        formData.append("wavFile", wavFile.value);
-        formData.append("textGridFile", textGridFile.value);
-        // 添加sysTask部分（JSON字符串）
-        formData.append("sysTask", new Blob([JSON.stringify({...form.value, packageId: taskPackageId})], { type: "application/json" }));
-        
+
+        // 按照音频标注类型处理，如果不是文件录音
+        if (taskPackage.value.type != 'audio') {
+
+          // 新增操作
+          if (!wavFile.value) {
+            proxy.$modal.msgWarning(proxy.$t("label.task.select_wav_file_warning"));
+            return;
+          }
+
+          if (!textGridFile.value) {
+            proxy.$modal.msgWarning(proxy.$t("label.task.select_textgrid_file_warning"));
+            return;
+          }
+
+          formData.append("wavFile", wavFile.value);
+          formData.append("textGridFile", textGridFile.value);
+
+        } else {
+          //按照文件录音处理
+          if (!xlsxFile.value) {
+            proxy.$modal.msgWarning(proxy.$t("label.task.select_wav_file_warning"));
+            return;
+          }
+
+          formData.append("xlsxFile", xlsxFile.value);
+        }
+
+        formData.append("sysTask", new Blob([JSON.stringify({ ...form.value, packageId: taskPackageId })], { type: "application/json" }));
+
         // 使用修改后的API接口上传任务和文件
         addTask(formData).then(response => {
           proxy.$modal.msgSuccess(proxy.$t("label.task.add_success"));
@@ -411,12 +434,12 @@ function submitForm() {
 /** 删除按钮操作 */
 function handleDelete(row) {
   const _taskIds = row.taskId || ids.value
-  proxy.$modal.confirm(proxy.$t('label.task.confirm_remove', { id: _taskIds })).then(function() {
+  proxy.$modal.confirm(proxy.$t('label.task.confirm_remove', { id: _taskIds })).then(function () {
     return delTask(_taskIds)
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess(proxy.$t("label.task.remove_success"))
-  }).catch(() => {})
+  }).catch(() => { })
 }
 
 /** 导出按钮操作 */
@@ -430,9 +453,9 @@ function handleExport() {
 function handleToAnnotator(row) {
   const taskId = row.taskId
   const type = row.packageType
-  if (type === "audio") { 
+  if (type === "audio") {
     proxy.$router.push(`/label/view-audio-recorder/index/${taskPackageId}/${taskPackageName}/${taskId}`)
-  }else{
+  } else {
     proxy.$router.push(`/label/view-label/index/${taskPackageId}/${taskPackageName}/${taskId}`)
   }
 }

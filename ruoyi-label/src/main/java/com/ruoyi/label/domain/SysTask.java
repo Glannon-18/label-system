@@ -57,6 +57,9 @@ public class SysTask extends BaseEntity {
     /** 审核通过时间 **/
     private Date passTime;
 
+    /** 音频时长 */
+    private Double duration;
+
     public void setTaskId(Long taskId) {
         this.taskId = taskId;
     }
@@ -161,6 +164,14 @@ public class SysTask extends BaseEntity {
         this.passTime = passTime;
     }
 
+    public Double getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Double duration) {
+        this.duration = duration;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
@@ -181,6 +192,7 @@ public class SysTask extends BaseEntity {
                 .append("packageType", getPackageType())
                 .append("packageName", getPackageName())
                 .append("passTime", getPassTime())
+                .append("duration", getDuration().toString())
                 .toString();
     }
 }
