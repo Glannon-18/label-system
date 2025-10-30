@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.label.utils.SysTaskLogUtils;
+import com.ruoyi.common.utils.audio.AudioUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -278,6 +279,10 @@ public class SysTaskPackageController extends BaseController
                     MultipartFile wavFile = createMultipartFileFromZipEntry(wavFileName, file);
                     String uploadedFileName = FileUploadUtils.upload(filePath, wavFile);
                     
+                    // 获取wav文件时长
+                    String realPath = RuoYiConfig.getProfile() + uploadedFileName.replaceFirst("/profile", "");
+                    Double duration = AudioUtils.getWavDuration(realPath);
+                    
                     SysTask task = new SysTask();
                     task.setPackageId(taskPackage.getTaskPackageId());
                     task.setAudioFileName(wavFileName);
@@ -286,6 +291,7 @@ public class SysTaskPackageController extends BaseController
                     task.setOriginalTextGrid(textGridContent);
                     task.setStatus(TaskStatus.UNSTART);
                     task.setCreateBy(getUsername());
+                    task.setDuration(duration);
                     
                     sysTaskService.insertSysTask(task);
                     SysTaskLogUtils.insertSysTaskLog(task.getTaskId(), TaskStatus.UNSTART, getUsername(), null);

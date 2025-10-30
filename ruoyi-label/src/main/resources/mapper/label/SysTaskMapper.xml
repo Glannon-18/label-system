@@ -22,6 +22,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="packageName" column="package_name" />
         <result property="projectName" column="project_name" />
         <result property="passTime" column="pass_time" />
+        <result property="duration" column="duration" />
     </resultMap>
 
     <sql id="selectSysTaskVo">
@@ -39,6 +40,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.update_time,
             t.remark,
             t.pass_time,
+            t.duration,
 			p.type as package_type,
             p.assigner as package_assigner,
             p.name as package_name
@@ -61,6 +63,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.update_time,
             t.remark,
             t.pass_time,
+            t.duration,
             p.type as package_type,
             p.assigner as package_assigner,
             p.name as package_name
@@ -104,6 +107,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="textGrid != null">text_grid,</if>
             <if test="originalTextGrid != null">original_text_grid,</if>
             <if test="passTime != null">pass_time,</if>
+            <if test="duration != null">duration,</if>
          </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="packageId != null">#{packageId},</if>
@@ -118,6 +122,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="textGrid != null">#{textGrid},</if>
             <if test="originalTextGrid != null">#{originalTextGrid},</if>
             <if test="passTime != null">#{passTime},</if>
+            <if test="duration != null">#{duration},</if>
          </trim>
     </insert>
 
@@ -136,6 +141,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateTime != null">update_time = #{updateTime},</if>
             <if test="remark != null">remark = #{remark},</if>
             <if test="passTime != null">pass_time = #{passTime},</if>
+            <if test="duration != null">duration = #{duration},</if>
         </trim>
         where task_id = #{taskId}
     </update>
@@ -185,6 +191,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             t.update_time,
             t.remark,
             t.pass_time,
+            t.duration,
 			p.type as package_type,
             p.assigner as package_assigner,
             p.name as package_name,
