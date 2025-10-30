@@ -261,9 +261,37 @@
 
     <!-- 标注前后的TextGrid对比 -->
     <el-dialog  v-model="diffDialogVisible" :fullscreen="false" width="90%">
-      <div style="display: flex; justify-content: space-around; ">
-        <el-text class="mx-1" size="large">{{ $t('label.labelEditor.预标注文本内容（标注前）') }}</el-text>
-        <el-text class="mx-1" size="large">{{ $t('label.labelEditor.当前标注文本内容') }}</el-text>
+      <div style="display: flex; justify-content: space-around; line-height: 30px;">
+        <!-- 左边选项 -->
+        <el-dropdown size="large" @command="handleCommandLeft">
+          <span class="el-dropdown-link">
+            {{ leftTG.label }}
+            <el-icon class="el-icon--right">
+              <arrow-down />
+            </el-icon>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="vs in versions" :command="vs" :disabled="vs.value==rightTG.value">{{ vs.label }}</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <!-- 右边选项 -->
+        <el-dropdown size="large" @command="handleCommandRight">
+          <span class="el-dropdown-link">
+            {{ rightTG.label }}
+            <el-icon class="el-icon--right">
+              <arrow-down />
+            </el-icon>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item v-for="vs in versions" :command="vs" :disabled="vs.value==leftTG.value">{{ vs.label }}</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <!-- <el-text class="mx-1" size="large">{{ $t('label.labelEditor.标注员的标注') }}</el-text>
+        <el-text class="mx-1" size="large">{{ $t('label.labelEditor.审核员的标注') }}</el-text> -->
       </div>
       <div style="flex: 1; display: flex; flex-direction: column; height: calc(100vh - 200px);">
         <div style="flex: 1; overflow-y: auto;" class="custom-diff-container">
@@ -403,6 +431,13 @@ function updateFormHistory(history) {
 const diffDialogVisible = ref(false)
 const oldText = ref('')
 const newText = ref('')
+const versions = ref([
+  {label:'原始的标注', value:'originalTextGrid'}, 
+  {label:'标注员的标注', value:'textGrid'}, 
+  {label:'审核员的标注', value:'auditTextGrid'}
+])
+const leftTG = ref(versions.value[1])
+const rightTG = ref(versions.value[2])
 //将标注文本textGridJson转换为文本
 function convertText(textGridJson){
   let textArray = textGridJson.item[0].intervals.map( (row, index)=>{
@@ -410,26 +445,42 @@ function convertText(textGridJson){
   })
   return textArray.join('\n')
 }
+const handleCommandLeft = (command => {
+  leftTG.value=command
+  showTextDiff()
+})
+const handleCommandRight = (command => {
+  rightTG.value=command
+  showTextDiff()
+})
 //显示标注前后文本对比
 function showTextDiff(){
-  //获取原始的分段数据
-  let oldTextGridJson = parseTextGrid(task.data.originalTextGrid)
-  //将转换为分段号+文本
-  oldText.value = convertText(oldTextGridJson)
-  //-------------------------
+  //---------左边的文本--------
+  if(leftTG.value.value==='auditTextGrid'){//审核员的标注
+    //获取最新的分段数据intervals
+    let intervals = times.map((ts,i)=>{
+      return { index: (i+1), xmin: ts.start, xmax: ts.end, text: ts.text, }
+    })
+    // 将intervals替换到 task.textGridJson.item[0].intervals
+    task.textGridJson.item[0].intervals = intervals
+    // 转换为分段号+文本
+    oldText.value = convertText(task.textGridJson)
+  }else{
+    oldText.value =  convertText(parseTextGrid(task.data[leftTG.value.value]))
+  }
+  //---------右边的文本--------
+  if(rightTG.value.value==='auditTextGrid'){//审核员的标注
   //获取最新的分段数据intervals
   let intervals = times.map((ts,i)=>{
-    return {
-      index: (i+1),
-      xmin: ts.start,
-      xmax: ts.end,
-      text: ts.text,
-    }
+      return { index: (i+1), xmin: ts.start, xmax: ts.end, text: ts.text, }
   })
   // 将intervals替换到 task.textGridJson.item[0].intervals
   task.textGridJson.item[0].intervals = intervals
   // 转换为分段号+文本
   newText.value = convertText(task.textGridJson)
+  }else{
+    newText.value =  convertText(parseTextGrid(task.data[rightTG.value.value]))
+  }
   diffDialogVisible.value = true
 }
 
@@ -978,16 +1029,12 @@ function saveTask(autoSave=false) {
   task.textGridJson.item[0].intervals = intervals
   //转换textGridJson为TG文本格式
   let textGrid = stringifyTextGrid(task.textGridJson)
-  // if(task.data.textGrid === textGrid) {
-  //   proxy.$modal.msgWarning("标注内容未发生改变")
-  //   return 
-  // }
-  //替换task.data的TextGrid字段
-  task.data.textGrid = textGrid
+  //替换task.data的auditTextGrid字段
+  task.data.auditTextGrid = textGrid
   //准备保存的参数
   let sysTask = {
       taskId: taskId,
-      textGrid: textGrid,
+      auditTextGrid: textGrid,//审核员的TextGrid
     }
   const formData = new FormData();
   formData.append('sysTask', new Blob([JSON.stringify(sysTask)], {type: "application/json"}));
@@ -1107,24 +1154,9 @@ function rejectTask(){
   }
   dialogFormVisible = false
 
-  //将最新的times转为intervals
-  let intervals = times.map((ts,i)=>{
-    return {
-      index: (i+1),
-      xmin: ts.start,
-      xmax: ts.end,
-      text: ts.text,
-    }
-  })
-  // 将intervals替换到 task.textGridJson.item[0].intervals
-  task.textGridJson.item[0].intervals = intervals
-  //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
-  let textGrid = stringifyTextGrid(task.textGridJson)
-  task.data.textGrid = textGrid
   //准备提交的参数
   let sysTask = {
       taskId: taskId,
-      textGrid: textGrid,
       status: 'reject',
       remark: proxy.$t('label.labelEditor.驳回原因')+':'+dialogFormRemark.value
     }
@@ -1157,24 +1189,9 @@ function auditTask(isValidate=true) {
     }
   }
   proxy.$modal.confirm(proxy.$t('label.labelEditor.确定审核通过吗？')).then(function () {
-    //将最新的times转为intervals
-    let intervals = times.map((ts,i)=>{
-      return {
-        index: (i+1),
-        xmin: ts.start,
-        xmax: ts.end,
-        text: ts.text,
-      }
-    })
-    // 将intervals替换到 task.textGridJson.item[0].intervals
-    task.textGridJson.item[0].intervals = intervals
-    //转换textGridJson为TG文本格式,替换task.data的TextGrid字段
-    let textGrid = stringifyTextGrid(task.textGridJson)
-    task.data.textGrid = textGrid
     //准备提交的参数
     let sysTask = {
         taskId: taskId,
-        textGrid: textGrid,
         status: 'pass',
       }
     const formData = new FormData();
@@ -1185,7 +1202,6 @@ function auditTask(isValidate=true) {
         //跳转回“我的审核”页
         proxy.$router.push({ path: `/label/auditTask`, query: { t: new Date().getTime() } });
       }, 1000)
-      
     })
   })
 }
@@ -1459,13 +1475,19 @@ function splitSegment(times, oldSegment, point, firstPart, secondPart) {
 }
 
 function loadTextGrid(){
-  if(!task.data.textGrid){
-    proxy.$message.error(proxy.$t('label.labelEditor.缺少预标注文本TextGrid'))
+  if(!task.data.textGrid){//如果标注员的标注数据为空，则提示
+    proxy.$message.error(proxy.$t('label.labelEditor.缺少标注文本TextGrid'))
     return
+  }
+  if(!task.data.auditTextGrid){//如果审核员的标注数据为空，则复用标注员的
+    task.data.auditTextGrid = task.data.textGrid
+    console.log('载入【标注员】的标注数据')
+  }else{
+    console.log('载入【审核员】的标注数据')
   }
   // ----将预标注文本转为json---
   // console.log('task.textGrid-->\n',task.data.textGrid)
-  task.textGridJson = parseTextGrid(task.data.textGrid)
+  task.textGridJson = parseTextGrid(task.data.auditTextGrid)
   // console.log('解析TextGrid-->\n',task.textGridJson)
 
   //检查并修复时间序列数据
@@ -1473,7 +1495,7 @@ function loadTextGrid(){
   // console.log('检查并修复时间序列数据-->\n',task.textGridJson)
 
   //JSON转TextGrid
-  task.textGrid = stringifyTextGrid(task.textGridJson)
+  // task.textGrid = stringifyTextGrid(task.textGridJson)
   // console.log('JSON转TextGrid-->\n',task.textGrid)
 
   // 生成时间序列数据
@@ -1503,10 +1525,10 @@ async function init(){
   console.log('任务详情：', res)
   task.data = res.data;
 
-  getPackage(task.data.packageId).then(res=>{
-    task.package = res.data;
-    console.log('任务包详情：', task.package)
-  })
+  // getPackage(task.data.packageId).then(res=>{
+  //   task.package = res.data;
+  //   console.log('任务包详情：', task.package)
+  // })
 
   // 等待DOM更新
   // await nextTick()
@@ -2002,7 +2024,7 @@ async function init(){
         // 或者根据当前播放所在位置查找当前分段
         //2.查找下一段
         // 索引加一，但必须小于times.length        
-        regionIndex = (regionIndex+1) > times.length ? times.length : (regionIndex+1)
+        regionIndex = (regionIndex+1) > times.length ? times.length-1 : (regionIndex+1)
         //3.激活下一段
         activateRegion(times[regionIndex])
         //滚动到标注行
@@ -2044,12 +2066,12 @@ async function init(){
 
 //激活分段
 function activateRegion(ts){
+  if(!ts)return 
   console.log('>>>激活目标分段>>>', JSON.stringify(ts))
 
   if(activeRegion.start==ts.start && activeRegion.end==ts.end){
     //已经是激活的分段
     console.log('是激活的分段', activeRegion)
-    //return
   }else{
     console.log('未激活的分段', activeRegion)
     ws.setTime(ts.start)
@@ -2392,15 +2414,88 @@ let task = reactive({
     audioFileName: '',
     packageId: taskPackageId,
     textGrid: '',//TG文本
-  },  
-  textGridJson: {},//TG文本转的JSON（用于显示、重置、提交等）
+    //其它字段
+    // auditTextGrid: null,
+    // originalTextGrid: null,
+    // status: "unstart",
+    // remark: "",
+    // audioFilePath: "/profile/upload/2025/10/17/Thai_STHB_250906_30_0000_20251017093333A002.wav",
+    // packageAssigner: "admin",
+    // packageId: 6,
+    // packageName: "任务包名称",
+    // packageType: "text",
+    // projectName: null,
+    // createBy: "admin",
+    // createTime: "2025-10-17 09:33:33",
+    // updateBy: "admin",
+    // updateTime: "2025-10-30 10:22:25",
+    // passTime: "2025-10-17 10:33:33",
+  },
+  package:{ //任务包信息
+    // taskPackageId: 6,
+    // type: "text",
+    // name: "语音标注任务包",
+    // status: "reception",
+    // language: null,
+    // projectId: 6,
+    // projectName: "语音标注项目2025.10.17",
+    // remark: null,
+    // assigner: "admin",
+    // assignerNickName: "若依",
+    // auditor: "admin",
+    // auditorNickName: "若依",
+    // createBy: "admin",
+    // createTime: "2025-10-17 09:33:33",
+    // updateBy: "admin",
+    // updateTime: "2025-10-17 09:34:58",
+  },
+  //TG文本转的JSON（用于显示、重置、提交等）
+  textGridJson: {
+    // "File type" : "ooTextFile short",
+    // "Object class" : "TextGrid",
+    // "xmin" : 0,
+    // "xmax" : 299.830,
+    // "item": [{
+    //     "class" : "IntervalTier" ,
+    //     "name" : "内容层", 
+    //     "xmin" : 0,
+    //     "xmax" : 299.830,
+    //     "intervals": [{
+    //       "xmin" : 0.000,
+    //       "xmax" : 33.120,
+    //       "text" : "文本内容"
+    //     },{
+    //       "xmin" : 33.120,
+    //       "xmax" : 53.120,
+    //       "text" : "文本内容"
+    //     },{
+    //       "xmin" : 53.120,
+    //       "xmax" : 299.830,
+    //       "text" : "文本内容"
+    //     }]
+    // },{
+    //     "class" : "IntervalTier",
+    //     "name" : "角色层" ,
+    //     "xmin" : 0,
+    //     "xmax" : 299.830,
+    //     "intervals" : [{
+    //       "xmin" : 0.000,
+    //       "xmax" : 55.123,
+    //       "text" : "文本内容"
+    //     },{
+    //       "xmin" : 55.123,
+    //       "xmax" : 299.830,
+    //       "text" : "文本内容"
+    //     }]
+    // }]
+  }
 })
 
 
 // 音频播放控件
 let ws = null;
 // 激活区域颜色
-let activeColor = 'rgba(255, 255, 0, 0.3)';
+let activeColor = 'rgba(255, 255, 0, 0.25)';
 // 当前激活的区域
 let activeRegion = reactive({start: 0, end: 0})
 // 音频总时长
@@ -2502,54 +2597,6 @@ function undo(){
 
   // });
   
-}
-
-function deepEqual(obj1, obj2) {
-  // 严格相等检查（处理基本类型和相同引用）
-  if (obj1 === obj2) {
-    return true;
-  }
-  
-  // null 和 undefined 检查
-  if (obj1 == null || obj2 == null) {
-    return obj1 === obj2;
-  }
-  
-  // 类型检查
-  if (typeof obj1 !== typeof obj2) {
-    return false;
-  }
-  
-  // 处理基本类型
-  if (typeof obj1 !== 'object') {
-    return obj1 === obj2;
-  }
-  
-  // 处理数组
-  if (Array.isArray(obj1) !== Array.isArray(obj2)) {
-    return false;
-  }
-  
-  // 获取对象的键
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
-  
-  // 键的数量比较
-  if (keys1.length !== keys2.length) {
-    return false;
-  }
-  
-  // 递归比较每个属性
-  for (let key of keys1) {
-    if (!keys2.includes(key)) {
-      return false;
-    }
-    if (!deepEqual(obj1[key], obj2[key])) {
-      return false;
-    }
-  }
-  
-  return true;
 }
 
 //获取常用时间
@@ -2710,11 +2757,16 @@ onUpdated(() => {
 })
 
 //计算表格高度
+let resizeTime = 0
 function calculateTableHeight() {
-  const windowHeight = window.innerHeight;
-  const tableTop = tableRef.value.$el.getBoundingClientRect().top;
-  tableHeight.value = Math.abs(windowHeight - tableTop - 20); // 20是底部留白
-  console.log('tableHeight-->', tableHeight.value)
+  let now = new Date().getTime()
+  if(now - resizeTime > 1000){
+    const windowHeight = window.innerHeight;
+    const tableTop = tableRef.value.$el.getBoundingClientRect().top;
+    tableHeight.value = Math.abs(windowHeight - tableTop - 20); // 20是底部留白
+    console.log('tableHeight-->', tableHeight.value)
+    resizeTime = now
+  }
 }
 
 // 移除键盘事件监听器
@@ -2755,7 +2807,7 @@ function startTimer() {
 
 /* 高亮行的样式 */
 :deep(.el-table .highlight-row) {
-  background-color: rgba(255, 225, 0, 0.3) !important;
+  background-color: rgba(255, 225, 0, 0.25) !important;
   /*color: #409EFF;*/
   font-weight: bold;
   caret-color: red;

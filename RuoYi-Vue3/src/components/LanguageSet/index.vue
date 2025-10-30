@@ -1,8 +1,8 @@
 <template>
   <el-dropdown trigger="hover" @command="handleSetLanguage">
     <div class="language-icon--style">
-      <!-- <svg-icon class-name="language-icon" icon-class="language" /> -->
-      {{ $t('menus.语言') }}
+      <svg-icon class-name="language-icon" icon-class="language" />
+      <!-- {{ $t('menus.语言') }} -->
     </div>
     <template #dropdown>
       <el-dropdown-menu slot="dropdown">

@@ -24,7 +24,7 @@ export default {
         我的审核: 'my audits',
         主题模式: 'theme mode',
         语言选择: 'language selection',
-        语言: 'English',
+        语言: 'Language',
         //标签页标题
         语音标注: 'voice annotation',
         查看标注: 'view annotation',

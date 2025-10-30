@@ -182,7 +182,7 @@ export const dynamicRoutes = [
         path: 'index/:taskPackageId(\\d+)/:taskPackageName/:taskId(\\d+)',
         component: () => import('@/views/label/labelEditorProject'),
         name: 'audio-annotator',
-        meta: { title: '查看标注', activeMenu: '/label/project' }//高亮“项目管理”菜单
+        meta: { title: '查看标注', activeMenu: '/label/project', noCache: true }//高亮“项目管理”菜单
       }
     ]
   },
@@ -196,7 +196,7 @@ export const dynamicRoutes = [
         path: 'index/:taskPackageId(\\d+)/:taskPackageName/:taskId(\\d+)',
         component: () => import('@/views/label/labelEditor'),
         name: 'label-editor',
-        meta: { title: '语音标注', activeMenu: '/label/annotator' } //高亮“我的任务”菜单
+        meta: { title: '语音标注', activeMenu: '/label/annotator', noCache: true } //高亮“我的任务”菜单
       }
     ]
   },
@@ -210,7 +210,7 @@ export const dynamicRoutes = [
         path: 'index/:taskId(\\d+)',
         component: () => import('@/views/label/labelEditorAudit'),
         name: 'audit-label',
-        meta: { title: '审核标注', activeMenu: '/label/auditTask' }//高亮“我的审核”菜单
+        meta: { title: '审核标注', activeMenu: '/label/auditTask', noCache: true }//高亮“我的审核”菜单
       }
     ]
   },
