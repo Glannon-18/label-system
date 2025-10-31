@@ -116,8 +116,9 @@
                <dict-tag :options="sys_oper_type" :value="scope.row.businessType" />
             </template>
          </el-table-column>
-         <el-table-column label="操作人员" align="center" prop="operName" :show-overflow-tooltip="true" sortable="custom" :sort-orders="['descending', 'ascending']" />
-         <el-table-column label="操作地址" align="center" width="150" prop="operIp"  :show-overflow-tooltip="true" />
+         <el-table-column label="操作人员" align="center" width="150" prop="operName" :show-overflow-tooltip="true" sortable="custom" :sort-orders="['descending', 'ascending']" />
+         <el-table-column label="操作IP" align="center" width="150" prop="operIp"  :show-overflow-tooltip="true" />
+         <el-table-column label="IP属地" align="center" width="150" prop="operLocation"  :show-overflow-tooltip="true" />
          <el-table-column label="操作状态" align="center" width="80" prop="status">
             <template #default="scope">
                <dict-tag :options="sys_common_status" :value="scope.row.status" />
