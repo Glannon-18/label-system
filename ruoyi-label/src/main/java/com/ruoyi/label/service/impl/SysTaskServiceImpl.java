@@ -178,10 +178,12 @@ public class SysTaskServiceImpl implements ISysTaskService
      * 
      * @param deptId 部门ID
      * @param keyword 用户名或昵称查询关键字
+     * @param orderByColumn 排序字段
+     * @param isAsc 排序方式
      * @return 任务统计结果
      */
     @Override
-    public List<Map<String, Object>> getTaskStatisticsByDeptId(Long deptId, String keyword) {
-        return sysTaskMapper.getTaskStatisticsByDeptId(deptId, keyword);
+    public List<Map<String, Object>> getTaskStatisticsByDeptId(Long deptId, String keyword, String orderByColumn, String isAsc) {
+        return sysTaskMapper.getTaskStatisticsByDeptId(deptId, keyword, orderByColumn, isAsc);
     }
 }

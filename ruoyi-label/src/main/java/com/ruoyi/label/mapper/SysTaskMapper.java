@@ -109,7 +109,13 @@ public interface SysTaskMapper
      * 
      * @param deptId 部门ID
      * @param keyword 用户名或昵称查询关键字
+     * @param orderByColumn 排序字段
+     * @param isAsc 排序方式
      * @return 任务统计结果
      */
-    public List<Map<String, Object>> getTaskStatisticsByDeptId(@Param("deptId") Long deptId, @Param("keyword") String keyword);
+    public List<Map<String, Object>> getTaskStatisticsByDeptId(
+            @Param("deptId") Long deptId,
+            @Param("keyword") String keyword,
+            @Param("orderByColumn") String orderByColumn,
+            @Param("isAsc") String isAsc);
 }

@@ -14,18 +14,21 @@
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
-    <el-table :data="taskStats" border>
+    <el-table :data="taskStats" border @sort-change="handleSortChange">
       <el-table-column 
         :formatter="formatUserName"
         label="用户名"
         align="center"
+        sortable="custom"
+        prop="userName"
       />
       <el-table-column 
         v-for="col in columns.slice(1)" 
         :key="col.prop" 
-        :prop="col.prop" 
+        :prop="col.prop"
         :label="col.label"
         align="center"
+        sortable="custom"
       />
     </el-table>
   </div>
@@ -42,13 +45,16 @@ const router = useRouter()
 const taskStats = ref([])
 
 // 查询参数
+// 查询参数和排序参数
 const data = reactive({
   queryParams: {
     keyword: ''
-  }
+  },
+  sortField: '',
+  sortOrder: ''
 })
 
-const { queryParams } = toRefs(data)
+const { queryParams, sortField, sortOrder } = toRefs(data)
 
 // 表格列定义
 const columns = ref([
@@ -84,14 +90,14 @@ const columns = ref([
 
 // 获取任务统计数据
 const fetchTaskStats = () => {
-  getTaskStatistics().then(response => {
+  getTaskStatistics(queryParams.value.keyword, sortField.value, sortOrder.value).then(response => {
     taskStats.value = response.data
   })
 }
 
 // 搜索处理
 const handleQuery = () => {
-  getTaskStatistics(queryParams.value.keyword).then(response => {
+  getTaskStatistics(queryParams.value.keyword, sortField.value, sortOrder.value).then(response => {
     taskStats.value = response.data
   })
 }
@@ -99,7 +105,23 @@ const handleQuery = () => {
 // 重置搜索
 const resetQuery = () => {
   queryParams.value.keyword = ''
+  sortField.value = ''
+  sortOrder.value = ''
   fetchTaskStats()
+}
+
+// 排序处理
+const handleSortChange = (sort) => {
+  if (sort.prop) {
+    sortField.value = convertToUnderScore(sort.prop)
+    sortOrder.value = sort.order === 'ascending' ? 'asc' : 'desc'
+    handleQuery()
+  }
+}
+
+// 驼峰转下划线
+const convertToUnderScore = (str) => {
+  return str.replace(/([A-Z])/g, '_$1').toLowerCase()
 }
 
 // 格式化用户名显示

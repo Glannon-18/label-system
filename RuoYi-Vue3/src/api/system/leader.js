@@ -1,10 +1,10 @@
 import request from '@/utils/request'
 
-// 获取任务统计信息
-export function getTaskStatistics(keyword) {
+// 获取任务统计数据
+export function getTaskStatistics(keyword, orderByColumn, isAsc) {
   return request({
     url: '/label/leader/taskStatistics',
     method: 'get',
-    params: { keyword }
+    params: { keyword, orderByColumn, isAsc }
   })
 }
