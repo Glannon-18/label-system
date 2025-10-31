@@ -44,6 +44,13 @@ export default {
         管理员任务: 'admin task',
         我的审核: 'my audits',
         管理员任务: 'admin task',
+        个人中心: 'Personal Center',
+        布局设置: 'Layout Settings',
+        退出登录: 'Log out',
+        '确定注销并退出系统吗？': 'Are you sure to log out and exit the system?',
+        确定:'Ok',
+        取消:'Cancel',
+        提示:'Tip'
     },
     label: {
         project: {
@@ -391,9 +398,13 @@ export default {
             "标点符号-规范": "According to the rules of semantic grammar, use commas, periods, question marks, exclamation marks, etc. for annotation, and do not omit symbols required by the target language language standards such as punctuation marks, stress marks, and pronunciation marks.",
             "用词规范": "Standard terminology",
             "用词规范-规范1": "The numbers should be marked in the commonly used Arabic numeral form (e.g. sextyight marked as 68).",
-            "用词规范-规范2": "Common pronunciation symbols (such as @,&amp;); %, etc. need to be marked in symbolic form (e.g. fivepercent is marked as 5%).",
-            "用词规范-规范3": "Common units (such as ℃ C, kg, km, $, etc.) need to be marked in symbol form (for example: Fiftykilograms are marked as 50kg). ",
+            "用词规范-规范2": "Common pronunciation symbols (such as {'@'}、{'*'}、{'&'}、{'%'}, etc. need to be marked in symbolic form (e.g. five percent is marked as 5%).",
+            "用词规范-规范3": "Common units (such as ℃, kg, km, $, etc.) need to be marked in symbol form (for example: fifty kilograms are marked as 50 kg). ",
             "用词规范-规范4": "The above annotation results must comply with language norms, context, and native speaker usage habits.",
+            "英文标注规则": "English annotation rules",
+            "英文标注规则-1": "When simple English words with pronunciation are used in the sentence, they must be marked in their correct English form (no more than three or more words), with a space between two English words. For example: Thank you.",
+            "英文标注规则-2": "Proper nouns are capitalized in half-width English in alphabetical order. For example: VP MBA NHK TBC",
+            "英文标注规则-3": "Ordinary words are in lowercase. For example: action",
         }
     }
 }
