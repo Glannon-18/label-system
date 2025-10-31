@@ -228,6 +228,10 @@
         <p><span >②{{$t('label.labelEditor.用词规范-规范2')}} </span></p>
         <p><span >③{{$t('label.labelEditor.用词规范-规范3')}} </span></p>
         <p><span >④{{$t('label.labelEditor.用词规范-规范4')}}</span></p>
+        <p><strong >6）{{$t('label.labelEditor.英文标注规则')}}</strong><span >： </span></p>
+        <p><span >①{{$t('label.labelEditor.英文标注规则-1')}} </span></p>
+        <p><span >②{{$t('label.labelEditor.英文标注规则-2')}} </span></p>
+        <p><span >③{{$t('label.labelEditor.英文标注规则-3')}} </span></p>
       </div>
     </el-dialog>
     <!-- 抽屉组件 -->
