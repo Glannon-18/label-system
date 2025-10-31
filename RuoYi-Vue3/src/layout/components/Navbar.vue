@@ -66,6 +66,7 @@ import LanguageSet from '@/components/LanguageSet'
 const appStore = useAppStore()
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
+const {proxy} = getCurrentInstance()
 
 function toggleSideBar() {
   appStore.toggleSideBar()
