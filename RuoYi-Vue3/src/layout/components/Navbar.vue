@@ -20,26 +20,28 @@
         <!-- <el-tooltip content="布局大小" effect="dark" placement="bottom">
           <size-select id="size-select" class="right-menu-item hover-effect" />
         </el-tooltip> -->
-        <el-tooltip :content="$t('menus.语言选择')" effect="dark" placement="left">
+        <!-- <el-tooltip :content="$t('menus.语言选择')" effect="dark" placement="left"> -->
           <language-set id="language-set" class="right-menu-item hover-effect" />
-        </el-tooltip>
+        <!-- </el-tooltip> -->
       </template>
 
       <el-dropdown @command="handleCommand" class="avatar-container right-menu-item hover-effect" trigger="hover">
-        <div class="avatar-wrapper">
-          <img :src="userStore.avatar" class="user-avatar" />
+        <div xclass="avatar-wrapper" style="margin-right: 18px;line-height: 50px; display: flex;align-items: center;">
+          <!-- <img :src="userStore.avatar" class="user-avatar" /> -->
+          <el-icon size="20" ><Avatar  /></el-icon>
+          <!-- <el-icon><Avatar size="50"/></el-icon> -->
           <span class="user-nickname"> {{ userStore.nickName }} </span>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
             <router-link to="/user/profile">
-              <el-dropdown-item>个人中心</el-dropdown-item>
+              <el-dropdown-item>{{ $t('menus.个人中心') }}</el-dropdown-item>
             </router-link>
             <el-dropdown-item command="setLayout" v-if="settingsStore.showSettings">
-                <span>布局设置</span>
+                <span>{{ $t('menus.布局设置') }}</span>
               </el-dropdown-item>
             <el-dropdown-item divided command="logout">
-              <span>退出登录</span>
+              <span>{{ $t('menus.退出登录') }}</span>
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -83,9 +85,9 @@ function handleCommand(command) {
 }
 
 function logout() {
-  ElMessageBox.confirm('确定注销并退出系统吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(proxy.$t('menus.确定注销并退出系统吗？'), proxy.$t('menus.提示'), {
+    confirmButtonText: proxy.$t('menus.确定'),
+    cancelButtonText: proxy.$t('menus.取消'),
     type: 'warning'
   }).then(() => {
     userStore.logOut().then(() => {
