@@ -7,6 +7,7 @@ import com.ruoyi.label.service.ISysTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -29,11 +30,14 @@ public class SysLeaderController extends BaseController
      * 统计label_worker角色用户各种状态的任务数量
      */
     @GetMapping("/taskStatistics")
-    public AjaxResult getTaskStatistics() {
+    public AjaxResult getTaskStatistics(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "orderByColumn", required = false) String orderByColumn,
+            @RequestParam(value = "isAsc", required = false) String isAsc) {
 
         Long deptId = getLoginUser().getDeptId();
         // 获取当前用户部门下label_worker用户创建的任务统计
-        List<Map<String, Object>> taskStats = sysTaskService.getTaskStatisticsByDeptId(deptId);
+        List<Map<String, Object>> taskStats = sysTaskService.getTaskStatisticsByDeptId(deptId, keyword, orderByColumn, isAsc);
         
         return AjaxResult.success(taskStats);
     }

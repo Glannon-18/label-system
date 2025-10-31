@@ -275,9 +275,9 @@ function handleViewDetail(row) {
   const taskId = row.taskId
   const type = row.packageType
   if (type === "audio") {
-    proxy.$router.push(`/label/audit-audio-recorder/index/${taskId}`)
-  }else{
-    proxy.$router.push(`/label/audit-label/index/${taskId}`)
+    proxy.$router.push(`/label/view-audio-recorder/index/33/44/${taskId}`)
+  } else {
+    proxy.$router.push(`/label/view-label/index/33/44/${taskId}`)
   }
 }
 

@@ -1,28 +1,60 @@
 <template>
   <div class="app-container">
-    <el-table :data="taskStats" border>
+    <el-form :model="queryParams" ref="queryRef" :inline="true" label-width="68px">
+      <el-form-item label="用户名/昵称" prop="keyword" label-width="auto">
+        <el-input
+          v-model="queryParams.keyword"
+          placeholder="请输入用户名或昵称进行搜索"
+          clearable
+          @keyup.enter="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
+    <el-table :data="taskStats" border @sort-change="handleSortChange">
       <el-table-column 
         :formatter="formatUserName"
         label="用户名"
         align="center"
+        sortable="custom"
+        prop="userName"
       />
       <el-table-column 
         v-for="col in columns.slice(1)" 
         :key="col.prop" 
-        :prop="col.prop" 
+        :prop="col.prop"
         :label="col.label"
         align="center"
+        sortable="custom"
       />
     </el-table>
   </div>
 </template>
 
 <script setup name="Leader">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive, toRefs } from 'vue'
 import { getTaskStatistics } from '@/api/system/leader'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // 任务统计数据
 const taskStats = ref([])
+
+// 查询参数
+// 查询参数和排序参数
+const data = reactive({
+  queryParams: {
+    keyword: ''
+  },
+  sortField: '',
+  sortOrder: ''
+})
+
+const { queryParams, sortField, sortOrder } = toRefs(data)
 
 // 表格列定义
 const columns = ref([
@@ -58,9 +90,38 @@ const columns = ref([
 
 // 获取任务统计数据
 const fetchTaskStats = () => {
-  getTaskStatistics().then(response => {
+  getTaskStatistics(queryParams.value.keyword, sortField.value, sortOrder.value).then(response => {
     taskStats.value = response.data
   })
+}
+
+// 搜索处理
+const handleQuery = () => {
+  getTaskStatistics(queryParams.value.keyword, sortField.value, sortOrder.value).then(response => {
+    taskStats.value = response.data
+  })
+}
+
+// 重置搜索
+const resetQuery = () => {
+  queryParams.value.keyword = ''
+  sortField.value = ''
+  sortOrder.value = ''
+  fetchTaskStats()
+}
+
+// 排序处理
+const handleSortChange = (sort) => {
+  if (sort.prop) {
+    sortField.value = convertToUnderScore(sort.prop)
+    sortOrder.value = sort.order === 'ascending' ? 'asc' : 'desc'
+    handleQuery()
+  }
+}
+
+// 驼峰转下划线
+const convertToUnderScore = (str) => {
+  return str.replace(/([A-Z])/g, '_$1').toLowerCase()
 }
 
 // 格式化用户名显示

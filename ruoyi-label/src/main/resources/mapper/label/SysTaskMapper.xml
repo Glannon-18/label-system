@@ -247,8 +247,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <where>
             r.role_key = 'label_worker'
             <if test="deptId != null"> AND assigner_user.dept_id = #{deptId}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (assigner_user.user_name LIKE CONCAT('%', #{keyword}, '%') OR assigner_user.nick_name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
         </where>
         GROUP BY assigner_user.user_name, assigner_user.nick_name
-        ORDER BY assigner_user.user_name
+        <if test="orderByColumn != null and orderByColumn != '' and isAsc != null">
+            ORDER BY ${orderByColumn} ${isAsc}
+        </if>
+        <if test="(orderByColumn == null or orderByColumn == '') or isAsc == null">
+            ORDER BY assigner_user.user_name
+        </if>
     </select>
 </mapper>

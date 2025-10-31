@@ -182,7 +182,7 @@ export const dynamicRoutes = [
         path: 'index/:taskPackageId(\\d+)/:taskPackageName/:taskId(\\d+)',
         component: () => import('@/views/label/labelEditorProject'),
         name: 'audio-annotator',
-        meta: { title: '查看标注', activeMenu: '/label/project', noCache: true }//高亮“项目管理”菜单
+        meta: { title: '查看标注', noCache: true }
       }
     ]
   },
