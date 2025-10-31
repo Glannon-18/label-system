@@ -6,7 +6,7 @@ import en from './en.js'
 export const i18n = createI18n({
     legacy: false,
     globalInjection: true,
-    locale: localStorage.getItem('lang') || 'cn',
+    locale: localStorage.getItem('lang') || 'ch',
     messages: {
         ch,
         en
