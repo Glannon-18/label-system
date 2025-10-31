@@ -223,6 +223,7 @@ export default {
             annotator: 'Annotator',
             creator: 'Creator',
             create_time: 'Create Time',
+            submit_time: 'Submit Time',
             pass_time: 'Pass Time',
             remark: 'Remark',
             operation: 'Operation',

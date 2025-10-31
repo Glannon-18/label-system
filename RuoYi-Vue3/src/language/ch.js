@@ -223,6 +223,7 @@ export default {
             annotator: '标注人员',
             creator: '创建者',
             create_time: '创建时间',
+            submit_time: '提交时间',
             pass_time: '通过时间',
             remark: '备注',
             operation: '操作',

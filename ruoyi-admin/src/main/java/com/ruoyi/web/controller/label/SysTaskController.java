@@ -247,10 +247,16 @@ public class SysTaskController extends BaseController {
         if (sysTask.getStatus() != null && !sysTask.getStatus().equals(oldTask.getStatus())) {
             SysTaskLogUtils.insertSysTaskLog(sysTask.getTaskId(), sysTask.getStatus(), getUsername(), null);
         }
+        //如果提交，则设置提交
+        if (sysTask.getStatus() != null && sysTask.getStatus().equals(TaskStatus.PENDING_REVIEW)) {
+            sysTask.setSubmitTime(DateUtils.getNowDate());
+        }
         //如果审核通过，则设置通过时间
-        if (sysTask.getStatus() != null && sysTask.getStatus().equals(TaskStatus.PASS)) {
+        else if (sysTask.getStatus() != null && sysTask.getStatus().equals(TaskStatus.PASS)) {
             sysTask.setPassTime(DateUtils.getNowDate());
         }
+
+
         
         return toAjax(sysTaskService.updateSysTask(sysTask));
     }

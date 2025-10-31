@@ -57,6 +57,9 @@ public class SysTask extends BaseEntity {
     /** 审核通过时间 **/
     private Date passTime;
 
+    /** 提交时间 */
+    private Date submitTime;
+
     /** 音频时长 */
     private Double duration;
 
@@ -172,6 +175,15 @@ public class SysTask extends BaseEntity {
         this.duration = duration;
     }
 
+    /** 提交时间 */
+    public Date getSubmitTime() {
+        return submitTime;
+    }
+
+    public void setSubmitTime(Date submitTime) {
+        this.submitTime = submitTime;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
@@ -193,6 +205,7 @@ public class SysTask extends BaseEntity {
                 .append("packageName", getPackageName())
                 .append("passTime", getPassTime())
                 .append("duration", getDuration().toString())
+                .append("submitTime", getSubmitTime().toString())
                 .toString();
     }
 }

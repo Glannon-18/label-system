@@ -39,7 +39,7 @@
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="taskList" @selection-change="handleSelectionChange" @sort-change="handleSortChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column :label="$t('label.auditTask.project_name_col')" align="center" prop="projectName" />
       <el-table-column :label="$t('label.auditTask.task_package_name')" align="center" prop="packageName" />
@@ -54,14 +54,14 @@
         </template>
       </el-table-column>
       <el-table-column :label="$t('label.auditTask.annotator')" align="center" prop="packageAssigner" />
-      <el-table-column :label="$t('label.auditTask.create_time')" align="center" prop="createTime" width="180">
+      <el-table-column :label="$t('label.auditTask.submit_time')" align="center" prop="submitTime" width="180" :sortable="true">
         <template #default="scope">
-          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.submitTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('label.auditTask.pass_time')" align="center" prop="passTime" width="180">
+      <el-table-column :label="$t('label.auditTask.pass_time')" align="center" prop="passTime" width="180" :sortable="true">
         <template #default="scope">
-          <span>{{ scope.row.passTime ? parseTime(scope.row.passTime, '{y}-{m}-{d}') : '' }}</span>
+          <span>{{ scope.row.passTime ? parseTime(scope.row.passTime, '{y}-{m}-{d} {h}:{i}:{s}') : '' }}</span>
         </template>
       </el-table-column>
       <el-table-column :label="$t('label.auditTask.remark')" align="center" prop="remark" />
@@ -128,12 +128,14 @@ const progressLoading = ref(false)
 const progressLogs = ref([])
 
 const data = reactive({
-  queryParams: {
-    pageNum: 1,
-    pageSize: 10,
-    status: null,
-  }
-})
+    queryParams: {
+      pageNum: 1,
+      pageSize: 10,
+      status: null,
+      orderByColumn: '',
+      isAsc: ''
+    }
+  })
 
 const { queryParams } = toRefs(data)
 
@@ -226,6 +228,19 @@ function getList() {
     total.value = response.total
     loading.value = false
   })
+}
+
+/** 处理排序变化 */
+function handleSortChange(column) {
+  if (column.prop && column.order) {
+    queryParams.value.orderByColumn = column.prop
+    queryParams.value.isAsc = column.order === 'ascending' ? 'asc' : 'desc'
+  } else {
+    queryParams.value.orderByColumn = ''
+    queryParams.value.isAsc = ''
+  }
+  queryParams.value.pageNum = 1
+  getList()
 }
 
 // 添加onActivated钩子，当页面被激活时检查是否需要刷新数据
