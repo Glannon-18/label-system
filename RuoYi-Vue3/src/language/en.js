@@ -397,7 +397,7 @@ export default {
             "标点符号": "Punctuation Marks",
             "标点符号-规范": "According to the rules of semantic grammar, use commas, periods, question marks, exclamation marks, etc. for annotation, and do not omit symbols required by the target language language standards such as punctuation marks, stress marks, and pronunciation marks.",
             "用词规范": "Standard terminology",
-            "用词规范-规范1": "The numbers should be marked in the commonly used Arabic numeral form (e.g. sextyight marked as 68).",
+            "用词规范-规范1": "The numbers should be marked in the commonly used Arabic numeral form (e.g. sexty eight marked as 68).",
             "用词规范-规范2": "Common pronunciation symbols (such as {'@'}、{'*'}、{'&'}、{'%'}, etc. need to be marked in symbolic form (e.g. five percent is marked as 5%).",
             "用词规范-规范3": "Common units (such as ℃, kg, km, $, etc.) need to be marked in symbol form (for example: fifty kilograms are marked as 50 kg). ",
             "用词规范-规范4": "The above annotation results must comply with language norms, context, and native speaker usage habits.",

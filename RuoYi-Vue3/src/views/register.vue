@@ -70,7 +70,7 @@
     </el-form>
     <!--  底部  -->
     <div class="el-register-footer">
-      <span>Copyright © 2018-2025 ruoyi.vip All Rights Reserved.</span>
+      <span>Copyright © 2009-2025 <a href="http://gxdayi.com.cn" target="_blank">gxdayi.com.cn</a> All Rights Reserved.</span>
     </div>
   </div>
 </template>
