@@ -1,5 +1,19 @@
 <template>
   <div class="app-container">
+    <el-form :model="queryParams" ref="queryRef" :inline="true" label-width="68px">
+      <el-form-item label="用户名/昵称" prop="keyword" label-width="auto">
+        <el-input
+          v-model="queryParams.keyword"
+          placeholder="请输入用户名或昵称进行搜索"
+          clearable
+          @keyup.enter="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+      </el-form-item>
+    </el-form>
     <el-table :data="taskStats" border>
       <el-table-column 
         :formatter="formatUserName"
@@ -18,11 +32,23 @@
 </template>
 
 <script setup name="Leader">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive, toRefs } from 'vue'
 import { getTaskStatistics } from '@/api/system/leader'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // 任务统计数据
 const taskStats = ref([])
+
+// 查询参数
+const data = reactive({
+  queryParams: {
+    keyword: ''
+  }
+})
+
+const { queryParams } = toRefs(data)
 
 // 表格列定义
 const columns = ref([
@@ -61,6 +87,19 @@ const fetchTaskStats = () => {
   getTaskStatistics().then(response => {
     taskStats.value = response.data
   })
+}
+
+// 搜索处理
+const handleQuery = () => {
+  getTaskStatistics(queryParams.value.keyword).then(response => {
+    taskStats.value = response.data
+  })
+}
+
+// 重置搜索
+const resetQuery = () => {
+  queryParams.value.keyword = ''
+  fetchTaskStats()
 }
 
 // 格式化用户名显示

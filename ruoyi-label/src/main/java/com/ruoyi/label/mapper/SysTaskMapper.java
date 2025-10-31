@@ -108,7 +108,8 @@ public interface SysTaskMapper
      * 根据部门ID统计label_worker用户的任务
      * 
      * @param deptId 部门ID
+     * @param keyword 用户名或昵称查询关键字
      * @return 任务统计结果
      */
-    public List<Map<String, Object>> getTaskStatisticsByDeptId(@Param("deptId") Long deptId);
+    public List<Map<String, Object>> getTaskStatisticsByDeptId(@Param("deptId") Long deptId, @Param("keyword") String keyword);
 }
