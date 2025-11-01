@@ -105,11 +105,11 @@ public class SysTaskController extends BaseController {
                 }
 
                 // 添加TextGrid文件到ZIP
-                if (task.getTextGrid() != null && !task.getTextGrid().isEmpty()) {
+                if (task.getAuditTextGrid() != null && !task.getAuditTextGrid().isEmpty()) {
                     // 为避免文件名冲突，添加任务ID作为前缀
                     String textGridFileName = task.getTaskId() + "_" + task.getAudioFileName().replaceAll("\\.wav$", ".TextGrid");
                     zipOut.putNextEntry(new ZipEntry(textGridFileName));
-                    zipOut.write(task.getTextGrid().getBytes(StandardCharsets.UTF_8));
+                    zipOut.write(task.getAuditTextGrid().getBytes(StandardCharsets.UTF_8));
                     zipOut.closeEntry();
                 }
             }

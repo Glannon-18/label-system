@@ -25,6 +25,8 @@
         
         </div>
 
+        <el-button v-if="['pass'].includes(task.data.status)" type="success" plain @click="download()" >下载</el-button>
+
         <!-- 审核驳回对话框 -->
         <el-dialog v-model="dialogFormVisible" :title="$t('label.labelEditor.审核驳回')" width="500">
           <el-input v-model="dialogFormRemark" type="textarea" :autosize="{ minRows: 3, maxRows: 20 }" :placeholder="$t('label.labelEditor.请输入驳回原因')" style="width: 100%;" />
@@ -317,7 +319,7 @@
 <script setup name="audit-label">
 //=========================引入模块=========================
 import { getPackage } from "@/api/label/package"
-import { listTask, getTask, updateTask } from "@/api/label/task"
+import { listTask, getTask, updateTask, downloadTasks } from "@/api/label/task"
 
 import WaveSurfer from "wavesurfer.js"
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
@@ -1193,9 +1195,25 @@ function auditTask(isValidate=true) {
     }
   }
   proxy.$modal.confirm(proxy.$t('label.labelEditor.确定审核通过吗？')).then(function () {
+    //将最新的times转为intervals
+    let intervals = times.map((ts,i)=>{
+      return {
+        index: (i+1),
+        xmin: ts.start,
+        xmax: ts.end,
+        text: ts.text,
+      }
+    })
+    // 将intervals替换到 task.textGridJson.item[0].intervals
+    task.textGridJson.item[0].intervals = intervals
+    //转换textGridJson为TG文本格式
+    let textGrid = stringifyTextGrid(task.textGridJson)
+    //替换task.data的auditTextGrid字段
+    task.data.auditTextGrid = textGrid
     //准备提交的参数
     let sysTask = {
         taskId: taskId,
+        auditTextGrid: textGrid,//审核员的TextGrid
         status: 'pass',
       }
     const formData = new FormData();
@@ -2799,6 +2817,23 @@ function startTimer() {
   }, 10 * 60 * 1000); //间隔10分钟
 }
 
+function download(){
+  proxy.$modal.confirm(proxy.$t('label.auditTask.confirm_download')).then(function() {
+    return downloadTasks(Number(taskId))
+  }).then(response => {
+    const blob = new Blob([response], { type: 'text/plain' })
+    const fileName = task.data.audioFileName.slice(0, task.data.audioFileName.lastIndexOf('.')) +'.zip'
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = fileName
+    link.click()
+    URL.revokeObjectURL(link.href)
+    proxy.$modal.msgSuccess(proxy.$t('label.auditTask.download_success'))
+  }).catch(error => {
+    proxy.$modal.msgError(proxy.$t('label.auditTask.download_failed'))
+    console.error('Download error:', error)
+  })
+}
 </script>
 
 

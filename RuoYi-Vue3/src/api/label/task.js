@@ -90,7 +90,7 @@ export function downloadTasks(taskIds) {
   return request({
     url: '/label/task/download',
     method: 'post',
-    data: taskIds,
+    data: Array.isArray(taskIds) ? taskIds : [taskIds],
     responseType: 'blob'
   })
 }
